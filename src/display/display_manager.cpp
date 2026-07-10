@@ -1,6 +1,6 @@
 #include "display_manager.h"
 
-DisplayManager::DisplayManager(IDisplayDriver& driver)
+DisplayManager::DisplayManager(IDisplayDriver &driver)
     : driver(driver)
 {
 }
@@ -40,7 +40,7 @@ uint16_t DisplayManager::height() const
 }
 
 void DisplayManager::drawText(
-    const String& text,
+    const String &text,
     int16_t x,
     int16_t y,
     uint16_t color,
@@ -134,4 +134,9 @@ void DisplayManager::fillCircle(
         y,
         r,
         color);
+}
+
+void DisplayManager::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color)
+{
+    driver.drawBitmap(x, y, bitmap, w, h, color);
 }

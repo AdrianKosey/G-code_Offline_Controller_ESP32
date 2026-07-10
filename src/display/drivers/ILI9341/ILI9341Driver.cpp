@@ -30,22 +30,22 @@ void ILI9341Driver::invertDisplay(bool invert)
 
 uint16_t ILI9341Driver::width() const
 {
-    return const_cast<ILI9341Driver*>(this)->tft.width();
+    return const_cast<ILI9341Driver *>(this)->tft.width();
 }
 
 uint16_t ILI9341Driver::height() const
 {
-    return const_cast<ILI9341Driver*>(this)->tft.height();
+    return const_cast<ILI9341Driver *>(this)->tft.height();
 }
 
 bool ILI9341Driver::calibrateTouch(uint16_t calData[5])
-{   
+{
     tft.calibrateTouch(
         calData,
         TFT_MAGENTA,
         TFT_BLACK,
         15);
-    
+
     return true;
 }
 
@@ -56,7 +56,7 @@ void ILI9341Driver::setTouchCalibration(
 }
 
 void ILI9341Driver::drawText(
-    const String& text,
+    const String &text,
     int16_t x,
     int16_t y,
     uint16_t color,
@@ -126,8 +126,19 @@ void ILI9341Driver::fillCircle(
 }
 
 bool ILI9341Driver::getTouch(
-    uint16_t& x,
-    uint16_t& y)
+    uint16_t &x,
+    uint16_t &y)
 {
     return tft.getTouch(&x, &y);
+}
+
+void ILI9341Driver::drawBitmap(
+    int16_t x,
+    int16_t y,
+    const uint8_t *bitmap,
+    int16_t w,
+    int16_t h,
+    uint16_t color)
+{
+    tft.drawBitmap(x, y, bitmap, w, h, color);
 }

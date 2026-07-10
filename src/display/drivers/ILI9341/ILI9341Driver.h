@@ -23,7 +23,7 @@ public:
     uint16_t height() const override;
 
     void drawText(
-        const String& text,
+        const String &text,
         int16_t x,
         int16_t y,
         uint16_t color = TFT_WHITE,
@@ -69,10 +69,17 @@ public:
 
     // Touch
     bool getTouch(
-        uint16_t& x,
-        uint16_t& y) override;
+        uint16_t &x,
+        uint16_t &y) override;
+
+    void drawBitmap(
+        int16_t x,
+        int16_t y,
+        const uint8_t *bitmap,
+        int16_t w,
+        int16_t h,
+        uint16_t color) override;
 
 private:
-
     TFT_eSPI tft;
 };

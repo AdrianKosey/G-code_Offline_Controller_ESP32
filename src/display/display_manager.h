@@ -5,8 +5,7 @@
 class DisplayManager
 {
 public:
-
-    explicit DisplayManager(IDisplayDriver& driver);
+    explicit DisplayManager(IDisplayDriver &driver);
 
     bool begin();
 
@@ -21,7 +20,7 @@ public:
     uint16_t height() const;
 
     void drawText(
-        const String& text,
+        const String &text,
         int16_t x,
         int16_t y,
         uint16_t color = 0xFFFF, // Default color is white
@@ -65,7 +64,14 @@ public:
         int16_t r,
         uint16_t color);
 
-private:
+    void drawBitmap(
+        int16_t x,
+        int16_t y,
+        const uint8_t *bitmap,
+        int16_t w,
+        int16_t h,
+        uint16_t color);
 
-    IDisplayDriver& driver;
+private:
+    IDisplayDriver &driver;
 };

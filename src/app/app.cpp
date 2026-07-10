@@ -1,33 +1,45 @@
 #include "App.h"
 
-App::App() : display(displayDriver), touch(displayDriver),
-             button(
-                 Rect{
-                     20,
-                     20,
-                     120,
-                     40},
-                 "Inicio") {}
+static constexpr uint8_t SIDEBAR_WIDTH = 60;
+
+static const SidebarItem sidebarItems[] = {
+    {IconId::Home, "Inicio"},
+    {IconId::Files, "Archivos"},
+    {IconId::Prepare, "Preparar"},
+    {IconId::Tools, "Tools"},
+    {IconId::Settings, "Configrar"},
+};
+
+App::App()
+    : display(displayDriver),
+      touch(displayDriver),
+      screenManager(display, Rect{0, 0, SIDEBAR_WIDTH, 240}, sidebarItems, 5)
+{
+}
 
 void App::begin()
 {
     display.begin();
 
-    constexpr bool FORCE_TOUCH_CALIBRATION = false; // Set to true to force touch calibration on every startup
+    constexpr bool FORCE_TOUCH_CALIBRATION = false;
     touch.begin(FORCE_TOUCH_CALIBRATION);
 
-    display.clear(0x0000);
-    button.draw(display);
+    display.clear(Theme::Background);
+
+    screenManager.registerScreen(0, &homeScreen);
+    screenManager.registerScreen(1, &filesScreen);
+    screenManager.registerScreen(2, &prepareScreen);
+    screenManager.registerScreen(3, &toolsScreen);
+    screenManager.registerScreen(4, &settingsScreen);
+
+    screenManager.draw();
 }
 
 void App::update()
 {
     TouchEvent event = touch.poll();
 
-    if (button.handleTouch(event))
-    {
-        button.setSelected(!button.isSelected());
-    }
-
-    button.draw(display);
+    screenManager.handleTouch(event);
+    screenManager.update();
+    screenManager.draw();
 }

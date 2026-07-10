@@ -4,7 +4,6 @@
 class IDisplayDriver
 {
 public:
-
     virtual ~IDisplayDriver() = default;
 
     virtual bool begin() = 0;
@@ -20,7 +19,7 @@ public:
     virtual uint16_t height() const = 0;
 
     virtual void drawText(
-        const String& text,
+        const String &text,
         int16_t x,
         int16_t y,
         uint16_t color = 0xFFFF, // Default color is white
@@ -62,5 +61,13 @@ public:
         int16_t x,
         int16_t y,
         int16_t r,
+        uint16_t color) = 0;
+
+    virtual void drawBitmap(
+        int16_t x,
+        int16_t y,
+        const uint8_t *bitmap,
+        int16_t w,
+        int16_t h,
         uint16_t color) = 0;
 };
