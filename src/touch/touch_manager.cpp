@@ -1,19 +1,14 @@
 #include "touch_manager.h"
 
-TouchManager::TouchManager(IDisplayDriver& display, ITouchDriver& driver)
-    : display(display), driver(driver)
-{
-}
+TouchManager::TouchManager(ITouchDriver& driver) : driver(driver){}
 
-bool TouchManager::begin()
+bool TouchManager::begin(bool forceCalibration)
 {
-    if (!calibration.load())
+    if (forceCalibration || !calibration.load(driver))
     {
-        calibration.calibrate(display, driver);
-
-        calibration.save();
+        if (!calibration.calibrate(driver))
+            return false;
     }
-
     return true;
 }
 
@@ -26,17 +21,25 @@ void TouchManager::update()
 
     if (driver.getTouch(x, y))
     {
-        calibration.transform(x, y);
-
         currentEvent.pressed = true;
-
         currentEvent.point.x = x;
-
         currentEvent.point.y = y;
     }
 }
 
-TouchEvent TouchManager::poll() const
+TouchEvent TouchManager::poll()
 {
+    currentEvent = {};
+
+    uint16_t x;
+    uint16_t y;
+
+    if (driver.getTouch(x, y))
+    {
+        currentEvent.pressed = true;
+        currentEvent.point.x = x;
+        currentEvent.point.y = y;
+    }
+
     return currentEvent;
 }

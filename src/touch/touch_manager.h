@@ -4,23 +4,21 @@
 #include "touch_calibration.h"
 
 #include "interface/itouch_driver.h"
-#include "../display/interface/idisplay_driver.h"
 class TouchManager
 {
 public:
 
-    explicit TouchManager(IDisplayDriver& display, ITouchDriver& driver);
+    explicit TouchManager(ITouchDriver& driver);
 
-    bool begin();
+    bool begin(bool forceCalibration = false);
 
     void update();
 
-    TouchEvent poll() const;
+    TouchEvent poll();
 
 private:
 
     ITouchDriver& driver;
-    IDisplayDriver& display;
 
     TouchCalibration calibration;
 

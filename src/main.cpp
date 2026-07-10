@@ -4,6 +4,7 @@
 App app;
 
 void setup() {
+  Serial.begin(115200);
   app.begin();
 }
 

@@ -13,6 +13,8 @@ public:
 
     virtual void setRotation(uint8_t rotation) = 0;
 
+    virtual void invertDisplay(bool invert) = 0;
+
     virtual uint16_t width() const = 0;
 
     virtual uint16_t height() const = 0;

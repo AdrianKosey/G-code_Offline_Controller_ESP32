@@ -15,7 +15,9 @@ public:
     void clear(uint16_t color = TFT_BLACK) override;
 
     void setRotation(uint8_t rotation) override;
-
+    void invertDisplay(bool invert) override;
+    bool calibrateTouch(uint16_t calData[5]) override;
+    void setTouchCalibration(uint16_t calData[5]) override;
     uint16_t width() const override;
 
     uint16_t height() const override;

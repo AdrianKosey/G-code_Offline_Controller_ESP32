@@ -20,7 +20,7 @@ folder of its respective module.
       |--interface
          |- idisplay_driver.h
 
-====== Display ======
+====== Touch ======
 
 |--src
    |-- app

@@ -11,4 +11,9 @@ public:
     virtual bool getTouch(
         uint16_t& x,
         uint16_t& y) = 0;
+
+    virtual bool calibrateTouch(
+    uint16_t calData[5]) = 0;
+    virtual void setTouchCalibration(
+    uint16_t calData[5]) = 0;
 };
