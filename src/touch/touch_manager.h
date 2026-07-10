@@ -12,8 +12,6 @@ public:
 
     bool begin(bool forceCalibration = false);
 
-    void update();
-
     TouchEvent poll();
 
 private:

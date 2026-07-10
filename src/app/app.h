@@ -2,6 +2,7 @@
 #include "../display/display_manager.h"
 #include "../touch/touch_manager.h"
 #include "../display/drivers/ILI9341/ILI9341Driver.h"
+#include "../gui/widgets/button/button_widget.h"
 class App
 {
 public:
@@ -13,4 +14,5 @@ private:
     ILI9341Driver displayDriver;
     DisplayManager display;
     TouchManager touch;
+    ButtonWidget button;
 };

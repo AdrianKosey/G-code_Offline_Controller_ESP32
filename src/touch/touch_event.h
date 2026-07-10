@@ -1,17 +1,17 @@
 #pragma once
 #include "touch_point.h"
 #include <stdint.h>
+
+enum class TouchType
+{
+    None,
+    Pressed,
+    Released,
+    Move,
+    longPress
+};
 struct TouchEvent
 {
-    bool pressed;
-
-    bool released;
-
-    bool clicked;
-
-    bool longPressed;
-
-    bool dragging;
-
+    TouchType type;
     TouchPoint point;
 };
