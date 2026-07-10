@@ -1,0 +1,32 @@
+Here you can add different display drivers if you need to use a different type 
+or model of screen.
+For it to work correctly with the entire system, use the touch and display 
+interfaces located in the interface folder of their respective module.
+
+If your screen has built-in touch functionality, such as the ILI9341, and the library 
+supports it, you can use it directly in your driver class with `getTouch`, implementing 
+both interfaces with the same library. If your library doesn't support it and you have to 
+use a secondary library, you can always create a specific class for touch in the driver 
+folder of its respective module.
+
+
+====== Display ======
+
+|--src
+   |-- app
+   |-- communication
+   |-- display
+      |--drivers
+      |--interface
+         |- idisplay_driver.h
+
+====== Display ======
+
+|--src
+   |-- app
+   |-- communication
+   |-- touch
+      |--drivers
+      |--interface
+         |- itouch_driver.h
+

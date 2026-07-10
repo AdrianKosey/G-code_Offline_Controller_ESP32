@@ -1,0 +1,32 @@
+To enable compatibility with an ILI9341 TFT display, you need to do the 
+following in the PlatformIO TFT_eSPI library.
+
+#Step 1: 
+
+Go to the User_Setup_Select.h file and comment out line #27, which says 
+#include <User_Setup.h> // Default setup is root library folder," and uncomment line 
+#76, which says "#include <User_Setups/Setup42_ILI9341_ESP32.h> // Setup file for 
+ESP32 and SPI ILI9341 240x320"
+
+|--.pio
+   |--build
+   |
+   |--libdeps
+      |--esp32dev
+         |--TFT_eSPI
+            |- User_Setup_Select.h
+
+#Step 2:
+Go to the "User_Setups" folder of the library and find the file called "Setup42_ILI9341_ESP32.h" 
+and uncomment line number #14 which says "#define TOUCH_CS 5 // Chip select pin (T_CS) of touch 
+screen" to enable the touch of our screen.
+
+|--.pio
+   |--build
+   |
+   |--libdeps
+      |--esp32dev
+         |--TFT_eSPI
+            |-- User_Setups
+                |- Setup42_ILI9341_ESP32.h
+
