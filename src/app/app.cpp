@@ -7,7 +7,7 @@ static constexpr int16_t SCREEN_HEIGHT = 240;
 static const SidebarItem sidebarItems[] = {
     {IconId::Home, "Inicio"},
     {IconId::Files, "Archivos"},
-    {IconId::Prepare, "Preparar"},
+    {IconId::Prepare, "Jog"},
     {IconId::Tools, "Tools"},
     {IconId::Settings, "Configrar"},
 };
@@ -20,14 +20,17 @@ App::App()
           sidebarItems,
           5,
           Rect{SIDEBAR_WIDTH, 0, 320 - SIDEBAR_WIDTH, HEADER_HEIGHT}),
-          confirmModal(Rect{0, 0, 320, 240}),
-        loadingModal(Rect{0, 0, 320, 240})
+      confirmModal(Rect{0, 0, 320, 240}),
+      loadingModal(Rect{0, 0, 320, 240}),
+      jobRunner(grblController),
+      jogScreen(grblController)
 {
 }
 
 void App::begin()
 {
-
+    //grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
+    grblController.beginSimulated();
     SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
     sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
     if (!sdReady)
@@ -44,33 +47,43 @@ void App::begin()
 
     screenManager.registerScreen(0, &homeScreen, "Home");
     screenManager.registerScreen(1, &filesScreen, "Files");
-    screenManager.registerScreen(2, &prepareScreen, "Prepare");
+    screenManager.registerScreen(2, &jogScreen, "Jog");
     screenManager.registerScreen(3, &toolsScreen, "Tools");
     screenManager.registerScreen(4, &settingsScreen, "Settings");
 
-    filesScreen.setOnFileSelected([this](const String& path) {
+    homeScreen.setOnPlay([this]() {
+        if (jobRunner.getState() == JobState::Paused)
+            jobRunner.resume();
+        else
+            jobRunner.start();
+    });
+
+    homeScreen.setOnPause([this]() { jobRunner.pause(); });
+    homeScreen.setOnStop([this]()  { jobRunner.stop();  });
+
+    filesScreen.setOnFileSelected([this](const String &path)
+                                  {
         pendingFilePath = path;
 
         int lastSlash = path.lastIndexOf('/');
         String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
 
-        confirmModal.show("Cargar " + filename + "?");
-    });
+        confirmModal.show("Cargar " + filename + "?"); });
 
-    confirmModal.setOnConfirm([this]() {
+    confirmModal.setOnConfirm([this]()
+                              {
         loadingModal.show("Cargando...");
         loadingModal.draw(display);
 
         homeScreen.loadJob(pendingFilePath);
-
+        jobRunner.load(pendingFilePath, homeScreen.getTotalLines());              
         loadingModal.hide();
         screenManager.switchToScreen(0);
-        screenManager.invalidateAll();
-    });
+        screenManager.redrawAll(); });
 
-    confirmModal.setOnCancel([this]() {
-        screenManager.invalidateAll();
-    });
+    confirmModal.setOnCancel([this]()
+                             { screenManager.redrawAll(); });
+
 
     screenManager.showInitialScreen(0);
     screenManager.setSdStatus(sdReady);
@@ -82,6 +95,12 @@ void App::begin()
 void App::update()
 {
     TouchEvent event = touch.poll();
+    jobRunner.update();
+    homeScreen.updateMachineState(
+        jobRunner.getState(),
+        grblController.getStatus(),
+        jobRunner.getCurrentLine(),
+        jobRunner.getTotalLines());
 
     if (confirmModal.isVisible())
         confirmModal.handleTouch(event);

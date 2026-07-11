@@ -3,7 +3,7 @@
 static constexpr int16_t CONTENT_X = 60;
 
 FilesScreen::FilesScreen()
-    : pathLabel(Rect{CONTENT_X + 44, 30, 200, 16}, "/", Theme::TextSecondary, 1, Theme::Background),
+    : pathLabel(Rect{CONTENT_X + 44, 30, 200, 16}, "/", Theme::TextSecondary, 1, Theme::Background, true),
       backButton(
           Rect{CONTENT_X + 8, 26, 28, 24},
           Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
@@ -44,26 +44,48 @@ void FilesScreen::onEnter()
     loadDirectory(currentPath);
 }
 
-void FilesScreen::loadDirectory(const String &path)
+namespace
+{
+    bool isGCodeFile(const String& filename)
+    {
+        String lower = filename;
+        lower.toLowerCase();
+
+        return lower.endsWith(".nc") ||
+               lower.endsWith(".gcode") ||
+               lower.endsWith(".ngc") ||
+               lower.endsWith(".tap");
+    }
+}
+
+void FilesScreen::loadDirectory(const String& path)
 {
     pathLabel.setText(path);
-    File dir = SD.open(path);
-    if (!dir || !dir.isDirectory())
-    {
-        FileEntry errorEntry[1] = {{"ERROR: SD card not detected", FileEntryType::File}};
-        fileList.setEntries(errorEntry, 1);
-        return;
-    }
+
     FileEntry entries[FileListWidget::MAX_ITEMS];
     uint8_t count = 0;
+
+    File dir = SD.open(path);
+
+    if (!dir || !dir.isDirectory())
+    {
+        fileList.clear();
+        return;
+    }
 
     File file = dir.openNextFile();
 
     while (file && count < FileListWidget::MAX_ITEMS)
     {
-        entries[count].name = file.name();
-        entries[count].type = file.isDirectory() ? FileEntryType::Folder : FileEntryType::File;
-        count++;
+        bool isFolder = file.isDirectory();
+        String name = file.name();
+
+        if (isFolder || isGCodeFile(name))
+        {
+            entries[count].name = name;
+            entries[count].type = isFolder ? FileEntryType::Folder : FileEntryType::File;
+            count++;
+        }
 
         file = dir.openNextFile();
     }

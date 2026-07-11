@@ -35,8 +35,8 @@ void ProgressBarWidget::draw(DisplayManager& display)
     if (fillWidth > 0)
     {
         // radius limited to the current width so that it doesn't look distorted when the padding is very small
-        int16_t fillRadius = std::min<int16_t>(r, fillWidth / 2);
-        display.fillRoundRect(bounds.x, bounds.y, fillWidth, bounds.height, fillRadius, fillColor);
+        int16_t fillRadius = std::min<int16_t>(r, fillWidth/2);
+        display.fillRoundRect(bounds.x, bounds.y, fillWidth, bounds.height, r, fillColor);
     }
 
     dirty = false;

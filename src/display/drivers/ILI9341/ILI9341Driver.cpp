@@ -158,3 +158,8 @@ void ILI9341Driver::clearClipRect()
 {
     tft.resetViewport();
 }
+
+int16_t ILI9341Driver::getTextWidth(const String& text, uint8_t font)
+{
+    return tft.textWidth(text, font);
+}

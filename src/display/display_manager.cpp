@@ -148,3 +148,8 @@ void DisplayManager::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, i
 
 void DisplayManager::setClipRect(int16_t x, int16_t y, int16_t w, int16_t h) { driver.setClipRect(x, y, w, h); }
 void DisplayManager::clearClipRect() { driver.clearClipRect(); }
+
+int16_t DisplayManager::getTextWidth(const String& text, uint8_t font)
+{
+    return driver.getTextWidth(text, font);
+}

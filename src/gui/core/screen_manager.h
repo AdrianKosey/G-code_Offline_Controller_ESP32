@@ -27,6 +27,7 @@ public:
     void switchToScreen(uint8_t id);
 
     void invalidateAll();
+    void redrawAll();
 private:
     struct ScreenEntry
     {

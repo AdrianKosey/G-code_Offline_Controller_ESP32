@@ -4,19 +4,19 @@ GCodePreviewWidget::GCodePreviewWidget(
     const Rect& bounds,
     uint16_t backgroundColor,
     uint16_t pathColor,
-    uint16_t cursorColor)
+    uint16_t cursorColor,
+    uint16_t traveledColor)
     : Widget(bounds),
       backgroundColor(backgroundColor),
       pathColor(pathColor),
-      cursorColor(cursorColor)
+      cursorColor(cursorColor),
+      traveledColor(traveledColor)
 {}
 
 void GCodePreviewWidget::setProjectBounds(float newMinX, float newMinY, float newMaxX, float newMaxY)
 {
-    minX = newMinX;
-    minY = newMinY;
-    maxX = newMaxX;
-    maxY = newMaxY;
+    minX = newMinX; minY = newMinY;
+    maxX = newMaxX; maxY = newMaxY;
 
     recalculateScale();
     invalidate();
@@ -39,10 +39,8 @@ void GCodePreviewWidget::recalculateScale()
     float scaleX = availableWidth / projectWidth;
     float scaleY = availableHeight / projectHeight;
 
-    //The smaller of the two, so the project ALWAYS fits completely, without being distorted
     scale = min(scaleX, scaleY);
 
-    // Center the drawing within the available space
     float drawnWidth = projectWidth * scale;
     float drawnHeight = projectHeight * scale;
 
@@ -53,21 +51,20 @@ void GCodePreviewWidget::recalculateScale()
 void GCodePreviewWidget::worldToScreen(float x, float y, int16_t& screenX, int16_t& screenY) const
 {
     screenX = bounds.x + PADDING + offsetX + (int16_t)((x - minX) * scale);
-
-    // Y reversed: in G-code Y grows upwards, on screen it grows downwards
     screenY = bounds.y + PADDING + offsetY + (int16_t)((maxY - y) * scale);
 }
 
 void GCodePreviewWidget::clearPath()
 {
     pointCount = 0;
+    traveledCount = 0;
     invalidate();
 }
 
 void GCodePreviewWidget::addPoint(float x, float y)
 {
     if (pointCount >= MAX_POINTS)
-        return; // buffer full - caller should be sampling to avoid reaching here
+        return;
 
     points[pointCount++] = { x, y };
     invalidate();
@@ -80,10 +77,25 @@ void GCodePreviewWidget::setCursor(float x, float y)
     invalidate();
 }
 
+void GCodePreviewWidget::setProgress(float percent)
+{
+    percent = constrain(percent, 0.0f, 100.0f);
+
+    uint16_t newTraveled = (uint16_t)((percent / 100.0f) * pointCount);
+
+    if (newTraveled == traveledCount)
+        return;
+
+    traveledCount = newTraveled;
+    invalidate();
+}
+
 void GCodePreviewWidget::draw(DisplayManager& display)
 {
     if (!dirty)
         return;
+
+    display.setClipRect(bounds.x, bounds.y, bounds.width, bounds.height);
 
     display.fillRect(bounds.x, bounds.y, bounds.width, bounds.height, backgroundColor);
     display.drawRect(bounds.x, bounds.y, bounds.width, bounds.height, Theme::Border);
@@ -95,10 +107,11 @@ void GCodePreviewWidget::draw(DisplayManager& display)
         worldToScreen(points[i - 1].x, points[i - 1].y, x1, y1);
         worldToScreen(points[i].x, points[i].y, x2, y2);
 
-        display.drawLine(x1, y1, x2, y2, pathColor);
+        uint16_t segmentColor = (i <= traveledCount) ? traveledColor : pathColor;
+
+        display.drawLine(x1, y1, x2, y2, segmentColor);
     }
 
-    // Cursor: white cross over the current position of the tool
     int16_t cx, cy;
     worldToScreen(cursorX, cursorY, cx, cy);
 
@@ -106,6 +119,8 @@ void GCodePreviewWidget::draw(DisplayManager& display)
 
     display.drawLine(cx - CURSOR_SIZE, cy, cx + CURSOR_SIZE, cy, cursorColor);
     display.drawLine(cx, cy - CURSOR_SIZE, cx, cy + CURSOR_SIZE, cursorColor);
+
+    display.clearClipRect();
 
     dirty = false;
 }

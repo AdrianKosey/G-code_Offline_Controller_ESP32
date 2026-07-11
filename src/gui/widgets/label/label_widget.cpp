@@ -1,7 +1,7 @@
 #include "label_widget.h"
 
-LabelWidget::LabelWidget(const Rect& bounds, const String& text, uint16_t color, uint8_t font, uint16_t backgroundColor)
-    : Widget(bounds), text(text), color(color), font(font), backgroundColor(backgroundColor)
+LabelWidget::LabelWidget(const Rect& bounds, const String& text, uint16_t color, uint8_t font, uint16_t backgroundColor, bool allowTruncate)
+    : Widget(bounds), text(text), color(color), font(font), backgroundColor(backgroundColor), allowTruncate(allowTruncate)
 {}
 
 void LabelWidget::setText(const String& value)
@@ -31,6 +31,15 @@ void LabelWidget::setBackgroundColor(uint16_t value)
     invalidate();
 }
 
+void LabelWidget::setAllowTruncate(bool allow)
+{
+    if (allowTruncate == allow)
+        return;
+
+    allowTruncate = allow;
+    invalidate();
+}
+
 void LabelWidget::setBadge(uint16_t color, uint8_t radius)
 {
     hasBadge = true;
@@ -55,7 +64,26 @@ void LabelWidget::draw(DisplayManager& display)
     }
 
     int16_t textY = bounds.y + (bounds.height / 2) - (4 * font);
-    display.drawText(text, bounds.x + 6, textY, color, font);
+
+    String displayText = text;
+
+    if (allowTruncate)
+    {
+        int16_t maxWidth = bounds.width - 12;
+
+        if (display.getTextWidth(displayText, font) > maxWidth)
+        {
+            while (displayText.length() > 0 &&
+                   display.getTextWidth(displayText + "...", font) > maxWidth)
+            {
+                displayText.remove(displayText.length() - 1);
+            }
+
+            displayText += "...";
+        }
+    }
+
+    display.drawText(displayText, bounds.x + 6, textY, color, font);
 
     dirty = false;
 }

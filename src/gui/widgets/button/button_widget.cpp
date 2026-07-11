@@ -38,19 +38,23 @@ void ButtonWidget::setText(const String& value)
 
 void ButtonWidget::draw(DisplayManager& display)
 {
-    if(!dirty)
+    if (!dirty)
         return;
 
-    uint16_t color =
-        selected ?
-        Theme::SidebarBorderSelected :
-        Theme::SidebarBackground;
+    uint16_t color;
+
+    if (pressed)
+        color = Theme::Progress;      
+    else if (selected)
+        color = Theme::SidebarBorderSelected;
+    else
+        color = Theme::SidebarBackground;
 
     display.fillRect(bounds.x, bounds.y, bounds.width, bounds.height, color);
     display.drawRect(bounds.x, bounds.y, bounds.width, bounds.height, Theme::Border);
 
     constexpr uint8_t font = 2;
-    int16_t textY = bounds.y + (bounds.height / 2) - (4 * font); 
+    int16_t textY = bounds.y + (bounds.height / 2) - (4 * font);
 
     display.drawText(text, bounds.x + 6, textY, Theme::Text, font);
 
@@ -59,16 +63,31 @@ void ButtonWidget::draw(DisplayManager& display)
 
 bool ButtonWidget::handleTouch(const TouchEvent& event)
 {
-    if (event.type != TouchType::Pressed)
-        return false;
+    if (event.type == TouchType::Pressed)
+    {
+        if (!contains(event.point.x, event.point.y))
+            return false;
 
-    if (!contains(event.point.x, event.point.y))
-        return false;
+        pressed = true;
+        trackingPress = true;
+        invalidate();
 
-    if (onPress)
-        onPress();
+        if (onPress)
+            onPress();
 
-    return true;
+        return true;
+    }
+
+    if (event.type == TouchType::Released && trackingPress)
+    {
+        pressed = false;
+        trackingPress = false;
+        invalidate();
+
+        return true;
+    }
+
+    return false;
 }
 
 void ButtonWidget::setOnPress(PressCallback callback)

@@ -92,6 +92,8 @@ public:
 
     void clearClipRect() override;
 
+    int16_t getTextWidth(const String& text, uint8_t font) override;
+
 private:
     TFT_eSPI tft;
 };

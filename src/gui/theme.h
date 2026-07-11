@@ -30,6 +30,8 @@ namespace Theme
 
     constexpr uint16_t Text = RGB565(0xFFFFFF);
 
+    constexpr uint16_t TextBlack = RGB565(0x00000);
+
     constexpr uint16_t TextSecondary = RGB565(0xAAAAAA);
 
     constexpr uint16_t Border = RGB565(0x000000);

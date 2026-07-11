@@ -31,6 +31,7 @@ struct GCodeCommand
     bool hasTarget = false; 
 
     float feedRate = 0;
+    float spindleSpeed = 0;
     SpindleState spindle = SpindleState::Off;
 
     bool isProgramEnd = false; // M2 / M30

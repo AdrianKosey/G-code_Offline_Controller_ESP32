@@ -1,5 +1,9 @@
 #pragma once
 #include <SD.h>
+#include <functional>
+#include "../../../../include/config.h"
+#include "../../../machine/grbl_controller.h"
+#include "../../../gcode/gcode_job_runner.h"
 #include "../../../gcode/gcode_parser.h"
 #include "../../../gcode/gcode_file_analyzer.h"
 #include "../../core/screen.h"
@@ -18,6 +22,15 @@ class HomeScreen : public IScreen
 public:
     HomeScreen();
     void loadJob(const String& path);
+    using ActionCallback = std::function<void()>;
+
+    void setOnPlay(ActionCallback callback);
+    void setOnPause(ActionCallback callback);
+    void setOnStop(ActionCallback callback);
+
+    uint32_t getTotalLines() const;
+
+    void updateMachineState(JobState jobState, const GrblStatus& status, uint32_t currentLine, uint32_t totalLines);
 private:
     // Header
     LabelWidget statusBadge;
@@ -28,16 +41,18 @@ private:
     LabelWidget jobFilename;
     ProgressBarWidget jobProgress;
     LabelWidget jobProgressText;
+    LabelWidget jobProgressPercentage;
 
     // Panel XYZ
     PanelWidget xyzPanel;
     LabelWidget labelX, valueX;
     LabelWidget labelY, valueY;
     LabelWidget labelZ, valueZ;
+    LabelWidget labelS, valueS;
 
-    // Speed
-    LabelWidget speedLabel;
-    ProgressBarWidget speedBar;
+    // Power
+    LabelWidget powerLabel;
+    ProgressBarWidget powerBar;
 
     // Controles
     IconButtonWidget playButton;
@@ -48,4 +63,6 @@ private:
 
     uint32_t totalLines = 0;
     uint32_t currentLine = 0;
+
+    ActionCallback onPlay, onPause, onStop;
 };

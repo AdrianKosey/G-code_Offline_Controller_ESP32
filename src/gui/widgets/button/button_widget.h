@@ -28,6 +28,7 @@ public:
 private:
     PressCallback onPress;
     String text;
-
+    bool pressed = false;       
+    bool trackingPress = false;
     bool selected = false;
 };

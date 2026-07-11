@@ -138,6 +138,9 @@ GCodeCommand GCodeParser::parseLine(const String& rawLine)
     if (hasWord(words, count, 'F', value))
         state.feedRate = toMillimeters(value);
 
+    if (hasWord(words, count, 'S', value))
+        state.spindleSpeed = value;
+
     float x, y, z;
     bool hasX = hasWord(words, count, 'X', x);
     bool hasY = hasWord(words, count, 'Y', y);
@@ -159,6 +162,7 @@ GCodeCommand GCodeParser::parseLine(const String& rawLine)
     }
 
     command.feedRate = state.feedRate;
+    command.spindleSpeed = state.spindleSpeed;
     command.spindle = state.spindle;
 
     return command;

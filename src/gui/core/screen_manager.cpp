@@ -105,3 +105,14 @@ void ScreenManager::invalidateAll()
     if (screens[currentId].screen)
         screens[currentId].screen->invalidateAll();
 }
+
+void ScreenManager::redrawAll()
+{
+    if (display)
+    {
+
+        display->fillRect(0, 0, display->width(), display->height(), Theme::Background);
+    }
+
+    invalidateAll();
+}
