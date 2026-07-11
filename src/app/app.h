@@ -16,6 +16,7 @@
 
 #include "../machine/grbl_controller.h"
 #include "../gcode/gcode_job_runner.h"
+#include "../machine/framing_runner.h"
 class App
 {
 public:
@@ -27,6 +28,7 @@ private:
     bool sdReady = false;
     GrblController grblController;
     GCodeJobRunner jobRunner;
+    FramingRunner framingRunner;
     ILI9341Driver displayDriver;
     DisplayManager display;
     TouchManager touch;

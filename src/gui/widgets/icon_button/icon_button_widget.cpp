@@ -27,6 +27,15 @@ void IconButtonWidget::setBackgroundColor(uint16_t color)
     invalidate();
 }
 
+void IconButtonWidget::setIcon(const uint8_t* newIcon)
+{
+    if (icon == newIcon)
+        return;
+
+    icon = newIcon;
+    invalidate();
+}
+
 bool IconButtonWidget::handleTouch(const TouchEvent& event)
 {
     if (event.type != TouchType::Pressed)

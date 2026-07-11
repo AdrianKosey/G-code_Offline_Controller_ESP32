@@ -25,6 +25,7 @@ public:
 
     void setOnPress(PressCallback callback);
     void setBackgroundColor(uint16_t color);
+    void setIcon(const uint8_t* icon);
 
 private:
     const uint8_t* icon;

@@ -23,7 +23,9 @@ App::App()
       confirmModal(Rect{0, 0, 320, 240}),
       loadingModal(Rect{0, 0, 320, 240}),
       jobRunner(grblController),
-      jogScreen(grblController)
+      jogScreen(grblController),
+      toolsScreen(grblController),
+      framingRunner(grblController)
 {
 }
 
@@ -51,15 +53,26 @@ void App::begin()
     screenManager.registerScreen(3, &toolsScreen, "Tools");
     screenManager.registerScreen(4, &settingsScreen, "Settings");
 
-    homeScreen.setOnPlay([this]() {
-        if (jobRunner.getState() == JobState::Paused)
+    homeScreen.setOnPlayPause([this]() {
+        JobState state = jobRunner.getState();
+
+        if (state == JobState::Running)
+            jobRunner.pause();
+        else if (state == JobState::Paused)
             jobRunner.resume();
         else
             jobRunner.start();
     });
-
-    homeScreen.setOnPause([this]() { jobRunner.pause(); });
     homeScreen.setOnStop([this]()  { jobRunner.stop();  });
+
+    homeScreen.setOnFraming([this]() {
+        framingRunner.start(
+            homeScreen.getProjectMinX(),
+            homeScreen.getProjectMinY(),
+            homeScreen.getProjectMaxX(),
+            homeScreen.getProjectMaxY(),
+            FRAMING_FEED_RATE);
+    });
 
     filesScreen.setOnFileSelected([this](const String &path)
                                   {
@@ -96,6 +109,8 @@ void App::update()
 {
     TouchEvent event = touch.poll();
     jobRunner.update();
+    framingRunner.update();
+    
     homeScreen.updateMachineState(
         jobRunner.getState(),
         grblController.getStatus(),

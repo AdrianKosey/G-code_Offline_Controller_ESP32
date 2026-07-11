@@ -24,9 +24,14 @@ public:
     void loadJob(const String& path);
     using ActionCallback = std::function<void()>;
 
-    void setOnPlay(ActionCallback callback);
-    void setOnPause(ActionCallback callback);
+    void setOnPlayPause(ActionCallback callback);
+    void setOnFraming(ActionCallback callback);
     void setOnStop(ActionCallback callback);
+
+    float getProjectMinX() const;
+    float getProjectMinY() const;
+    float getProjectMaxX() const;
+    float getProjectMaxY() const;
 
     uint32_t getTotalLines() const;
 
@@ -55,14 +60,18 @@ private:
     ProgressBarWidget powerBar;
 
     // Controles
-    IconButtonWidget playButton;
-    IconButtonWidget pauseButton;
+    IconButtonWidget playPauseButton;
     IconButtonWidget stopButton;
+    IconButtonWidget framingButton;
 
     GCodePreviewWidget gcodePreview;
 
     uint32_t totalLines = 0;
     uint32_t currentLine = 0;
 
-    ActionCallback onPlay, onPause, onStop;
+    ActionCallback onPlayPause; 
+    ActionCallback onStop;
+    ActionCallback onFraming;
+
+    float projectMinX = 0, projectMinY = 0, projectMaxX = 0, projectMaxY = 0;
 };
