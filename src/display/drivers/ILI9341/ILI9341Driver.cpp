@@ -142,3 +142,19 @@ void ILI9341Driver::drawBitmap(
 {
     tft.drawBitmap(x, y, bitmap, w, h, color);
 }
+
+void ILI9341Driver::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t radius, uint16_t color)
+{
+    tft.fillRoundRect(x, y, w, h, radius, color);
+}
+
+
+void ILI9341Driver::setClipRect(int16_t x, int16_t y, int16_t w, int16_t h)
+{
+    tft.setViewport(x, y, w, h, false);
+}
+
+void ILI9341Driver::clearClipRect()
+{
+    tft.resetViewport();
+}

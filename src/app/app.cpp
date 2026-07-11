@@ -19,6 +19,14 @@ App::App()
 
 void App::begin()
 {
+
+    SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
+    sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
+    if (!sdReady)
+    {
+        Serial.println("SD: card not detected or initialization failed");
+    }
+
     display.begin();
 
     constexpr bool FORCE_TOUCH_CALIBRATION = false;

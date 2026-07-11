@@ -107,10 +107,10 @@ void SidebarWidget::drawIcon(DisplayManager& display, IconId icon, int16_t cx, i
         return;
 
     display.drawBitmap(
-        cx - Icons::WIDTH / 2,
-        cy - Icons::HEIGHT / 2,
+        cx - Icons::SIDEBAR_WIDTH / 2,
+        cy - Icons::SIDEBAR_HEIGHT / 2,
         bitmap,
-        Icons::WIDTH,
-        Icons::HEIGHT,
+        Icons::SIDEBAR_WIDTH,
+        Icons::SIDEBAR_HEIGHT,
         color);
 }

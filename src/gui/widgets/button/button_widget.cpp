@@ -35,15 +35,6 @@ void ButtonWidget::setText(const String& value)
     invalidate();
 }
 
-bool ButtonWidget::handleTouch(const TouchEvent& event)
-{
-    if(event.type != TouchType::Pressed)
-        return false;
-
-    return contains(
-        event.point.x,
-        event.point.y);
-}
 
 void ButtonWidget::draw(DisplayManager& display)
 {
@@ -76,4 +67,23 @@ void ButtonWidget::draw(DisplayManager& display)
         Theme::Text);
 
     dirty = false;
+}
+
+bool ButtonWidget::handleTouch(const TouchEvent& event)
+{
+    if (event.type != TouchType::Pressed)
+        return false;
+
+    if (!contains(event.point.x, event.point.y))
+        return false;
+
+    if (onPress)
+        onPress();
+
+    return true;
+}
+
+void ButtonWidget::setOnPress(PressCallback callback)
+{
+    onPress = callback;
 }

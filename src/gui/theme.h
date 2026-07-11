@@ -18,7 +18,9 @@ namespace Theme
 
     constexpr uint16_t Background = RGB565(0x11192b);
 
-    constexpr uint16_t Panel = RGB565(0x212437);
+    constexpr uint16_t Panel = RGB565(0x182f4e);
+
+    constexpr uint16_t JobPanel = RGB565(0x3f6b8e);
 
     constexpr uint16_t SidebarBackground = RGB565(0x182f4e);
 
@@ -35,6 +37,10 @@ namespace Theme
     constexpr uint16_t Success = RGB565(0x00FF00);
     constexpr uint16_t Warning = RGB565(0xFFFF00);
     constexpr uint16_t Error = RGB565(0xFF0000);
+
+    constexpr uint16_t ButtonPlayBackground = RGB565(0x5288ad);
+    constexpr uint16_t ButtonPauseBackground = RGB565(0x5288ad);
+    constexpr uint16_t ButtonStopBackground = RGB565(0xFF0000);
 
     constexpr uint16_t Progress = RGB565(0xecb86f);
 }

@@ -1,13 +1,27 @@
 #pragma once
+
+#include <SD.h>
+
 #include "../../core/screen.h"
 #include "../../theme.h"
+#include "../../widgets/label/label_widget.h"
+#include "../../widgets/button/button_widget.h"
+#include "../../widgets/file_list/file_list_widget.h"
 
 class FilesScreen : public IScreen
 {
 public:
-    void draw(DisplayManager& display) override
-    {
-        display.fillRect(60, 0, display.width() - 60, display.height(), Theme::Background);
-        display.drawText("Archivos (placeholder)", 80, 20, Theme::Text);
-    }
+    FilesScreen();
+
+    void onEnter() override;
+
+private:
+    LabelWidget title;
+    LabelWidget pathLabel;
+    ButtonWidget backButton;
+    FileListWidget fileList;
+
+    String currentPath = "/";
+
+    void loadDirectory(const String& path);
 };

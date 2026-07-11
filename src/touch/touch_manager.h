@@ -7,18 +7,17 @@
 class TouchManager
 {
 public:
-
-    explicit TouchManager(ITouchDriver& driver);
+    explicit TouchManager(ITouchDriver &driver);
 
     bool begin(bool forceCalibration = false);
 
     TouchEvent poll();
 
 private:
-
-    ITouchDriver& driver;
-
+    ITouchDriver &driver;
     TouchCalibration calibration;
-
     TouchEvent currentEvent;
+
+    bool wasTouched = false;
+    TouchPoint lastPoint{};
 };

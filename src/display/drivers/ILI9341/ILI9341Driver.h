@@ -80,6 +80,18 @@ public:
         int16_t h,
         uint16_t color) override;
 
+    void fillRoundRect(
+        int16_t x,
+        int16_t y,
+        int16_t w,
+        int16_t h,
+        int16_t radius,
+        uint16_t color) override;
+
+    void setClipRect(int16_t x, int16_t y, int16_t w, int16_t h) override;
+
+    void clearClipRect() override;
+
 private:
     TFT_eSPI tft;
 };

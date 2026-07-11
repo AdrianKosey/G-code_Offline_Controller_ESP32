@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include <functional>
 #include "../../core/widget.h"
 #include "../../theme.h"
 
@@ -8,6 +9,9 @@ class ButtonWidget : public Widget
 {
 public:
     ButtonWidget(const Rect &bounds, const String &text);
+    using PressCallback = std::function<void()>;
+
+    void setOnPress(PressCallback callback);
 
     void draw(DisplayManager &display) override;
 
@@ -22,6 +26,7 @@ public:
     void setText(const String &text);
 
 private:
+    PressCallback onPress;
     String text;
 
     bool selected = false;

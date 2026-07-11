@@ -15,17 +15,35 @@ bool TouchManager::begin(bool forceCalibration)
 
 TouchEvent TouchManager::poll()
 {
-    currentEvent = {};
+    uint16_t x, y;
+    bool touched = driver.getTouch(x, y);
 
-    uint16_t x;
-    uint16_t y;
+    TouchEvent event{};
 
-    if (driver.getTouch(x, y))
+    if (touched && !wasTouched)
     {
-        currentEvent.type = TouchType::Pressed;
-        currentEvent.point.x = x;
-        currentEvent.point.y = y;
+        event.type = TouchType::Pressed;
+        event.point = { x, y };
+    }
+    else if (touched && wasTouched)
+    {
+        event.type = TouchType::Move;
+        event.point = { x, y };
+    }
+    else if (!touched && wasTouched)
+    {
+        event.type = TouchType::Released;
+        event.point = lastPoint;
+    }
+    else
+    {
+        event.type = TouchType::None;
     }
 
-    return currentEvent;
+    if (touched)
+        lastPoint = { x, y };
+
+    wasTouched = touched;
+
+    return event;
 }
