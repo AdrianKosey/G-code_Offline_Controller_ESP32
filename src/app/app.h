@@ -11,6 +11,8 @@
 #include "../gui/screens/prepare/prepare_screen.h"
 #include "../gui/screens/settings/settings_screen.h"
 #include "../gui/screens/tools/tools_screen.h"
+#include "../gui/widgets/modal/confirm_modal_widget.h"
+#include "../gui/widgets/modal/loading_modal_widget.h"
 class App
 {
 public:
@@ -30,4 +32,8 @@ private:
     PrepareScreen prepareScreen;
     ToolsScreen toolsScreen;
     SettingsScreen settingsScreen;
+
+    ConfirmModalWidget confirmModal;
+    LoadingModalWidget loadingModal;
+    String pendingFilePath;
 };

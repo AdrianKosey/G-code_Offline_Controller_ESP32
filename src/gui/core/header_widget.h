@@ -8,13 +8,19 @@
 class HeaderWidget
 {
 public:
-    HeaderWidget(const Rect& bounds);
+    HeaderWidget(const Rect &bounds);
 
-    void draw(DisplayManager& display);
+    void draw(DisplayManager &display);
 
-    void setTitle(const String& title);
+    void setTitle(const String &title);
     void setSdStatus(bool ready);
     void setWifiStatus(bool connected);
+    void invalidate()
+    {
+        titleLabel.invalidate();
+        sdIcon.invalidate();
+        wifiIcon.invalidate();
+    }
 
 private:
     LabelWidget titleLabel;

@@ -1,5 +1,7 @@
 #pragma once
-
+#include <SD.h>
+#include "../../../gcode/gcode_parser.h"
+#include "../../../gcode/gcode_file_analyzer.h"
 #include "../../core/screen.h"
 #include "../../theme.h"
 #include "../../icons.h"
@@ -15,7 +17,7 @@ class HomeScreen : public IScreen
 {
 public:
     HomeScreen();
-    
+    void loadJob(const String& path);
 private:
     // Header
     LabelWidget statusBadge;
@@ -43,4 +45,7 @@ private:
     IconButtonWidget stopButton;
 
     GCodePreviewWidget gcodePreview;
+
+    uint32_t totalLines = 0;
+    uint32_t currentLine = 0;
 };

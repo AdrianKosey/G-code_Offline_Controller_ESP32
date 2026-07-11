@@ -90,3 +90,18 @@ void ScreenManager::showInitialScreen(uint8_t id)
     header.setTitle(screens[id].title);
     screens[id].screen->onEnter();
 }
+
+void ScreenManager::switchToScreen(uint8_t id)
+{
+    sidebar.setSelectedIndex(id); 
+    setActiveScreen(id);
+}
+
+void ScreenManager::invalidateAll()
+{
+    sidebar.invalidate(); 
+    header.invalidate();
+
+    if (screens[currentId].screen)
+        screens[currentId].screen->invalidateAll();
+}

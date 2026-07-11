@@ -16,10 +16,12 @@ App::App()
     : display(displayDriver),
       touch(displayDriver),
       screenManager(
-          Rect{ 0, 0, SIDEBAR_WIDTH, SCREEN_HEIGHT },
+          Rect{0, 0, SIDEBAR_WIDTH, SCREEN_HEIGHT},
           sidebarItems,
           5,
-          Rect{ SIDEBAR_WIDTH, 0, 320 - SIDEBAR_WIDTH, HEADER_HEIGHT }) 
+          Rect{SIDEBAR_WIDTH, 0, 320 - SIDEBAR_WIDTH, HEADER_HEIGHT}),
+          confirmModal(Rect{0, 0, 320, 240}),
+        loadingModal(Rect{0, 0, 320, 240})
 {
 }
 
@@ -32,7 +34,6 @@ void App::begin()
     {
         Serial.println("SD: card not detected or initialization failed");
     }
-
 
     display.begin();
 
@@ -47,6 +48,30 @@ void App::begin()
     screenManager.registerScreen(3, &toolsScreen, "Tools");
     screenManager.registerScreen(4, &settingsScreen, "Settings");
 
+    filesScreen.setOnFileSelected([this](const String& path) {
+        pendingFilePath = path;
+
+        int lastSlash = path.lastIndexOf('/');
+        String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
+
+        confirmModal.show("Cargar " + filename + "?");
+    });
+
+    confirmModal.setOnConfirm([this]() {
+        loadingModal.show("Cargando...");
+        loadingModal.draw(display);
+
+        homeScreen.loadJob(pendingFilePath);
+
+        loadingModal.hide();
+        screenManager.switchToScreen(0);
+        screenManager.invalidateAll();
+    });
+
+    confirmModal.setOnCancel([this]() {
+        screenManager.invalidateAll();
+    });
+
     screenManager.showInitialScreen(0);
     screenManager.setSdStatus(sdReady);
     screenManager.setWifiStatus(false);
@@ -58,7 +83,17 @@ void App::update()
 {
     TouchEvent event = touch.poll();
 
-    screenManager.handleTouch(event);
-    screenManager.update();
+    if (confirmModal.isVisible())
+        confirmModal.handleTouch(event);
+    else if (loadingModal.isVisible())
+        loadingModal.handleTouch(event);
+    else
+    {
+        screenManager.handleTouch(event);
+        screenManager.update();
+    }
+
     screenManager.draw(display);
+    confirmModal.draw(display);
+    loadingModal.draw(display);
 }

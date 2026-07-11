@@ -13,27 +13,30 @@ public:
 
     virtual void onEnter()
     {
-        for (Widget* widget : widgets)
+        invalidateAll();
+    }
+    void invalidateAll()
+    {
+        for (Widget *widget : widgets)
             widget->invalidate();
     }
-
     virtual void onExit() {}
 
-    virtual void draw(DisplayManager& display)
+    virtual void draw(DisplayManager &display)
     {
-        for (Widget* widget : widgets)
+        for (Widget *widget : widgets)
             widget->draw(display);
     }
 
     virtual void update()
     {
-        for (Widget* widget : widgets)
+        for (Widget *widget : widgets)
             widget->update();
     }
 
-    virtual bool handleTouch(const TouchEvent& event)
+    virtual bool handleTouch(const TouchEvent &event)
     {
-        for (Widget* widget : widgets)
+        for (Widget *widget : widgets)
         {
             if (widget->handleTouch(event))
                 return true;
@@ -43,5 +46,5 @@ public:
     }
 
 protected:
-    std::vector<Widget*> widgets;
+    std::vector<Widget *> widgets;
 };

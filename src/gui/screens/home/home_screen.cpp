@@ -7,7 +7,7 @@ HomeScreen::HomeScreen()
 
       jobPanel(Rect{CONTENT_X + 8, 34, 150, 200}, Theme::Panel, 10),
       jobCaption(Rect{CONTENT_X + 15, 40, 130, 16}, "En Curso:", Theme::TextSecondary, 1, Theme::Panel),
-      jobFilename(Rect{CONTENT_X + 15, 58, 130, 20}, "Test_router3018.nc", Theme::Text, 2, Theme::Panel),
+      jobFilename(Rect{CONTENT_X + 15, 54, 130, 20}, "Test_router3018.nc", Theme::Text, 2, Theme::Panel),
       jobProgress(Rect{CONTENT_X + 15, 156, 130, 10}, Theme::JobPanel, Theme::Progress),
       jobProgressText(Rect{CONTENT_X + 18, 168, 130, 14}, "1000 / 16504     70%", Theme::TextSecondary, 1, Theme::Panel),
 
@@ -52,14 +52,6 @@ HomeScreen::HomeScreen()
     pauseButton.setOnPress([]() { /* TODO: pausar */ });
     stopButton.setOnPress([]() { /* TODO: detener */ });
 
-    // Test data - replace when the G-code parser delivers real data
-    gcodePreview.setProjectBounds(0.0f, 0.0f, 300.0f, 180.0f);
-    gcodePreview.addPoint(10, 10);
-    gcodePreview.addPoint(290, 10);
-    gcodePreview.addPoint(290, 170);
-    gcodePreview.addPoint(10, 170);
-    gcodePreview.addPoint(10, 10);
-    gcodePreview.setCursor(154.0f, 90.0f); 
 
     // Order = z-order of drawing and touch priority
     widgets = {
@@ -70,4 +62,52 @@ HomeScreen::HomeScreen()
         &labelX, &valueX, &labelY, &valueY, &labelZ, &valueZ,
         &speedLabel, &speedBar,
         &playButton, &pauseButton, &stopButton};
+}
+
+
+void HomeScreen::loadJob(const String& path)
+{
+    GCodeFileInfo info = GCodeFileAnalyzer::analyze(path);
+
+    if (!info.valid)
+    {
+        jobFilename.setText("Archivo invalido");
+        gcodePreview.clearPath();
+        return;
+    }
+
+    int lastSlash = path.lastIndexOf('/');
+    String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
+    jobFilename.setText(filename);
+
+    totalLines = info.totalLines;
+    currentLine = 0;
+
+    gcodePreview.clearPath();
+    gcodePreview.setProjectBounds(info.minX, info.minY, info.maxX, info.maxY);
+
+    uint32_t stride = max((uint32_t)1, info.totalLines / GCodePreviewWidget::MAX_POINTS);
+
+    File file = SD.open(path);
+    if (!file)
+        return;
+
+    GCodeParser parser;
+    uint32_t lineIndex = 0;
+
+    while (file.available())
+    {
+        String line = file.readStringUntil('\n');
+        GCodeCommand command = parser.parseLine(line);
+
+        if (command.hasTarget && (lineIndex % stride == 0))
+            gcodePreview.addPoint(command.target.x, command.target.y);
+
+        lineIndex++;
+    }
+
+    file.close();
+
+    jobProgress.setValue(0);
+    jobProgressText.setText("0 / " + String(totalLines) + "  0%");
 }

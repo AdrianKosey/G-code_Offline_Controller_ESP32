@@ -24,6 +24,9 @@ public:
     void setSdStatus(bool ready);
     void setWifiStatus(bool connected);
     void showInitialScreen(uint8_t id);
+    void switchToScreen(uint8_t id);
+
+    void invalidateAll();
 private:
     struct ScreenEntry
     {

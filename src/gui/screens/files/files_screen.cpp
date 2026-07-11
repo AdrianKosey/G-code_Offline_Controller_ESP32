@@ -31,7 +31,8 @@ FilesScreen::FilesScreen()
         }
         else
         {
-            // TODO: Define what happens when you touch a .nc file
+            if (onFileSelected)
+            onFileSelected(currentPath + entry.name);
         } });
 
     widgets = {&pathLabel, &backButton, &fileList};
@@ -49,7 +50,7 @@ void FilesScreen::loadDirectory(const String &path)
     File dir = SD.open(path);
     if (!dir || !dir.isDirectory())
     {
-        FileEntry errorEntry[1] = {{"No se detecta la tarjeta SD", FileEntryType::File}};
+        FileEntry errorEntry[1] = {{"ERROR: SD card not detected", FileEntryType::File}};
         fileList.setEntries(errorEntry, 1);
         return;
     }
@@ -68,4 +69,9 @@ void FilesScreen::loadDirectory(const String &path)
     }
 
     fileList.setEntries(entries, count);
+}
+
+void FilesScreen::setOnFileSelected(FileSelectedCallback callback)
+{
+    onFileSelected = callback;
 }
