@@ -5,8 +5,10 @@
 #include "../../core/screen.h"
 #include "../../theme.h"
 #include "../../widgets/label/label_widget.h"
-#include "../../widgets/button/button_widget.h"
+#include "../../widgets/icon_button/icon_button_widget.h"
+#include "../../icons.h"
 #include "../../widgets/file_list/file_list_widget.h"
+#include "../../widgets/icon/icon_widget.h"
 
 class FilesScreen : public IScreen
 {
@@ -16,12 +18,14 @@ public:
     void onEnter() override;
 
 private:
+    IconWidget sdIcon;
+    IconWidget wifiIcon;
     LabelWidget title;
     LabelWidget pathLabel;
-    ButtonWidget backButton;
+    IconButtonWidget backButton;
     FileListWidget fileList;
 
     String currentPath = "/";
 
-    void loadDirectory(const String& path);
+    void loadDirectory(const String &path);
 };

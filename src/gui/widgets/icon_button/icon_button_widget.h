@@ -17,7 +17,8 @@ public:
         uint8_t iconWidth,
         uint8_t iconHeight,
         uint16_t backgroundColor,
-        uint16_t iconColor = Theme::Text);
+        uint16_t iconColor = Theme::Text,
+        bool showBackground = true);
 
     void draw(DisplayManager& display) override;
     bool handleTouch(const TouchEvent& event) override;
@@ -30,8 +31,9 @@ private:
     uint8_t iconWidth;
     uint8_t iconHeight;
 
-    uint16_t backgroundColor;
+    uint16_t backgroundColor; // If showBackground=false, it is only used to CLEAR the area (background color behind)
     uint16_t iconColor;
+    bool showBackground;
 
     PressCallback onPress;
 };

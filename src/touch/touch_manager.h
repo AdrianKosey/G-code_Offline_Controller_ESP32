@@ -20,4 +20,7 @@ private:
 
     bool wasTouched = false;
     TouchPoint lastPoint{};
+
+    static constexpr uint8_t RELEASE_DEBOUNCE_COUNT = 3;
+    uint8_t releaseCandidateCount = 0;
 };

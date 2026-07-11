@@ -46,25 +46,13 @@ void ButtonWidget::draw(DisplayManager& display)
         Theme::SidebarBorderSelected :
         Theme::SidebarBackground;
 
-    display.fillRect(
-        bounds.x,
-        bounds.y,
-        bounds.width,
-        bounds.height,
-        color);
+    display.fillRect(bounds.x, bounds.y, bounds.width, bounds.height, color);
+    display.drawRect(bounds.x, bounds.y, bounds.width, bounds.height, Theme::Border);
 
-    display.drawRect(
-        bounds.x,
-        bounds.y,
-        bounds.width,
-        bounds.height,
-        Theme::Border);
+    constexpr uint8_t font = 2;
+    int16_t textY = bounds.y + (bounds.height / 2) - (4 * font); 
 
-    display.drawText(
-        text,
-        bounds.x + 10,
-        bounds.y + 18,
-        Theme::Text);
+    display.drawText(text, bounds.x + 6, textY, Theme::Text, font);
 
     dirty = false;
 }

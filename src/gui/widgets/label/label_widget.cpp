@@ -1,7 +1,7 @@
 #include "label_widget.h"
 
-LabelWidget::LabelWidget(const Rect& bounds, const String& text, uint16_t color, uint8_t font)
-    : Widget(bounds), text(text), color(color), font(font)
+LabelWidget::LabelWidget(const Rect& bounds, const String& text, uint16_t color, uint8_t font, uint16_t backgroundColor)
+    : Widget(bounds), text(text), color(color), font(font), backgroundColor(backgroundColor)
 {}
 
 void LabelWidget::setText(const String& value)
@@ -22,11 +22,20 @@ void LabelWidget::setColor(uint16_t value)
     invalidate();
 }
 
-void LabelWidget::setBackground(uint16_t bgColor, uint8_t radius)
+void LabelWidget::setBackgroundColor(uint16_t value)
 {
-    hasBackground = true;
-    backgroundColor = bgColor;
-    backgroundRadius = radius;
+    if (backgroundColor == value)
+        return;
+
+    backgroundColor = value;
+    invalidate();
+}
+
+void LabelWidget::setBadge(uint16_t color, uint8_t radius)
+{
+    hasBadge = true;
+    badgeColor = color;
+    badgeRadius = radius;
 
     invalidate();
 }
@@ -36,21 +45,16 @@ void LabelWidget::draw(DisplayManager& display)
     if (!dirty)
         return;
 
-    if (hasBackground)
+    if (hasBadge)
     {
-        display.fillRoundRect(
-            bounds.x,
-            bounds.y,
-            bounds.width,
-            bounds.height,
-            backgroundRadius,
-            backgroundColor);
+        display.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, badgeRadius, badgeColor);
+    }
+    else
+    {
+        display.fillRect(bounds.x, bounds.y, bounds.width, bounds.height, backgroundColor);
     }
 
-    // Approximate vertical centering. TFT_eSPI measures the actual text width
-    // with tft.textWidth(), but that's inside the driver.
     int16_t textY = bounds.y + (bounds.height / 2) - (4 * font);
-
     display.drawText(text, bounds.x + 6, textY, color, font);
 
     dirty = false;

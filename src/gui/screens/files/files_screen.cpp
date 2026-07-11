@@ -4,9 +4,16 @@ static constexpr int16_t CONTENT_X = 60;
 
 FilesScreen::FilesScreen()
     : title(Rect{CONTENT_X + 10, 4, 150, 20}, "ARCHIVOS", Theme::Text, 2),
-      pathLabel(Rect{CONTENT_X + 44, 30, 200, 16}, "/", Theme::TextSecondary, 1),
-      backButton(Rect{CONTENT_X + 8, 26, 28, 24}, "<"),
-      fileList(Rect{CONTENT_X + 8, 56, 244, 178}, 28)
+      pathLabel(Rect{CONTENT_X + 44, 30, 200, 16}, "/", Theme::TextSecondary, 1, Theme::Background),
+      backButton(
+          Rect{CONTENT_X + 8, 26, 28, 24},
+          Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
+          Theme::Background,
+          Theme::Text,
+          false),
+      fileList(Rect{CONTENT_X + 8, 56, 244, 178}, 28),
+      sdIcon(Rect{CONTENT_X + 205, 6, 16, 16}, Icons::MicroSd, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::TextSecondary),
+      wifiIcon(Rect{CONTENT_X + 230, 6, 16, 16}, Icons::Wifi, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::TextSecondary)
 {
     backButton.setOnPress([this]()
                           {
@@ -30,7 +37,7 @@ FilesScreen::FilesScreen()
             // TODO: Define what happens when you touch a .nc file
         } });
 
-    widgets = {&title, &pathLabel, &backButton, &fileList};
+    widgets = {&title, &pathLabel, &backButton, &fileList, &sdIcon, &wifiIcon};
 }
 
 void FilesScreen::onEnter()

@@ -11,21 +11,25 @@ public:
         const Rect& bounds,
         const String& text,
         uint16_t color = Theme::Text,
-        uint8_t font = 2);
+        uint8_t font = 2,
+        uint16_t backgroundColor = Theme::Background); 
 
     void draw(DisplayManager& display) override;
 
     void setText(const String& value);
     void setColor(uint16_t value);
+    void setBackgroundColor(uint16_t value);
 
-    void setBackground(uint16_t backgroundColor, uint8_t radius = 0);
+    void setBadge(uint16_t badgeColor, uint8_t radius);
 
 private:
     String text;
     uint16_t color;
     uint8_t font;
 
-    bool hasBackground = false;
-    uint16_t backgroundColor = Theme::Background;
-    uint8_t backgroundRadius = 0;
+    uint16_t backgroundColor; 
+
+    bool hasBadge = false;
+    uint16_t badgeColor = Theme::Background;
+    uint8_t badgeRadius = 0;
 };

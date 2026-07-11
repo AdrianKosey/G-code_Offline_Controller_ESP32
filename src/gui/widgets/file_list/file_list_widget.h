@@ -4,7 +4,7 @@
 #include <functional>
 #include "../../core/widget.h"
 #include "../../theme.h"
-
+#include "../../icons.h"
 enum class FileEntryType
 {
     File,
@@ -22,11 +22,12 @@ class FileListWidget : public Widget
 public:
     using SelectCallback = std::function<void(const FileEntry&)>;
 
-    static constexpr uint8_t MAX_ITEMS = 255; // The maximum number of files expected per folder
+    static constexpr uint8_t MAX_ITEMS = 64;
 
     FileListWidget(const Rect& bounds, int16_t rowHeight = 28);
 
     void draw(DisplayManager& display) override;
+    void update() override;
     bool handleTouch(const TouchEvent& event) override;
 
     void setEntries(const FileEntry* entries, uint8_t count);
@@ -45,10 +46,18 @@ private:
     bool dragging = false;
     int16_t lastTouchY = 0;
     int16_t totalDragDistance = 0;
+    unsigned long pressStartTime = 0;
+
+    float velocity = 0;
+    bool inertiaActive = false;
+    unsigned long lastMoveTime = 0;
 
     SelectCallback onSelect;
 
-    static constexpr int16_t TAP_THRESHOLD = 8; // px - below this is tap, not scroll
+    static constexpr int16_t TAP_THRESHOLD = 8;
+    static constexpr unsigned long MIN_TAP_DURATION_MS = 30;
+    static constexpr float FRICTION = 0.92f;
+    static constexpr float MIN_VELOCITY = 0.5f;
 
     void recalculateMaxScroll();
     void clampScroll();
