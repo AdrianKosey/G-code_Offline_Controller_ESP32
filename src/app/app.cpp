@@ -1,6 +1,8 @@
 #include "App.h"
 
 static constexpr uint8_t SIDEBAR_WIDTH = 60;
+static constexpr int16_t HEADER_HEIGHT = 30;
+static constexpr int16_t SCREEN_HEIGHT = 240;
 
 static const SidebarItem sidebarItems[] = {
     {IconId::Home, "Inicio"},
@@ -13,7 +15,11 @@ static const SidebarItem sidebarItems[] = {
 App::App()
     : display(displayDriver),
       touch(displayDriver),
-      screenManager(display, Rect{0, 0, SIDEBAR_WIDTH, 240}, sidebarItems, 5)
+      screenManager(
+          Rect{ 0, 0, SIDEBAR_WIDTH, SCREEN_HEIGHT },
+          sidebarItems,
+          5,
+          Rect{ SIDEBAR_WIDTH, 0, 320 - SIDEBAR_WIDTH, HEADER_HEIGHT }) 
 {
 }
 
@@ -27,6 +33,7 @@ void App::begin()
         Serial.println("SD: card not detected or initialization failed");
     }
 
+
     display.begin();
 
     constexpr bool FORCE_TOUCH_CALIBRATION = false;
@@ -34,13 +41,17 @@ void App::begin()
 
     display.clear(Theme::Background);
 
-    screenManager.registerScreen(0, &homeScreen);
-    screenManager.registerScreen(1, &filesScreen);
-    screenManager.registerScreen(2, &prepareScreen);
-    screenManager.registerScreen(3, &toolsScreen);
-    screenManager.registerScreen(4, &settingsScreen);
+    screenManager.registerScreen(0, &homeScreen, "Home");
+    screenManager.registerScreen(1, &filesScreen, "Files");
+    screenManager.registerScreen(2, &prepareScreen, "Prepare");
+    screenManager.registerScreen(3, &toolsScreen, "Tools");
+    screenManager.registerScreen(4, &settingsScreen, "Settings");
 
-    screenManager.draw();
+    screenManager.showInitialScreen(0);
+    screenManager.setSdStatus(sdReady);
+    screenManager.setWifiStatus(false);
+
+    screenManager.draw(display);
 }
 
 void App::update()
@@ -49,5 +60,5 @@ void App::update()
 
     screenManager.handleTouch(event);
     screenManager.update();
-    screenManager.draw();
+    screenManager.draw(display);
 }

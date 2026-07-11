@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../widgets/sidebar/sidebar_widget.h"
+#include "header_widget.h"
 #include "screen.h"
 
 class ScreenManager
@@ -8,22 +9,38 @@ class ScreenManager
 public:
     static constexpr uint8_t MAX_SCREENS = 8;
 
-    ScreenManager(DisplayManager& display, const Rect& sidebarBounds, const SidebarItem* items, uint8_t itemCount);
+    ScreenManager(
+        const Rect& sidebarBounds,
+        const SidebarItem* items,
+        uint8_t itemCount,
+        const Rect& headerBounds);
 
-    void registerScreen(uint8_t id, IScreen* screen);
+    void registerScreen(uint8_t id, IScreen* screen, const String& title);
 
-    void draw();
-
+    void draw(DisplayManager& display);
     void update();
-
     void handleTouch(const TouchEvent& event);
 
+    void setSdStatus(bool ready);
+    void setWifiStatus(bool connected);
+    void showInitialScreen(uint8_t id);
 private:
-    DisplayManager& display;
-    SidebarWidget sidebar;
-    IScreen* screens[MAX_SCREENS] = { nullptr };
+    struct ScreenEntry
+    {
+        IScreen* screen = nullptr;
+        String title;
+    };
 
+    SidebarWidget sidebar;
+    HeaderWidget header;
+
+    Rect sidebarBounds;
+    Rect headerBounds;
+
+    ScreenEntry screens[MAX_SCREENS];
     uint8_t currentId = 0;
+
+    DisplayManager* display = nullptr;
 
     void setActiveScreen(uint8_t id);
 };

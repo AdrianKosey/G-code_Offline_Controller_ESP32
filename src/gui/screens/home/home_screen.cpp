@@ -3,10 +3,7 @@
 static constexpr int16_t CONTENT_X = 60;
 
 HomeScreen::HomeScreen()
-    : title(Rect{CONTENT_X + 10, 4, 150, 20}, "CONTROL CNC", Theme::Text, 2),
-      sdIcon(Rect{CONTENT_X + 205, 6, 16, 16}, Icons::MicroSd, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::TextSecondary),
-      wifiIcon(Rect{CONTENT_X + 230, 6, 16, 16}, Icons::Wifi, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::TextSecondary),
-      statusBadge(Rect{CONTENT_X + 170, 34, 80, 22}, "RUNNING", Theme::Text, 2),
+    : statusBadge(Rect{CONTENT_X + 170, 34, 80, 22}, "RUNNING", Theme::Text, 2),
 
       jobPanel(Rect{CONTENT_X + 8, 34, 150, 200}, Theme::Panel, 10),
       jobCaption(Rect{CONTENT_X + 15, 40, 130, 16}, "En Curso:", Theme::TextSecondary, 1, Theme::Panel),
@@ -66,8 +63,7 @@ HomeScreen::HomeScreen()
 
     // Order = z-order of drawing and touch priority
     widgets = {
-        &jobPanel, &xyzPanel,
-        &title, &sdIcon, &wifiIcon, &statusBadge,
+        &jobPanel, &xyzPanel, &statusBadge,
         &jobCaption, &jobFilename,
         &gcodePreview,
         &jobProgress, &jobProgressText,

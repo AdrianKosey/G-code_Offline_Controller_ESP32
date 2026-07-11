@@ -1,49 +1,66 @@
 #include "screen_manager.h"
 
-ScreenManager::ScreenManager(DisplayManager& display, const Rect& sidebarBounds, const SidebarItem* items, uint8_t itemCount)
-    : display(display), sidebar(sidebarBounds, items, itemCount)
+ScreenManager::ScreenManager(
+    const Rect& sidebarBounds,
+    const SidebarItem* items,
+    uint8_t itemCount,
+    const Rect& headerBounds)
+    : sidebar(sidebarBounds, items, itemCount),
+      header(headerBounds),
+      sidebarBounds(sidebarBounds),
+      headerBounds(headerBounds)
 {
     sidebar.setOnSelect([this](uint8_t id) { setActiveScreen(id); });
 }
 
-void ScreenManager::registerScreen(uint8_t id, IScreen* screen)
+void ScreenManager::registerScreen(uint8_t id, IScreen* screen, const String& title)
 {
-    if (id < MAX_SCREENS)
-        screens[id] = screen;
+    if (id >= MAX_SCREENS)
+        return;
+
+    screens[id].screen = screen;
+    screens[id].title = title;
 }
 
 void ScreenManager::setActiveScreen(uint8_t id)
 {
-    if (id >= MAX_SCREENS || screens[id] == nullptr || id == currentId)
+    if (id >= MAX_SCREENS || screens[id].screen == nullptr || id == currentId)
         return;
 
-    if (screens[currentId])
-        screens[currentId]->onExit();
+    if (screens[currentId].screen)
+        screens[currentId].screen->onExit();
 
     currentId = id;
 
-    display.fillRect(
-        sidebar.getBounds().width,
-        0,
-        display.width() - sidebar.getBounds().width,
-        display.height(),
-        Theme::Background);
+    if (display)
+    {
+        display->fillRect(
+            sidebarBounds.width,
+            headerBounds.height,
+            display->width() - sidebarBounds.width,
+            display->height() - headerBounds.height,
+            Theme::Background);
+    }
 
-    screens[currentId]->onEnter();
+    header.setTitle(screens[currentId].title);
+    screens[currentId].screen->onEnter();
 }
 
-void ScreenManager::draw()
+void ScreenManager::draw(DisplayManager& displayRef)
 {
-    sidebar.draw(display);
+    display = &displayRef;
 
-    if (screens[currentId])
-        screens[currentId]->draw(display);
+    header.draw(displayRef);
+    sidebar.draw(displayRef);
+
+    if (screens[currentId].screen)
+        screens[currentId].screen->draw(displayRef);
 }
 
 void ScreenManager::update()
 {
-    if (screens[currentId])
-        screens[currentId]->update();
+    if (screens[currentId].screen)
+        screens[currentId].screen->update();
 }
 
 void ScreenManager::handleTouch(const TouchEvent& event)
@@ -51,6 +68,25 @@ void ScreenManager::handleTouch(const TouchEvent& event)
     if (sidebar.handleTouch(event))
         return;
 
-    if (screens[currentId])
-        screens[currentId]->handleTouch(event);
+    if (screens[currentId].screen)
+        screens[currentId].screen->handleTouch(event);
+}
+
+void ScreenManager::setSdStatus(bool ready)
+{
+    header.setSdStatus(ready);
+}
+
+void ScreenManager::setWifiStatus(bool connected)
+{
+    header.setWifiStatus(connected);
+}
+void ScreenManager::showInitialScreen(uint8_t id)
+{
+    if (id >= MAX_SCREENS || screens[id].screen == nullptr)
+        return;
+
+    currentId = id;
+    header.setTitle(screens[id].title);
+    screens[id].screen->onEnter();
 }

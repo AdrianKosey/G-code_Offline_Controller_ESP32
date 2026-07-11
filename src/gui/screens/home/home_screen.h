@@ -15,12 +15,9 @@ class HomeScreen : public IScreen
 {
 public:
     HomeScreen();
-
+    
 private:
     // Header
-    LabelWidget title;
-    IconWidget sdIcon;
-    IconWidget wifiIcon;
     LabelWidget statusBadge;
 
     // Panel "In Progress Job"

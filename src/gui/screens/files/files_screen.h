@@ -18,9 +18,6 @@ public:
     void onEnter() override;
 
 private:
-    IconWidget sdIcon;
-    IconWidget wifiIcon;
-    LabelWidget title;
     LabelWidget pathLabel;
     IconButtonWidget backButton;
     FileListWidget fileList;
