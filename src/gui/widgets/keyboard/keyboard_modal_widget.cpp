@@ -1,4 +1,5 @@
 #include "keyboard_modal_widget.h"
+#include <cstring>
 
 namespace
 {
@@ -8,16 +9,93 @@ namespace
 
 KeyboardModalWidget::KeyboardModalWidget(const Rect& screenBounds)
     : screenBounds(screenBounds),
-      panel(Rect{screenBounds.x, (int16_t)(screenBounds.y+60), screenBounds.width, (int16_t)(screenBounds.height-60)}, Theme::Panel, 0),
-      titleLabel(Rect{(int16_t)(screenBounds.x + 10), (int16_t)(screenBounds.y + 66), 220, 18}, "", Theme::TextSecondary, 1, Theme::Panel, false),
-      inputLabel(Rect{(int16_t)(screenBounds.x + 10), (int16_t)(screenBounds.y + 84), (int16_t)(screenBounds.width - 20), 24}, "", Theme::Text, 2, Theme::Panel, true),
-      shiftButton(Rect{(int16_t)(screenBounds.x + 4), (int16_t)(screenBounds.y + 192), 40, 26}, "^"),
-      modeToggleButton(Rect{(int16_t)(screenBounds.x + 48), (int16_t)(screenBounds.y + 192), 44, 26}, "?123"),
-      spaceButton(Rect{(int16_t)(screenBounds.x + 96), (int16_t)(screenBounds.y + 192), 120, 26}, "espacio"),
-      backspaceButton(Rect{(int16_t)(screenBounds.x + screenBounds.width - 40), (int16_t)(screenBounds.y + 192), 36, 26}, "<-"),
-      cancelButton(Rect{(int16_t)(screenBounds.x + 4), (int16_t)(screenBounds.y + 222), 60, 26}, "Cancelar"),
-      submitButton(Rect{(int16_t)(screenBounds.x + screenBounds.width - 64), (int16_t)(screenBounds.y + 222), 60, 26}, "OK")
+      panel(Rect{screenBounds.x, (int16_t)(screenBounds.y + 60), screenBounds.width, (int16_t)(screenBounds.height - 60)}, Theme::Panel, 0),
+      
+      // Proportional adjustment for the upper displays of the modal
+      titleLabel(Rect{(int16_t)(screenBounds.x + 8), (int16_t)(screenBounds.y + 64), (int16_t)(screenBounds.width - 16), 14}, "", Theme::TextSecondary, 1, Theme::Panel, false),
+      inputLabel(Rect{(int16_t)(screenBounds.x + 8), (int16_t)(screenBounds.y + 80), (int16_t)(screenBounds.width - 16), 22}, "", Theme::Text, 2, Theme::Panel, true),
+      
+
+      shiftButton(Rect{0, 0, 0, 0}, "^"),
+      modeToggleButton(Rect{0, 0, 0, 0}, "?123"),
+      spaceButton(Rect{0, 0, 0, 0}, "space"),
+      backspaceButton(Rect{0, 0, 0, 0}, "<-"),
+      cancelButton(Rect{0, 0, 0, 0}, "cancel"),
+      submitButton(Rect{0, 0, 0, 0}, "OK")
 {
+    buildLayout();
+}
+
+void KeyboardModalWidget::buildLayout()
+{
+    const char** rows = (mode == KeyboardMode::Letters) ? LETTER_ROWS : SYMBOL_ROWS;
+
+    // ---- HORIZONTAL GEOMETRY (Based on a maximum row of 10 keys) ----
+    int16_t maxKeys = 10;
+    int16_t gap = 2; // Spacing between buttons
+    int16_t keyW = (screenBounds.width - 8 - ((maxKeys - 1) * gap)) / maxKeys;
+    int16_t totalGridW = maxKeys * keyW + (maxKeys - 1) * gap;
+    int16_t paddingX = (screenBounds.width - totalGridW) / 2; //  centering of the keyboard block
+
+    // ---- VERTICAL GEOMETRY (Reduced to 24px high so that the 5 rows fit in 180px) ----
+    int16_t panelY = screenBounds.y + 60;
+    int16_t keyH = 24; 
+    int16_t startY = panelY + 46; // Starts just below the input label
+
+    keyCount = 0;
+
+    // ---- ROWS 0, 1, 2: Character Matrix ----
+    for (uint8_t row = 0; row < 3; row++)
+    {
+        const char* rowChars = rows[row];
+        int16_t rowY = startY + row * (keyH + gap);
+        
+        // CENTERING CALCULATION FOR SHORT ROWS (e.g., 'asdfghjkl' or 'zxcvbnm')
+        int16_t numKeysInRow = strlen(rowChars);
+        int16_t rowWidth = numKeysInRow * keyW + (numKeysInRow - 1) * gap;
+        int16_t x = screenBounds.x + (screenBounds.width - rowWidth) / 2;
+
+        while (*rowChars && keyCount < MAX_KEYS)
+        {
+            keyChars[keyCount] = *rowChars;
+            keys[keyCount] = ButtonWidget(Rect{x, rowY, keyW, keyH}, String(*rowChars));
+
+            uint8_t idx = keyCount;
+            keys[keyCount].setOnPress([this, idx]() { appendChar(keyChars[idx]); });
+
+            keyCount++;
+            x += keyW + gap;
+            rowChars++;
+        }
+    }
+
+    // ---- ROW 3: [ ^ ] [ ?123 ] [ Space ] [ <- ] ----
+    int16_t row3_Y = startY + 3 * (keyH + gap);
+    int16_t sideBtnW = (keyW * 15) / 10;
+    int16_t totalActionRowW = screenBounds.width - (2 * paddingX);
+    int16_t spaceBtnW = totalActionRowW - (3 * sideBtnW) - (3 * gap);
+
+    int16_t currentX = screenBounds.x + paddingX;
+    
+    shiftButton = ButtonWidget(Rect{currentX, row3_Y, sideBtnW, keyH}, "^");
+    currentX += sideBtnW + gap;
+
+    modeToggleButton = ButtonWidget(Rect{currentX, row3_Y, sideBtnW, keyH}, mode == KeyboardMode::Letters ? "?123" : "ABC");
+    currentX += sideBtnW + gap;
+
+    spaceButton = ButtonWidget(Rect{currentX, row3_Y, spaceBtnW, keyH}, "          -------");
+    currentX += spaceBtnW + gap;
+
+    backspaceButton = ButtonWidget(Rect{currentX, row3_Y, sideBtnW, keyH}, "<-");
+
+    // ---- ROW 4: [ Cancel ] [ OK ] ----
+    int16_t row4_Y = startY + 4 * (keyH + gap);
+    int16_t bottomBtnW = (totalActionRowW - gap) / 2; 
+
+    cancelButton = ButtonWidget(Rect{(int16_t)(screenBounds.x + paddingX), row4_Y, bottomBtnW, keyH}, "Cancelar");
+    submitButton = ButtonWidget(Rect{(int16_t)(screenBounds.x + paddingX + bottomBtnW + gap), row4_Y, bottomBtnW, keyH}, "OK");
+
+
     shiftButton.setOnPress([this]() {
         shiftActive = !shiftActive;
         shiftButton.setSelected(shiftActive);
@@ -25,7 +103,6 @@ KeyboardModalWidget::KeyboardModalWidget(const Rect& screenBounds)
     });
 
     modeToggleButton.setOnPress([this]() { toggleMode(); });
-
     spaceButton.setOnPress([this]() { appendChar(' '); });
 
     backspaceButton.setOnPress([this]() {
@@ -47,44 +124,7 @@ KeyboardModalWidget::KeyboardModalWidget(const Rect& screenBounds)
         if (onSubmit) onSubmit(result);
     });
 
-    buildLayout();
-}
-
-void KeyboardModalWidget::buildLayout()
-{
-    const char** rows = (mode == KeyboardMode::Letters) ? LETTER_ROWS : SYMBOL_ROWS;
-
-    int16_t startY = screenBounds.y + 108;
-    int16_t keyH = 26, gap = 2;
-    int16_t gridWidth = screenBounds.width - 8;
-    int16_t keyW = gridWidth / 10;
-
-    keyCount = 0;
-
-    for (uint8_t row = 0; row < 3; row++)
-    {
-        const char* rowChars = rows[row];
-        int16_t rowY = startY + row * (keyH + gap);
-        int16_t x = screenBounds.x + 4;
-
-        while (*rowChars && keyCount < MAX_KEYS)
-        {
-            keyChars[keyCount] = *rowChars;
-            keys[keyCount] = ButtonWidget(Rect{x, rowY, (int16_t)(keyW - gap), keyH}, String(*rowChars));
-
-            uint8_t idx = keyCount;
-            keys[keyCount].setOnPress([this, idx]() { appendChar(keyChars[idx]); });
-
-            keyCount++;
-            x += keyW;
-            rowChars++;
-        }
-    }
-
-    modeToggleButton.setText(mode == KeyboardMode::Letters ? "?123" : "ABC");
-    shiftButton.setSelected(false);
-    shiftActive = false;
-
+    shiftButton.setSelected(shiftActive);
     refreshKeyLabels();
 }
 
@@ -92,7 +132,6 @@ void KeyboardModalWidget::toggleMode()
 {
     mode = (mode == KeyboardMode::Letters) ? KeyboardMode::Symbols : KeyboardMode::Letters;
     buildLayout();
-
     dirty = true;
 }
 

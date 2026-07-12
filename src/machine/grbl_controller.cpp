@@ -427,3 +427,23 @@ void GrblController::parseSettingLine(const String &line)
     settings.values[settingNumber] = line.substring(equalsPos + 1).toFloat();
     settings.present[settingNumber] = true;
 }
+
+
+void GrblController::setSetting(uint8_t index, float value)
+{
+    String cmd = "$" + String(index) + "=" + String(value, 3);
+
+    if (simulated)
+    {
+        settings.values[index] = value;
+        settings.present[index] = true;
+        okFlag = true;
+        return;
+    }
+
+    sendLine(cmd);
+    // The "ok" returned by Grbl confirms the change; to reflect it immediately in the UI,
+    // we also update locally - if Grbl rejects the value (out of range), an "error:" message would appear
+    settings.values[index] = value;
+    settings.present[index] = true;
+}

@@ -27,7 +27,7 @@ App::App()
       jogScreen(grblController),
       toolsScreen(grblController),
       framingRunner(grblController),
-      settingsScreen(wifiManager)
+      settingsScreen(wifiManager, grblController)
 {
 }
 
@@ -129,9 +129,17 @@ void App::update()
     else if (settingsScreen.isKeyboardVisible())
     {
         settingsScreen.handleKeyboardTouch(event);
-
-        if (!settingsScreen.isKeyboardVisible())
-            screenManager.redrawAll();
+        if (!settingsScreen.isKeyboardVisible()) screenManager.redrawAll();
+    }
+    else if (settingsScreen.isNumericPadVisible())
+    {
+        settingsScreen.handleNumericPadTouch(event);
+        if (!settingsScreen.isNumericPadVisible()) screenManager.redrawAll();
+    }
+    else if (settingsScreen.isEnumPickerVisible())
+    {
+        settingsScreen.handleEnumPickerTouch(event);
+        if (!settingsScreen.isEnumPickerVisible()) screenManager.redrawAll();
     }
     else
     {
@@ -143,6 +151,7 @@ void App::update()
     confirmModal.draw(display);
     loadingModal.draw(display);
 
-    if (settingsScreen.isKeyboardVisible())
-        settingsScreen.drawKeyboard(display);
+    if (settingsScreen.isKeyboardVisible()) settingsScreen.drawKeyboard(display);
+    if (settingsScreen.isNumericPadVisible()) settingsScreen.drawNumericPad(display);
+    if (settingsScreen.isEnumPickerVisible()) settingsScreen.drawEnumPicker(display);
 }

@@ -13,6 +13,11 @@
 #include "../../widgets/keyboard/keyboard_modal_widget.h"
 #include "../../../network/wifi_manager.h"
 #include "../../widgets/wifi_list/wifi_network_list_widget.h"
+#include "../../widgets/grbl_settings_list/grbl_settings_list_widget.h"
+#include "../../widgets/numeric_pad/numeric_pad_modal_widget.h"
+#include "../../widgets/enum_picker/enum_picker_modal_widget.h"
+#include "../../../machine/grbl_controller.h"
+
 enum class SettingsPage
 {
     Menu,
@@ -24,14 +29,27 @@ enum class SettingsPage
 class SettingsScreen : public IScreen
 {
 public:
+
+    SettingsScreen(WifiManager& wifiManager, GrblController& grblController);
     void draw(DisplayManager& display) override;
     void update() override;
-    SettingsScreen(WifiManager& wifiManager);
 
+    // WIFI
     bool isKeyboardVisible() const { return passwordKeyboard.isVisible(); }
     void drawKeyboard(DisplayManager& display) { passwordKeyboard.draw(display); }
     bool handleKeyboardTouch(const TouchEvent& event) { return passwordKeyboard.handleTouch(event); }
+
+    // MACHINE
+    bool isNumericPadVisible() const { return numericPad.isVisible(); }
+    void drawNumericPad(DisplayManager& display) { numericPad.draw(display); }
+    bool handleNumericPadTouch(const TouchEvent& event) { return numericPad.handleTouch(event); }
+
+    bool isEnumPickerVisible() const { return enumPicker.isVisible(); }
+    void drawEnumPicker(DisplayManager& display) { enumPicker.draw(display); }
+    bool handleEnumPickerTouch(const TouchEvent& event) { return enumPicker.handleTouch(event); }
+
 private:
+    GrblController& grbl;
     SettingsPage currentPage = SettingsPage::Menu;
     bool needsClear = false;
 
@@ -56,14 +74,11 @@ private:
     // Machine
     IconButtonWidget machineBackButton;
     LabelWidget machineTitleLabel;
-    LabelWidget invertXLabel;
-    ToggleWidget invertXToggle;
-    LabelWidget invertYLabel;
-    ToggleWidget invertYToggle;
-    LabelWidget invertZLabel;
-    ToggleWidget invertZToggle;
-    LabelWidget softLimitsLabel;
-    ToggleWidget softLimitsToggle;
+    GrblSettingsListWidget grblSettingsList;
+    NumericPadModalWidget numericPad;
+    EnumPickerModalWidget enumPicker;
+
+    uint8_t editingSettingIndex = 0;
 
     std::vector<Widget*> menuWidgets;
     std::vector<Widget*> aboutWidgets;

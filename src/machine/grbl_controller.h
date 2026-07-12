@@ -70,6 +70,8 @@ public:
     float getMaxTravelZ() const { return settings.get(132, GrblDefaults::S132); }
     bool isLaserMode() const { return settings.get(32, GrblDefaults::S32) > 0.5f; }
 
+    void setSetting(uint8_t index, float value);
+
     // Simulation
     void beginSimulated();
 
