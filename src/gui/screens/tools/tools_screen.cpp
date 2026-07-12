@@ -80,7 +80,7 @@ void ToolsScreen::updatePowerLabel()
 {
     if (mode == ToolMode::Spindle)
     {
-        int rpm = (int)(power / 100.0f * MAX_SPINDLE_SPEED);
+        int rpm = (int)(power / 100.0f * grbl.getMaxSpindleSpeed());
         powerValueLabel.setText(String(rpm) + " RPM");
     }
     else

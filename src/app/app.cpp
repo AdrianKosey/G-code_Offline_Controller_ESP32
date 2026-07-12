@@ -23,15 +23,17 @@ App::App()
       confirmModal(Rect{0, 0, 320, 240}),
       loadingModal(Rect{0, 0, 320, 240}),
       jobRunner(grblController),
+      homeScreen(grblController),
       jogScreen(grblController),
       toolsScreen(grblController),
-      framingRunner(grblController)
+      framingRunner(grblController),
+      settingsScreen(wifiManager)
 {
 }
 
 void App::begin()
 {
-    //grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
+    // grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
     grblController.beginSimulated();
     SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
     sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
@@ -53,7 +55,10 @@ void App::begin()
     screenManager.registerScreen(3, &toolsScreen, "Tools");
     screenManager.registerScreen(4, &settingsScreen, "Settings");
 
-    homeScreen.setOnPlayPause([this]() {
+    wifiManager.begin();
+
+    homeScreen.setOnPlayPause([this]()
+                              {
         JobState state = jobRunner.getState();
 
         if (state == JobState::Running)
@@ -61,18 +66,17 @@ void App::begin()
         else if (state == JobState::Paused)
             jobRunner.resume();
         else
-            jobRunner.start();
-    });
-    homeScreen.setOnStop([this]()  { jobRunner.stop();  });
+            jobRunner.start(); });
+    homeScreen.setOnStop([this]()
+                         { jobRunner.stop(); });
 
-    homeScreen.setOnFraming([this]() {
-        framingRunner.start(
-            homeScreen.getProjectMinX(),
-            homeScreen.getProjectMinY(),
-            homeScreen.getProjectMaxX(),
-            homeScreen.getProjectMaxY(),
-            FRAMING_FEED_RATE);
-    });
+    homeScreen.setOnFraming([this]()
+                            { framingRunner.start(
+                                  homeScreen.getProjectMinX(),
+                                  homeScreen.getProjectMinY(),
+                                  homeScreen.getProjectMaxX(),
+                                  homeScreen.getProjectMaxY(),
+                                  FRAMING_FEED_RATE); });
 
     filesScreen.setOnFileSelected([this](const String &path)
                                   {
@@ -97,7 +101,6 @@ void App::begin()
     confirmModal.setOnCancel([this]()
                              { screenManager.redrawAll(); });
 
-
     screenManager.showInitialScreen(0);
     screenManager.setSdStatus(sdReady);
     screenManager.setWifiStatus(false);
@@ -110,7 +113,9 @@ void App::update()
     TouchEvent event = touch.poll();
     jobRunner.update();
     framingRunner.update();
-    
+    wifiManager.update();
+    screenManager.setWifiStatus(wifiManager.getMode() == WifiMode::Connected);
+    screenManager.setMachineStatus(grblController.getConnectionState() == GrblConnectionState::Connected);
     homeScreen.updateMachineState(
         jobRunner.getState(),
         grblController.getStatus(),
@@ -121,6 +126,13 @@ void App::update()
         confirmModal.handleTouch(event);
     else if (loadingModal.isVisible())
         loadingModal.handleTouch(event);
+    else if (settingsScreen.isKeyboardVisible())
+    {
+        settingsScreen.handleKeyboardTouch(event);
+
+        if (!settingsScreen.isKeyboardVisible())
+            screenManager.redrawAll();
+    }
     else
     {
         screenManager.handleTouch(event);
@@ -130,4 +142,7 @@ void App::update()
     screenManager.draw(display);
     confirmModal.draw(display);
     loadingModal.draw(display);
+
+    if (settingsScreen.isKeyboardVisible())
+        settingsScreen.drawKeyboard(display);
 }

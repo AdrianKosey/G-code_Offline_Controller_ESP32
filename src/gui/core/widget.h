@@ -10,6 +10,7 @@
 class Widget
 {
 public:
+    Widget() : bounds{0, 0, 0, 0} {}
 
     Widget(const Rect& bounds)
         : bounds(bounds)

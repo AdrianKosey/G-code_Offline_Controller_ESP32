@@ -1,19 +1,20 @@
 #include "screen_manager.h"
 
 ScreenManager::ScreenManager(
-    const Rect& sidebarBounds,
-    const SidebarItem* items,
+    const Rect &sidebarBounds,
+    const SidebarItem *items,
     uint8_t itemCount,
-    const Rect& headerBounds)
+    const Rect &headerBounds)
     : sidebar(sidebarBounds, items, itemCount),
       header(headerBounds),
       sidebarBounds(sidebarBounds),
       headerBounds(headerBounds)
 {
-    sidebar.setOnSelect([this](uint8_t id) { setActiveScreen(id); });
+    sidebar.setOnSelect([this](uint8_t id)
+                        { setActiveScreen(id); });
 }
 
-void ScreenManager::registerScreen(uint8_t id, IScreen* screen, const String& title)
+void ScreenManager::registerScreen(uint8_t id, IScreen *screen, const String &title)
 {
     if (id >= MAX_SCREENS)
         return;
@@ -46,7 +47,7 @@ void ScreenManager::setActiveScreen(uint8_t id)
     screens[currentId].screen->onEnter();
 }
 
-void ScreenManager::draw(DisplayManager& displayRef)
+void ScreenManager::draw(DisplayManager &displayRef)
 {
     display = &displayRef;
 
@@ -63,7 +64,7 @@ void ScreenManager::update()
         screens[currentId].screen->update();
 }
 
-void ScreenManager::handleTouch(const TouchEvent& event)
+void ScreenManager::handleTouch(const TouchEvent &event)
 {
     if (sidebar.handleTouch(event))
         return;
@@ -81,6 +82,11 @@ void ScreenManager::setWifiStatus(bool connected)
 {
     header.setWifiStatus(connected);
 }
+
+void ScreenManager::setMachineStatus(bool connected) 
+{ 
+    header.setMachineStatus(connected); 
+}
 void ScreenManager::showInitialScreen(uint8_t id)
 {
     if (id >= MAX_SCREENS || screens[id].screen == nullptr)
@@ -93,13 +99,13 @@ void ScreenManager::showInitialScreen(uint8_t id)
 
 void ScreenManager::switchToScreen(uint8_t id)
 {
-    sidebar.setSelectedIndex(id); 
+    sidebar.setSelectedIndex(id);
     setActiveScreen(id);
 }
 
 void ScreenManager::invalidateAll()
 {
-    sidebar.invalidate(); 
+    sidebar.invalidate();
     header.invalidate();
 
     if (screens[currentId].screen)

@@ -13,7 +13,7 @@
 #include "../gui/screens/tools/tools_screen.h"
 #include "../gui/widgets/modal/confirm_modal_widget.h"
 #include "../gui/widgets/modal/loading_modal_widget.h"
-
+#include "../network/wifi_manager.h"
 #include "../machine/grbl_controller.h"
 #include "../gcode/gcode_job_runner.h"
 #include "../machine/framing_runner.h"
@@ -26,6 +26,7 @@ public:
 
 private:
     bool sdReady = false;
+    WifiManager wifiManager;
     GrblController grblController;
     GCodeJobRunner jobRunner;
     FramingRunner framingRunner;

@@ -15,15 +15,17 @@ public:
     void setTitle(const String &title);
     void setSdStatus(bool ready);
     void setWifiStatus(bool connected);
+    void setMachineStatus(bool connected);
     void invalidate()
     {
         titleLabel.invalidate();
         sdIcon.invalidate();
         wifiIcon.invalidate();
+        machineIcon.invalidate();
     }
-
 private:
     LabelWidget titleLabel;
     IconWidget sdIcon;
     IconWidget wifiIcon;
+    IconWidget machineIcon;
 };

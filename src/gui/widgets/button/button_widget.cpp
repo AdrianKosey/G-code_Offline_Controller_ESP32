@@ -94,3 +94,5 @@ void ButtonWidget::setOnPress(PressCallback callback)
 {
     onPress = callback;
 }
+
+const String& ButtonWidget::getText() const { return text; }

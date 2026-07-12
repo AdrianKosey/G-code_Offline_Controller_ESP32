@@ -2,9 +2,9 @@
 
 static constexpr int16_t CONTENT_X = 60;
 
-HomeScreen::HomeScreen()
-    : statusBadge(Rect{CONTENT_X + 170, 34, 80, 22}, "RUNNING", Theme::Text, 2),
-
+HomeScreen::HomeScreen(GrblController& grblController)
+    : grbl(grblController),
+      statusBadge(Rect{CONTENT_X + 170, 34, 80, 22}, "RUNNING", Theme::Text, 2),
       jobPanel(Rect{CONTENT_X + 8, 34, 150, 200}, Theme::Panel, 10),
       jobCaption(Rect{CONTENT_X + 15, 40, 130, 16}, "En Curso:", Theme::TextSecondary, 1, Theme::Panel, false),
       jobFilename(Rect{CONTENT_X + 15, 54, 130, 20}, "No Job", Theme::Text, 2, Theme::Panel, true),
@@ -142,7 +142,7 @@ void HomeScreen::updateMachineState(JobState jobState, const GrblStatus &status,
 
     valueS.setText(String((int)status.feedRate));
 
-    float powerPercent = constrain(status.spindleSpeed / MAX_SPINDLE_SPEED * 100.0f, 0.0f, 100.0f);
+    float powerPercent = constrain(status.spindleSpeed / grbl.getMaxSpindleSpeed() * 100.0f, 0.0f, 100.0f);
     powerBar.setValue(powerPercent);
 
     gcodePreview.setCursor(status.x, status.y);

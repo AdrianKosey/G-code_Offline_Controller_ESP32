@@ -1,8 +1,23 @@
 #pragma once
 
 #include <Arduino.h>
+#include <map>
 #include "../gcode/gcode_parser.h" // for simulation
 #include "../../include/config.h"
+
+enum class GrblConnectionState { Disconnected, Connected };
+
+struct GrblSettings
+{
+    float values[133] = {0};
+    bool present[133] = {false};
+
+    float get(uint8_t index, float defaultValue = 0.0f) const
+    {
+        return present[index] ? values[index] : defaultValue;
+    }
+};
+
 enum class GrblState
 {
     Unknown, Idle, Run, Hold, Alarm, Door, Check, Home, Sleep
@@ -42,6 +57,19 @@ public:
     void setWorkZeroAxis(char axis); 
     void probeZ(float maxDistance, float feedRate);
 
+    void requestSettings(); // "$$"
+
+    GrblConnectionState getConnectionState() const;
+    bool isSettingsLoaded() const;
+    const GrblSettings& getSettings() const;
+
+
+    float getMaxSpindleSpeed() const { return settings.get(30, GrblDefaults::S30); }
+    float getMaxTravelX() const { return settings.get(130, GrblDefaults::S130); }
+    float getMaxTravelY() const { return settings.get(131, GrblDefaults::S131); }
+    float getMaxTravelZ() const { return settings.get(132, GrblDefaults::S132); }
+    bool isLaserMode() const { return settings.get(32, GrblDefaults::S32) > 0.5f; }
+
     // Simulation
     void beginSimulated();
 
@@ -55,6 +83,18 @@ private:
 
     void processLine(const String& line);
     void parseStatusReport(const String& line);
+
+    GrblConnectionState connectionState = GrblConnectionState::Disconnected;
+    unsigned long lastResponseAt = 0;
+    bool hasReceivedAny = false;
+    static constexpr unsigned long CONNECTION_TIMEOUT_MS = 1000;
+
+    GrblSettings settings;
+    bool settingsLoaded = false;
+    bool settingsRequested = false;
+
+    void parseSettingLine(const String& line); // "$100=80.000"
+    void markResponseReceived();
 
     // Simulation
     bool simulated = false;

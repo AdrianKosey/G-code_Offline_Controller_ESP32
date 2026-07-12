@@ -1,6 +1,6 @@
 #include "grbl_controller.h"
 
-void GrblController::begin(HardwareSerial& serialPort, unsigned long baud, int8_t rxPin, int8_t txPin)
+void GrblController::begin(HardwareSerial &serialPort, unsigned long baud, int8_t rxPin, int8_t txPin)
 {
     serial = &serialPort;
     serial->begin(baud, SERIAL_8N1, rxPin, txPin);
@@ -10,9 +10,24 @@ void GrblController::beginSimulated()
 {
     simulated = true;
     status.state = GrblState::Idle;
+    connectionState = GrblConnectionState::Connected;
+
+    // Typical example values, to be able to test the UI without real hardware
+    settings.values[100] = 80.0f;  settings.present[100] = true; // steps/mm X
+    settings.values[101] = 80.0f;  settings.present[101] = true; // steps/mm Y
+    settings.values[102] = 400.0f; settings.present[102] = true; // steps/mm Z
+    settings.values[110] = 1000.0f; settings.present[110] = true; // max rate X
+    settings.values[111] = 1000.0f; settings.present[111] = true; // max rate Y
+    settings.values[112] = 500.0f;  settings.present[112] = true; // max rate Z
+    settings.values[130] = 300.0f;  settings.present[130] = true; // max travel X
+    settings.values[131] = 200.0f;  settings.present[131] = true; // max travel Y
+    settings.values[132] = 100.0f;  settings.present[132] = true; // max travel Z
+    settings.values[32] = 1.0f;     settings.present[32] = true; // laser mode
+
+    settingsLoaded = true;
 }
 
-void GrblController::sendLine(const String& line)
+void GrblController::sendLine(const String &line)
 {
     okFlag = false;
     errorFlag = false;
@@ -28,23 +43,58 @@ void GrblController::sendLine(const String& line)
             status.z = command.target.z;
         }
 
-        status.feedRate = command.feedRate; 
+        status.feedRate = command.feedRate;
         status.spindleSpeed = command.spindleSpeed;
 
         status.state = GrblState::Run;
-        simOkAt = millis() + SIM_MOVE_DELAY_MS; 
+        simOkAt = millis() + SIM_MOVE_DELAY_MS;
         return;
     }
 
-    if (!serial) return;
+    if (!serial)
+        return;
     serial->print(line);
     serial->print('\n');
 }
 
-void GrblController::requestStatus() { if (simulated) return; if (serial) serial->write('?'); }
-void GrblController::feedHold()      { if (simulated) { status.state = GrblState::Hold; return; } if (serial) serial->write('!'); }
-void GrblController::cycleStart()    { if (simulated) { status.state = GrblState::Run; return; } if (serial) serial->write('~'); }
-void GrblController::softReset()     { if (simulated) { status.state = GrblState::Idle; simOkAt = 0; return; } if (serial) serial->write(0x18); }
+void GrblController::requestStatus()
+{
+    if (simulated)
+        return;
+    if (serial)
+        serial->write('?');
+}
+void GrblController::feedHold()
+{
+    if (simulated)
+    {
+        status.state = GrblState::Hold;
+        return;
+    }
+    if (serial)
+        serial->write('!');
+}
+void GrblController::cycleStart()
+{
+    if (simulated)
+    {
+        status.state = GrblState::Run;
+        return;
+    }
+    if (serial)
+        serial->write('~');
+}
+void GrblController::softReset()
+{
+    if (simulated)
+    {
+        status.state = GrblState::Idle;
+        simOkAt = 0;
+        return;
+    }
+    if (serial)
+        serial->write(0x18);
+}
 
 bool GrblController::hasPendingOk() const { return okFlag || errorFlag; }
 
@@ -56,7 +106,7 @@ bool GrblController::consumeOk()
     return wasOk;
 }
 
-const GrblStatus& GrblController::getStatus() const { return status; }
+const GrblStatus &GrblController::getStatus() const { return status; }
 
 void GrblController::update()
 {
@@ -73,7 +123,8 @@ void GrblController::update()
         return;
     }
 
-    if (!serial) return;
+    if (!serial)
+        return;
 
     while (serial->available())
     {
@@ -90,49 +141,100 @@ void GrblController::update()
         else
         {
             lineBuffer += c;
-            if (lineBuffer.length() > 128) lineBuffer = "";
+            if (lineBuffer.length() > 128)
+                lineBuffer = "";
+        }
+    }
+
+    // Disconnection detection: if nothing has arrived for too long, the link has gone down
+    if (hasReceivedAny && connectionState == GrblConnectionState::Connected)
+    {
+        if (millis() - lastResponseAt > CONNECTION_TIMEOUT_MS)
+        {
+            connectionState = GrblConnectionState::Disconnected;
+            settingsLoaded = false;
         }
     }
 }
 
-void GrblController::processLine(const String& line)
+void GrblController::processLine(const String &line)
 {
+    markResponseReceived(); // Any actual Grbl line counts as "alive"
+
     if (line.startsWith("<") && line.endsWith(">"))
     {
         parseStatusReport(line);
         return;
     }
 
-    if (line == "ok") { okFlag = true; return; }
-    if (line.startsWith("error:")) { errorFlag = true; return; }
-    if (line.startsWith("ALARM:")) { status.state = GrblState::Alarm; return; }
+    if (line == "ok")
+    {
+        okFlag = true;
 
-    // Mensage [MSG:...], $$ - no implement yet
+        if (settingsRequested && !settingsLoaded)
+            settingsLoaded = true; // The ok that follows $$ indicates that all lines have arrived
+
+        return;
+    }
+    if (line.startsWith("error:"))
+    {
+        errorFlag = true;
+        return;
+    }
+    if (line.startsWith("ALARM:"))
+    {
+        status.state = GrblState::Alarm;
+        return;
+    }
+
+    if (line.startsWith("$") && line.indexOf('=') > 0)
+    {
+        parseSettingLine(line);
+        return;
+    }
+
+    if (line.startsWith("Grbl"))
+    {
+        // Welcome message after a reset - if you see this, it means settings haven't been requested yet
+        // to ensure they are refreshed after a true controller reset
+        settingsRequested = false;
+        return;
+    }
 }
 
-void GrblController::parseStatusReport(const String& line)
+void GrblController::parseStatusReport(const String &line)
 {
     // <Idle|WPos:0.000,0.000,0.000|FS:0,0>
     int pipe1 = line.indexOf('|');
     String stateStr = (pipe1 > 0) ? line.substring(1, pipe1) : line.substring(1, line.length() - 1);
 
-    if (stateStr == "Idle") status.state = GrblState::Idle;
-    else if (stateStr == "Run") status.state = GrblState::Run;
-    else if (stateStr.startsWith("Hold")) status.state = GrblState::Hold;
-    else if (stateStr == "Alarm") status.state = GrblState::Alarm;
-    else if (stateStr.startsWith("Door")) status.state = GrblState::Door;
-    else if (stateStr == "Check") status.state = GrblState::Check;
-    else if (stateStr == "Home") status.state = GrblState::Home;
-    else if (stateStr == "Sleep") status.state = GrblState::Sleep;
+    if (stateStr == "Idle")
+        status.state = GrblState::Idle;
+    else if (stateStr == "Run")
+        status.state = GrblState::Run;
+    else if (stateStr.startsWith("Hold"))
+        status.state = GrblState::Hold;
+    else if (stateStr == "Alarm")
+        status.state = GrblState::Alarm;
+    else if (stateStr.startsWith("Door"))
+        status.state = GrblState::Door;
+    else if (stateStr == "Check")
+        status.state = GrblState::Check;
+    else if (stateStr == "Home")
+        status.state = GrblState::Home;
+    else if (stateStr == "Sleep")
+        status.state = GrblState::Sleep;
 
     int posIndex = line.indexOf("WPos:");
-    if (posIndex < 0) posIndex = line.indexOf("MPos:");
+    if (posIndex < 0)
+        posIndex = line.indexOf("MPos:");
 
     if (posIndex >= 0)
     {
         int start = posIndex + 5;
         int end = line.indexOf('|', start);
-        if (end < 0) end = line.indexOf('>', start);
+        if (end < 0)
+            end = line.indexOf('>', start);
 
         String posStr = line.substring(start, end);
         int c1 = posStr.indexOf(',');
@@ -150,7 +252,8 @@ void GrblController::parseStatusReport(const String& line)
         int start = fsIndex + 3;
         int comma = line.indexOf(',', start);
         int end = line.indexOf('|', comma);
-        if (end < 0) end = line.indexOf('>', comma);
+        if (end < 0)
+            end = line.indexOf('>', comma);
 
         status.feedRate = line.substring(start, comma).toFloat();
         status.spindleSpeed = line.substring(comma + 1, end).toFloat();
@@ -167,9 +270,12 @@ void GrblController::jog(char axis, float distance, float feedRate)
 
     if (simulated)
     {
-        if (axis == 'X') status.x += distance;
-        else if (axis == 'Y') status.y += distance;
-        else if (axis == 'Z') status.z += distance;
+        if (axis == 'X')
+            status.x += distance;
+        else if (axis == 'Y')
+            status.y += distance;
+        else if (axis == 'Z')
+            status.z += distance;
 
         status.state = GrblState::Run;
         simOkAt = millis() + SIM_MOVE_DELAY_MS;
@@ -182,15 +288,22 @@ void GrblController::jog(char axis, float distance, float feedRate)
 
 void GrblController::jogCancel()
 {
-    if (simulated) { status.state = GrblState::Idle; return; }
-    if (serial) serial->write(0x85);
+    if (simulated)
+    {
+        status.state = GrblState::Idle;
+        return;
+    }
+    if (serial)
+        serial->write(0x85);
 }
 
 void GrblController::home()
 {
     if (simulated)
     {
-        status.x = 0; status.y = 0; status.z = 0;
+        status.x = 0;
+        status.y = 0;
+        status.z = 0;
         status.state = GrblState::Idle;
         okFlag = true;
         return;
@@ -203,7 +316,9 @@ void GrblController::setWorkZero()
 {
     if (simulated)
     {
-        status.x = 0; status.y = 0; status.z = 0;
+        status.x = 0;
+        status.y = 0;
+        status.z = 0;
         okFlag = true;
         return;
     }
@@ -214,7 +329,8 @@ void GrblController::setWorkZero()
 void GrblController::setSpindlePower(float percent, bool clockwise)
 {
     percent = constrain(percent, 0.0f, 100.0f);
-    float value = (percent / 100.0f) * MAX_SPINDLE_SPEED;
+    float maxSpeed = getMaxSpindleSpeed();
+    float value = (percent / 100.0f) * maxSpeed;
 
     if (simulated)
     {
@@ -243,9 +359,12 @@ void GrblController::setWorkZeroAxis(char axis)
 
     if (simulated)
     {
-        if (axis == 'X') status.x = 0;
-        else if (axis == 'Y') status.y = 0;
-        else if (axis == 'Z') status.z = 0;
+        if (axis == 'X')
+            status.x = 0;
+        else if (axis == 'Y')
+            status.y = 0;
+        else if (axis == 'Z')
+            status.z = 0;
 
         okFlag = true;
         return;
@@ -267,4 +386,44 @@ void GrblController::probeZ(float maxDistance, float feedRate)
     }
 
     sendLine(cmd);
+}
+
+void GrblController::requestSettings()
+{
+    settingsRequested = true;
+    sendLine("$$");
+}
+
+GrblConnectionState GrblController::getConnectionState() const { return connectionState; }
+bool GrblController::isSettingsLoaded() const { return settingsLoaded; }
+const GrblSettings &GrblController::getSettings() const { return settings; }
+
+void GrblController::markResponseReceived()
+{
+    hasReceivedAny = true;
+    lastResponseAt = millis();
+
+    if (connectionState == GrblConnectionState::Disconnected)
+    {
+        connectionState = GrblConnectionState::Connected;
+
+        // Right when reconnecting/connecting for the first time, we request the full configuration
+        if (!settingsRequested)
+            requestSettings();
+    }
+}
+
+void GrblController::parseSettingLine(const String &line)
+{
+    // Format: $100=80,000 (number=value)
+    int equalsPos = line.indexOf('=');
+    if (equalsPos < 2)
+        return;
+
+    int settingNumber = line.substring(1, equalsPos).toInt();
+    if (settingNumber < 0 || settingNumber >= 133)
+        return;
+
+    settings.values[settingNumber] = line.substring(equalsPos + 1).toFloat();
+    settings.present[settingNumber] = true;
 }

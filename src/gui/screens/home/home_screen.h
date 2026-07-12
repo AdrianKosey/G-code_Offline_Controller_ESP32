@@ -16,11 +16,12 @@
 #include "../../widgets/icon_button/icon_button_widget.h"
 #include "../../widgets/icon/icon_widget.h"
 #include "../../widgets/gcode_preview/gcode_preview_widget.h"
+#include "../../../machine/grbl_controller.h"
 
 class HomeScreen : public IScreen
 {
 public:
-    HomeScreen();
+    HomeScreen(GrblController& grblController);
     void loadJob(const String& path);
     using ActionCallback = std::function<void()>;
 
@@ -37,6 +38,7 @@ public:
 
     void updateMachineState(JobState jobState, const GrblStatus& status, uint32_t currentLine, uint32_t totalLines);
 private:
+    GrblController& grbl;
     // Header
     LabelWidget statusBadge;
 

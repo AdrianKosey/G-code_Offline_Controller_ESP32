@@ -8,6 +8,7 @@
 class ButtonWidget : public Widget
 {
 public:
+    ButtonWidget() = default;
     ButtonWidget(const Rect &bounds, const String &text);
     using PressCallback = std::function<void()>;
 
@@ -25,10 +26,12 @@ public:
 
     void setText(const String &text);
 
+    const String &getText() const;
+
 private:
     PressCallback onPress;
     String text;
-    bool pressed = false;       
+    bool pressed = false;
     bool trackingPress = false;
     bool selected = false;
 };
