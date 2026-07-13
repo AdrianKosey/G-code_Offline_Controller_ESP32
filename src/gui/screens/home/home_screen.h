@@ -22,7 +22,7 @@ class HomeScreen : public IScreen
 {
 public:
     HomeScreen(GrblController& grblController);
-    void loadJob(const String& path);
+    void loadJob(const String& path, bool previewEnabled);
     using ActionCallback = std::function<void()>;
 
     void setOnPlayPause(ActionCallback callback);

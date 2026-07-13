@@ -25,6 +25,9 @@ public:
     AppLanguage getLanguage() const;
     void setLanguage(AppLanguage lang);
 
+    float getSafeZHeight() const;
+    void setSafeZHeight(float value);
+
 private:
     Preferences prefs;
 
@@ -32,6 +35,7 @@ private:
     float framingFeedRate = FRAMING_FEED_RATE;
     bool gcodePreviewEnabled = true;
     bool jobRecoveryEnabled = false;
+    float safeZHeight = SAFE_Z_HEIGHT;
     AppLanguage language = AppLanguage::Spanish;
 };
 

@@ -19,7 +19,9 @@
 #include "../machine/framing_runner.h"
 #include "app_settings_manager.h"
 #include "../i18n/translations.h"
-enum class ConfirmModalTarget { LoadFile, LanguageRestart };
+#include "../machine/job_recovery_manager.h"
+
+enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery };
 class App
 {
 public:
@@ -45,6 +47,9 @@ private:
     JogScreen jogScreen;
     ToolsScreen toolsScreen;
     SettingsScreen settingsScreen;
+
+    JobRecoveryManager jobRecovery;
+    bool resumingJob = false;
 
     ConfirmModalWidget confirmModal;
     LoadingModalWidget loadingModal;

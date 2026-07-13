@@ -3,7 +3,7 @@
 #include <Arduino.h>
 #include <SD.h>
 #include "../machine/grbl_controller.h"
-
+#include "../gcode/gcode_parser.h"
 enum class JobState
 {
     Idle, Loaded, Running, Paused, Completed, Error
@@ -20,7 +20,11 @@ public:
     void resume();
     void stop();
 
-    void update(); // no bloqueante
+    void update();
+
+    void resumeFrom(const String& path, uint32_t fromLine, uint32_t totalLines);
+
+    const GCodeState& getParserState() const { return parser.getState(); }
 
     JobState getState() const;
     uint32_t getCurrentLine() const;
@@ -28,7 +32,7 @@ public:
 
 private:
     GrblController& grbl;
-
+    GCodeParser parser;
     File file;
     JobState state = JobState::Idle;
 

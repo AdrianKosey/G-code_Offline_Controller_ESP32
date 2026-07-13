@@ -30,13 +30,14 @@ public:
     void setCursor(float x, float y);
 
     void setProgress(float percent); 
+    void setDisabledMessage(bool show);
 
 private:
     uint16_t backgroundColor;
     uint16_t pathColor;
     uint16_t cursorColor;
     uint16_t traveledColor;
-
+    bool showDisabledMessage = false;
     float minX = 0, minY = 0, maxX = 0, maxY = 0;
 
     float scale = 1.0f;

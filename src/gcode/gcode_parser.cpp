@@ -112,13 +112,21 @@ GCodeCommand GCodeParser::parseLine(const String& rawLine)
             case 1: state.lastMotion = GCodeMotionType::Linear; break;
             case 2: state.lastMotion = GCodeMotionType::ArcCW; break;
             case 3: state.lastMotion = GCodeMotionType::ArcCCW; break;
+            case 17: state.plane = 17; break;
+            case 18: state.plane = 18; break;
+            case 19: state.plane = 19; break;
             case 20: state.metric = false; break;
             case 21: state.metric = true; break;
+            case 54: case 55: case 56: case 57: case 58: case 59:
+                state.coordSystem = (uint8_t)value; break;
             case 90: state.absoluteMode = true; break;
             case 91: state.absoluteMode = false; break;
-            default: break; // G17/G18/G19/G28, etc. - not handled in this parser
+            default: break;
         }
     }
+
+    if (hasWord(words, count, 'T', value))
+        state.toolNumber = (uint8_t)value;
 
     if (hasWord(words, count, 'M', value))
     {

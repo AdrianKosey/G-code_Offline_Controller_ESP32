@@ -70,9 +70,9 @@ HomeScreen::HomeScreen(GrblController& grblController)
         &playPauseButton, &stopButton, &framingButton};
 }
 
-void HomeScreen::loadJob(const String &path)
+void HomeScreen::loadJob(const String& path, bool previewEnabled)
 {
-    GCodeFileInfo info = GCodeFileAnalyzer::analyze(path);
+    GCodeFileInfo info = GCodeFileAnalyzer::analyze(path); // This ALWAYS runs - necessary for Framing
 
     if (!info.valid)
     {
@@ -88,37 +88,44 @@ void HomeScreen::loadJob(const String &path)
     totalLines = info.totalLines;
     currentLine = 0;
 
-    gcodePreview.clearPath();
-    gcodePreview.setProjectBounds(info.minX, info.minY, info.maxX, info.maxY);
-
+    // Project boundaries are always saved - Framing requires them regardless of the preview.
     projectMinX = info.minX;
     projectMinY = info.minY;
     projectMaxX = info.maxX;
     projectMaxY = info.maxY;
 
-    uint32_t stride = max((uint32_t)1, info.totalLines / GCodePreviewWidget::MAX_POINTS);
+    gcodePreview.clearPath();
+    gcodePreview.setDisabledMessage(!previewEnabled);
 
-    File file = SD.open(path);
-    if (!file)
-        return;
-
-    GCodeParser parser;
-    uint32_t lineIndex = 0;
-
-    while (file.available())
+    if (previewEnabled)
     {
-        String line = file.readStringUntil('\n');
-        GCodeCommand command = parser.parseLine(line);
+        gcodePreview.setProjectBounds(info.minX, info.minY, info.maxX, info.maxY);
 
-        if (command.hasTarget && (lineIndex % stride == 0))
-            gcodePreview.addPoint(command.target.x, command.target.y);
+        uint32_t stride = max((uint32_t)1, info.totalLines / GCodePreviewWidget::MAX_POINTS);
 
-        lineIndex++;
+        File file = SD.open(path);
+        if (file)
+        {
+            GCodeParser parser;
+            uint32_t lineIndex = 0;
+
+            while (file.available())
+            {
+                String line = file.readStringUntil('\n');
+                GCodeCommand command = parser.parseLine(line);
+
+                if (command.hasTarget && (lineIndex % stride == 0))
+                    gcodePreview.addPoint(command.target.x, command.target.y);
+
+                lineIndex++;
+            }
+
+            file.close();
+        }
     }
 
-    file.close();
-
     gcodePreview.setProgress(0);
+
     jobProgress.setValue(0);
     jobProgressText.setText("0 / " + String(totalLines));
     jobProgressPercentage.setText("0%");

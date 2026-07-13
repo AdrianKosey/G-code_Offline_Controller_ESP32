@@ -61,19 +61,43 @@ void App::begin()
     screenManager.registerScreen(4, &settingsScreen, tr(StringId::Sidebar_Settings));
 
     wifiManager.begin();
+    jobRecovery.begin();
 
-    homeScreen.setOnPlayPause([this]()
-                              {
+    if (appSettings.isJobRecoveryEnabled() && jobRecovery.hasPendingRecovery())
+    {
+        const RecoverySnapshot& snap = jobRecovery.getSnapshot();
+
+        String message = tr(StringId::Work_Interrupted) +
+                          String(snap.path) + tr(StringId::Work_Line) + String(snap.line) +
+                          tr(StringId::Work_Of) + String(snap.totalLines) + tr(StringId::Work_Resume);
+
+        confirmTarget = ConfirmModalTarget::JobRecovery;
+        confirmModal.show(message);
+    }
+
+    homeScreen.setOnPlayPause([this](){
         JobState state = jobRunner.getState();
 
         if (state == JobState::Running)
+        {
             jobRunner.pause();
+        }
         else if (state == JobState::Paused)
+        {
             jobRunner.resume();
+        }
         else
-            jobRunner.start(); });
-    homeScreen.setOnStop([this]()
-                         { jobRunner.stop(); });
+        {
+            jobRunner.start();
+            if (appSettings.isJobRecoveryEnabled())
+                jobRecovery.startJob(pendingFilePath, homeScreen.getTotalLines());
+        }
+    
+    });
+    homeScreen.setOnStop([this]() {
+        jobRunner.stop();
+        jobRecovery.clear();
+    });
 
     homeScreen.setOnFraming([this]()
                             { framingRunner.start(
@@ -102,7 +126,8 @@ void App::begin()
             loadingModal.show(tr(StringId::App_Loading_File));
             loadingModal.draw(display);
 
-            homeScreen.loadJob(pendingFilePath);
+            homeScreen.loadJob(pendingFilePath, appSettings.isGcodePreviewEnabled()); 
+
             jobRunner.load(pendingFilePath, homeScreen.getTotalLines());
 
             loadingModal.hide();
@@ -116,10 +141,56 @@ void App::begin()
             delay(1500);
             ESP.restart();
         }
+        else if (confirmTarget == ConfirmModalTarget::JobRecovery)
+        {
+            const RecoverySnapshot& snap = jobRecovery.getSnapshot();
+
+            loadingModal.show(tr(StringId::Work_Resuming));
+            loadingModal.draw(display);
+
+            //Mandatory Homing - I NEVER trust the saved position without actual physical reference
+            grblController.home();
+
+            // Explicitly reapply all modal state where commands like F/G90 are only sent once in the original file
+            String setup = String("G") + (snap.metric ? "21" : "20") +
+                            " G" + (snap.absoluteMode ? "90" : "91") +
+                            " G" + String(snap.plane) +
+                            " G" + String(snap.coordSystem);
+            grblController.sendLine(setup);
+
+            if (snap.feedRate > 0)
+                grblController.sendLine("F" + String(snap.feedRate, 0));
+
+            if (snap.spindleState == 1)
+                grblController.sendLine("M3 S" + String(snap.spindleSpeed, 0));
+            else if (snap.spindleState == 2)
+                grblController.sendLine("M4 S" + String(snap.spindleSpeed, 0));
+
+            // Reposition: First raise to a safe height, then XY, then lower to the actual Z position.
+            // WARNING: This assumes the part/material is still in the same physical position
+            // as before the power outage - visually verify before confirming this step.
+            float safeZ = appSettings.getSafeZHeight();
+
+            grblController.sendLine("G90 G0 Z" + String(safeZ, 3));
+            grblController.sendLine("G0 X" + String(snap.x, 3) + " Y" + String(snap.y, 3));
+            grblController.sendLine("G1 Z" + String(snap.z, 3) + " F" + String(min(snap.feedRate, 300.0f), 0));
+
+            // and continue streaming the file from the saved line
+            jobRunner.resumeFrom(snap.path, snap.line, snap.totalLines);
+
+            resumingJob = true;
+
+            loadingModal.hide();
+            screenManager.switchToScreen(0);
+            screenManager.redrawAll();
+        }
     });
 
-    confirmModal.setOnCancel([this]()
-                             { screenManager.redrawAll(); });
+    confirmModal.setOnCancel([this](){ 
+        if (confirmTarget == ConfirmModalTarget::JobRecovery)
+            jobRecovery.clear();
+        screenManager.redrawAll(); 
+    });
 
     screenManager.showInitialScreen(0);
     screenManager.setSdStatus(sdReady);
@@ -134,13 +205,22 @@ void App::update()
     jobRunner.update();
     framingRunner.update();
     wifiManager.update();
+
     screenManager.setWifiStatus(wifiManager.getMode() == WifiMode::Connected);
     screenManager.setMachineStatus(grblController.getConnectionState() == GrblConnectionState::Connected);
+
     homeScreen.updateMachineState(
         jobRunner.getState(),
         grblController.getStatus(),
         jobRunner.getCurrentLine(),
         jobRunner.getTotalLines());
+
+    bool anyModalVisible =
+        confirmModal.isVisible() ||
+        loadingModal.isVisible() ||
+        settingsScreen.isKeyboardVisible() ||
+        settingsScreen.isNumericPadVisible() ||
+        settingsScreen.isEnumPickerVisible();
 
     if (confirmModal.isVisible())
         confirmModal.handleTouch(event);
@@ -170,7 +250,8 @@ void App::update()
         screenManager.update();
     }
 
-    screenManager.draw(display);
+    if (!anyModalVisible)
+        screenManager.draw(display);
     confirmModal.draw(display);
     loadingModal.draw(display);
 
@@ -180,4 +261,13 @@ void App::update()
         settingsScreen.drawNumericPad(display);
     if (settingsScreen.isEnumPickerVisible())
         settingsScreen.drawEnumPicker(display);
+
+    if (jobRunner.getState() == JobState::Running && appSettings.isJobRecoveryEnabled())
+    {
+        uint8_t spindleStateValue = 0; 
+        jobRecovery.updateProgress(jobRunner.getCurrentLine(), jobRunner.getParserState(), spindleStateValue);
+    }
+
+    if (jobRunner.getState() == JobState::Completed)
+        jobRecovery.clear(); 
 }

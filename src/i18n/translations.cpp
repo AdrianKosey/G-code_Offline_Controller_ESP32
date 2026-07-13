@@ -9,14 +9,16 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
     "Inicio", "Archivos", "Manual", "Utilidad", "Ajustes", // Max 8 for sidebar
 
     "X+", "X-", "Y+", "Y-", "Z+", "Z-",
-    "Paso (mm)", "CASA", "SET X0", "SET Y0", "SET Z0", "PROBAR Z",
+    "Paso (mm)", "HOME", "SET X0", "SET Y0", "SET Z0", "PROBAR Z",
 
     "CONTROL CNC", "En Curso:", "Sin Archivo", "CORRIENDO", "PAUSADO", "TERMINADO", "ERROR", "LISTO",
     "Velocidad", "Potencia",
     "X", "Y", "Z",
+    "Previsualizacion Desactivada.",
 
     "Archivos", "No se detecta la tarjeta SD",
     "Archivo Invalido",
+    "Trabajo Interrumpido:\n", "\nLinea ", " de ", ". Reanudar?", "Reanudando trabajo...",
 
     "Tipo de herramienta","Husillo", "Laser", "Potencia", "ON", "OFF", "CW", "CCW",
 
@@ -26,6 +28,7 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
     "Conectando...", "Conectando a", "Conectado", "Contraseña para: ", "Modo punto de acceso", "Buscando redes...",
     "Velocidad de Jog", "Velocidad de Framing", "Previsualizacion G-code", "Recuperar trabajos CNC", "Idioma",
     "Velocidad de Jog (mm/min)", "Velocidad de Framing (mm/min)",
+    "Altura segura Z",
 
     "Posicion maquina (MPos)", "Posicion de trabajo (WPos)",
     "Duracion pulso step", "Retardo desactivar steppers", "Invertir puerto step", "Invertir puerto direccion",
@@ -39,7 +42,7 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
     "Recorrido max Y", "Recorrido max Z", 
     "us", "ms", "mascara", "mm", "mm/min", "RPM", "pasos/mm", "mm/s2",
 
-    "Cancelar", "OK", "Cargar archivo?", "Cargando...",
+    "Cancelar", "OK", "Cargar archivo?", "Cargando..."
 };
 
 static const char* ENGLISH[(int)StringId::StringId_Count] = {
@@ -54,9 +57,11 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
     "CNC CONTROL", "In Progress:", "No File.", "RUNNING", "PAUSED", "COMPLETED", "ERROR", "READY",
     "Feed", "Power",
     "X", "Y", "Z",
+    "Preview Disabled",
 
     "Files", "SD card not detected",
     "Invalid File",
+    "Work Interrupted:\n", "\nLine ", " of ", ". Resume?", "Resuming work...",
 
     "Tool type","Spindle", "Laser", "Power", "ON", "OFF", "CW", "CCW",
 
@@ -66,6 +71,7 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
     "Connecting...", "Connecting to", "Connected", "Password for: ", "Access point mode", "Scanning networks...",
     "Jog speed", "Framing speed", "G-code preview", "CNC Job Recovery", "Language",
     "Jogging Speed (mm/min)", "Framing Speed (mm/min)",
+    "Safe Z height",
 
     "Machine position (MPos)", "Work position (WPos)",
     "Step pulse time", "Step idle delay", "Step port invert", "Direction port invert",
@@ -79,7 +85,7 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
     "Y-axis max travel", "Z-axis max travel", 
     "us", "ms", "mask", "mm", "mm/min", "RPM", "steps/mm", "mm/s2",
 
-    "Cancel", "OK", "Load file?", "Loading...",
+    "Cancel", "OK", "Load file?", "Loading..."
 };
 
 const char* tr(StringId id)

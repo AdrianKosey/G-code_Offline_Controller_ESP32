@@ -1,5 +1,5 @@
 #include "gcode_preview_widget.h"
-
+#include "../../../i18n/translations.h"
 GCodePreviewWidget::GCodePreviewWidget(
     const Rect& bounds,
     uint16_t backgroundColor,
@@ -100,6 +100,14 @@ void GCodePreviewWidget::draw(DisplayManager& display)
     display.fillRect(bounds.x, bounds.y, bounds.width, bounds.height, backgroundColor);
     display.drawRect(bounds.x, bounds.y, bounds.width, bounds.height, Theme::Border);
 
+    if (showDisabledMessage)
+    {
+        display.drawText(tr(StringId::Home_Preview), bounds.x + 8, bounds.y + bounds.height / 2 - 8, Theme::TextSecondary, 1);
+        display.clearClipRect();
+        dirty = false;
+        return;
+    }
+
     int16_t x1, y1, x2, y2;
 
     for (uint16_t i = 1; i < pointCount; i++)
@@ -123,4 +131,13 @@ void GCodePreviewWidget::draw(DisplayManager& display)
     display.clearClipRect();
 
     dirty = false;
+}
+
+void GCodePreviewWidget::setDisabledMessage(bool show)
+{
+    if (showDisabledMessage == show)
+        return;
+
+    showDisabledMessage = show;
+    invalidate();
 }

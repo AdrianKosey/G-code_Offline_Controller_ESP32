@@ -33,7 +33,8 @@ enum class NumericPadTarget
 {
     GrblSetting,
     JogFeed,
-    FramingFeed
+    FramingFeed,
+    SafeZ
 };
 
 enum class EnumPickerTarget
@@ -105,6 +106,7 @@ private:
     LabelWidget previewLabel;
     ToggleWidget previewToggle;
     MenuRowWidget languageRow;
+    MenuRowWidget safeZRow;
     ScrollPanelWidget controlScrollPanel;
     LabelWidget jobRecoveryLabel;
     ToggleWidget jobRecoveryToggle;

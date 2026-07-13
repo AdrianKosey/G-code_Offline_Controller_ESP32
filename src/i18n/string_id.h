@@ -17,10 +17,12 @@ enum class StringId
     Home_Title, Home_InProgress, Home_NoFile, Home_Running, Home_Paused, Home_Completed, Home_Error, Home_Ready,
     Home_Speed, Home_Power,
     Coords_X, Coords_Y, Coords_Z,
+    Home_Preview,
 
     // Files
     Files_Title, Files_NoSdCard,
     Files_Invalid,
+    Work_Interrupted, Work_Line, Work_Of, Work_Resume, Work_Resuming,
 
     // Tools
     Tool_Type, Tools_Spindle, Tools_Laser, Tools_Power, Tools_On, Tools_Off, Tools_CW, Tools_CCW,
@@ -32,6 +34,7 @@ enum class StringId
     Settings_Connecting, Settings_Connecting_To, Settings_Connected, Settings_Password, Settings_AccessPointMode, Settings_Scanning,
     Settings_JogSpeed, Settings_FramingSpeed, Settings_GcodePreview, Settings_JobRecovery, Settings_Language,
     Settings_Modal_JogSpeed, Settings_Modal_FramingSpeed,
+    Settings_SafeZ,
 
     // GRBL Settings & Status
     StatusMPos, StatusWPos,

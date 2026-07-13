@@ -68,8 +68,10 @@ void GCodeJobRunner::sendNextLine()
         line.trim();
         currentLine++;
 
+        GCodeCommand command = parser.parseLine(line);
+
         if (line.length() == 0 || line.startsWith(";") || line.startsWith("("))
-            continue; 
+            continue;
 
         grbl.sendLine(line);
         waitingForOk = true;
@@ -103,4 +105,34 @@ void GCodeJobRunner::update()
     }
 
     sendNextLine();
+}
+
+void GCodeJobRunner::resumeFrom(const String& path, uint32_t fromLine, uint32_t totalLinesParam)
+{
+    if (file) file.close();
+
+    file = SD.open(path);
+    if (!file || file.isDirectory())
+    {
+        state = JobState::Error;
+        return;
+    }
+
+    totalLines = totalLinesParam;
+    currentLine = 0;
+    waitingForOk = false;
+
+    parser.reset();
+
+    // Advance the file to the saved line WITHOUT sending it to Grbl - only update the parser
+    // so that its modal state is correct upon reaching that point
+    while (file.available() && currentLine < fromLine)
+    {
+        String line = file.readStringUntil('\n');
+        line.trim();
+        parser.parseLine(line);
+        currentLine++;
+    }
+
+    state = JobState::Running; // The caller (App) already took care of rehome and repositioning before this
 }

@@ -11,6 +11,7 @@ AppSettingsManager::AppSettingsManager()
     framingFeedRate = prefs.getFloat("framFeed", FRAMING_FEED_RATE);
     gcodePreviewEnabled = prefs.getBool("preview", true);
     jobRecoveryEnabled = prefs.getBool("jobRecov", false);
+    safeZHeight = prefs.getFloat("safeZ", SAFE_Z_HEIGHT);
     language = (AppLanguage)prefs.getUChar("lang", (uint8_t)AppLanguage::Spanish);
 
     Serial.printf("[Settings] Cargado: jogFeed=%.1f framFeed=%.1f preview=%d lang=%d\n",
@@ -58,4 +59,12 @@ void AppSettingsManager::setLanguage(AppLanguage lang)
 {
     language = lang;
     prefs.putUChar("lang", (uint8_t)lang);
+}
+
+float AppSettingsManager::getSafeZHeight() const { return safeZHeight; }
+
+void AppSettingsManager::setSafeZHeight(float value)
+{
+    safeZHeight = value;
+    prefs.putFloat("safeZ", value);
 }
