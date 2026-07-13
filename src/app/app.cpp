@@ -4,31 +4,36 @@ static constexpr uint8_t SIDEBAR_WIDTH = 60;
 static constexpr int16_t HEADER_HEIGHT = 30;
 static constexpr int16_t SCREEN_HEIGHT = 240;
 
-static const SidebarItem sidebarItems[] = {
-    {IconId::Home, "Inicio"},
-    {IconId::Files, "Archivos"},
-    {IconId::Prepare, "Jog"},
-    {IconId::Tools, "Tools"},
-    {IconId::Settings, "Configrar"},
-};
+static SidebarItem sidebarItemsBuffer[5]; 
 
+static const SidebarItem* buildSidebarItems()
+{
+    sidebarItemsBuffer[0] = { IconId::Home, tr(StringId::Sidebar_Home) };
+    sidebarItemsBuffer[1] = { IconId::Files, tr(StringId::Sidebar_Files) };
+    sidebarItemsBuffer[2] = { IconId::Prepare, tr(StringId::Sidebar_Jog) };
+    sidebarItemsBuffer[3] = { IconId::Tools, tr(StringId::Sidebar_Tools) };
+    sidebarItemsBuffer[4] = { IconId::Settings, tr(StringId::Sidebar_Settings) };
+
+    return sidebarItemsBuffer;
+}
 App::App()
     : display(displayDriver),
       touch(displayDriver),
       screenManager(
           Rect{0, 0, SIDEBAR_WIDTH, SCREEN_HEIGHT},
-          sidebarItems,
+          buildSidebarItems(),
           5,
           Rect{SIDEBAR_WIDTH, 0, 320 - SIDEBAR_WIDTH, HEADER_HEIGHT}),
       confirmModal(Rect{0, 0, 320, 240}),
       loadingModal(Rect{0, 0, 320, 240}),
       jobRunner(grblController),
       homeScreen(grblController),
-      jogScreen(grblController),
+      jogScreen(grblController, appSettings),
       toolsScreen(grblController),
       framingRunner(grblController),
-      settingsScreen(wifiManager, grblController)
+      settingsScreen(wifiManager, grblController, appSettings)
 {
+    g_appSettings = &appSettings;
 }
 
 void App::begin()
@@ -49,11 +54,11 @@ void App::begin()
 
     display.clear(Theme::Background);
 
-    screenManager.registerScreen(0, &homeScreen, "Home");
-    screenManager.registerScreen(1, &filesScreen, "Files");
-    screenManager.registerScreen(2, &jogScreen, "Jog");
-    screenManager.registerScreen(3, &toolsScreen, "Tools");
-    screenManager.registerScreen(4, &settingsScreen, "Settings");
+    screenManager.registerScreen(0, &homeScreen, tr(StringId::Sidebar_Home));
+    screenManager.registerScreen(1, &filesScreen, tr(StringId::Sidebar_Files));
+    screenManager.registerScreen(2, &jogScreen, tr(StringId::Sidebar_Jog));
+    screenManager.registerScreen(3, &toolsScreen, tr(StringId::Sidebar_Tools));
+    screenManager.registerScreen(4, &settingsScreen, tr(StringId::Sidebar_Settings));
 
     wifiManager.begin();
 
@@ -72,31 +77,46 @@ void App::begin()
 
     homeScreen.setOnFraming([this]()
                             { framingRunner.start(
-                                  homeScreen.getProjectMinX(),
-                                  homeScreen.getProjectMinY(),
-                                  homeScreen.getProjectMaxX(),
-                                  homeScreen.getProjectMaxY(),
-                                  FRAMING_FEED_RATE); });
+                                  homeScreen.getProjectMinX(), homeScreen.getProjectMinY(),
+                                  homeScreen.getProjectMaxX(), homeScreen.getProjectMaxY(),
+                                  appSettings.getFramingFeedRate()); });
 
-    filesScreen.setOnFileSelected([this](const String &path)
-                                  {
+    filesScreen.setOnFileSelected([this](const String &path) {
         pendingFilePath = path;
+        confirmTarget = ConfirmModalTarget::LoadFile;
 
         int lastSlash = path.lastIndexOf('/');
         String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
 
-        confirmModal.show("Cargar " + filename + "?"); });
+        confirmModal.show(tr(StringId::App_Open_File) + filename + "?");
+    });
 
-    confirmModal.setOnConfirm([this]()
-                              {
-        loadingModal.show("Cargando...");
-        loadingModal.draw(display);
+    settingsScreen.setOnLanguageChanged([this]() {
+        confirmTarget = ConfirmModalTarget::LanguageRestart;
+        confirmModal.show(tr(StringId::App_Modal_Language));
+    });
 
-        homeScreen.loadJob(pendingFilePath);
-        jobRunner.load(pendingFilePath, homeScreen.getTotalLines());              
-        loadingModal.hide();
-        screenManager.switchToScreen(0);
-        screenManager.redrawAll(); });
+    confirmModal.setOnConfirm([this]() {
+        if (confirmTarget == ConfirmModalTarget::LoadFile)
+        {
+            loadingModal.show(tr(StringId::App_Loading_File));
+            loadingModal.draw(display);
+
+            homeScreen.loadJob(pendingFilePath);
+            jobRunner.load(pendingFilePath, homeScreen.getTotalLines());
+
+            loadingModal.hide();
+            screenManager.switchToScreen(0);
+            screenManager.redrawAll();
+        }
+        else if (confirmTarget == ConfirmModalTarget::LanguageRestart)
+        {
+            loadingModal.show(tr(StringId::App_Reset));
+            loadingModal.draw(display);
+            delay(1500);
+            ESP.restart();
+        }
+    });
 
     confirmModal.setOnCancel([this]()
                              { screenManager.redrawAll(); });
@@ -129,17 +149,20 @@ void App::update()
     else if (settingsScreen.isKeyboardVisible())
     {
         settingsScreen.handleKeyboardTouch(event);
-        if (!settingsScreen.isKeyboardVisible()) screenManager.redrawAll();
+        if (!settingsScreen.isKeyboardVisible())
+            screenManager.redrawAll();
     }
     else if (settingsScreen.isNumericPadVisible())
     {
         settingsScreen.handleNumericPadTouch(event);
-        if (!settingsScreen.isNumericPadVisible()) screenManager.redrawAll();
+        if (!settingsScreen.isNumericPadVisible())
+            screenManager.redrawAll();
     }
     else if (settingsScreen.isEnumPickerVisible())
     {
         settingsScreen.handleEnumPickerTouch(event);
-        if (!settingsScreen.isEnumPickerVisible()) screenManager.redrawAll();
+        if (!settingsScreen.isEnumPickerVisible())
+            screenManager.redrawAll();
     }
     else
     {
@@ -151,7 +174,10 @@ void App::update()
     confirmModal.draw(display);
     loadingModal.draw(display);
 
-    if (settingsScreen.isKeyboardVisible()) settingsScreen.drawKeyboard(display);
-    if (settingsScreen.isNumericPadVisible()) settingsScreen.drawNumericPad(display);
-    if (settingsScreen.isEnumPickerVisible()) settingsScreen.drawEnumPicker(display);
+    if (settingsScreen.isKeyboardVisible())
+        settingsScreen.drawKeyboard(display);
+    if (settingsScreen.isNumericPadVisible())
+        settingsScreen.drawNumericPad(display);
+    if (settingsScreen.isEnumPickerVisible())
+        settingsScreen.drawEnumPicker(display);
 }

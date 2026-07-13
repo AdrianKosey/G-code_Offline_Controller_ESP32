@@ -1,5 +1,19 @@
 #include "toggle_widget.h"
 
+void drawToggleVisual(DisplayManager& display, const Rect& bounds, bool state)
+{
+    uint16_t trackColor = state ? Theme::Progress : Theme::SidebarBackground;
+    int16_t radius = bounds.height / 2;
+
+    display.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, radius, trackColor);
+
+    int16_t knobDiameter = bounds.height - 4;
+    int16_t knobX = state ? (bounds.x + bounds.width - knobDiameter - 2) : (bounds.x + 2);
+    int16_t knobY = bounds.y + 2;
+
+    display.fillCircle(knobX + knobDiameter / 2, knobY + knobDiameter / 2, knobDiameter / 2, Theme::Text);
+}
+
 ToggleWidget::ToggleWidget(const Rect& bounds, bool initialState)
     : Widget(bounds), state(initialState)
 {}
@@ -39,16 +53,7 @@ void ToggleWidget::draw(DisplayManager& display)
     if (!dirty)
         return;
 
-    uint16_t trackColor = state ? Theme::Progress : Theme::SidebarBackground;
-    int16_t radius = bounds.height / 2;
-
-    display.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, radius, trackColor);
-
-    int16_t knobDiameter = bounds.height - 4;
-    int16_t knobX = state ? (bounds.x + bounds.width - knobDiameter - 2) : (bounds.x + 2);
-    int16_t knobY = bounds.y + 2;
-
-    display.fillCircle(knobX + knobDiameter / 2, knobY + knobDiameter / 2, knobDiameter / 2, Theme::Text);
-
+    drawToggleVisual(display, bounds, state);
+    
     dirty = false;
 }

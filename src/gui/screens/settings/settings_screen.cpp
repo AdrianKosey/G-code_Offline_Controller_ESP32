@@ -1,58 +1,88 @@
 #include "settings_screen.h"
+#include "../../../i18n/translations.h"
 
 static constexpr int16_t CONTENT_X = 60;
 static constexpr int16_t CONTENT_Y = 34;
 static constexpr int16_t CONTENT_WIDTH = 260;
 static constexpr int16_t CONTENT_HEIGHT = 206;
 
-SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblController)
-    : grbl(grblController),
-      // Menu principal
-      aboutRow(Rect{CONTENT_X + 8, CONTENT_Y + 8, 244, 40}, "Acerca del dispositivo"),
-      wifiRow(Rect{CONTENT_X + 8, CONTENT_Y + 52, 244, 40}, "Wi-Fi"),
-      machineRow(Rect{CONTENT_X + 8, CONTENT_Y + 96, 244, 40}, "Machine"),
+static const char *LANGUAGE_OPTIONS[] = {"Espanol", "English"};
+
+SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblController, AppSettingsManager &appSettingsManager)
+    : // Menu principal
+      aboutRow(Rect{CONTENT_X + 8, CONTENT_Y + 8, 244, 40}, tr(StringId::Settings_About)),
+      wifiRow(Rect{CONTENT_X + 8, CONTENT_Y + 52, 244, 40}, tr(StringId::Settings_Wifi)),
+      machineRow(Rect{CONTENT_X + 8, CONTENT_Y + 96, 244, 40}, tr(StringId::Settings_Machine)),
+      controlRow(Rect{CONTENT_X + 8, CONTENT_Y + 140, 244, 40}, tr(StringId::Settings_Control)),
 
       // Acerca del dispositivo
       aboutBackButton(
           Rect{CONTENT_X + 8, CONTENT_Y + 4, 28, 24},
           Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
           Theme::Background, Theme::Text, false),
-      aboutTitleLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 150, 20}, "Acerca del dispositivo", Theme::Text, 2, Theme::Background, false),
-      firmwareLabel(Rect{CONTENT_X + 16, CONTENT_Y + 40, 120, 14}, "Firmware", Theme::TextSecondary, 1, Theme::Background, false),
+      aboutTitleLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 150, 20}, tr(StringId::Settings_About), Theme::Text, 2, Theme::Background, false),
+      firmwareLabel(Rect{CONTENT_X + 16, CONTENT_Y + 40, 120, 14}, tr(StringId::Settings_Firmware), Theme::TextSecondary, 1, Theme::Background, false),
       firmwareValue(Rect{CONTENT_X + 16, CONTENT_Y + 54, 200, 18}, "v0.1.0", Theme::Text, 2, Theme::Background, false),
-      projectLabel(Rect{CONTENT_X + 16, CONTENT_Y + 82, 120, 14}, "Proyecto", Theme::TextSecondary, 1, Theme::Background, false),
-      projectValue(Rect{CONTENT_X + 16, CONTENT_Y + 96, 220, 18}, "G-code Offline Controller", Theme::Text, 2, Theme::Background, true),
+      projectLabel(Rect{CONTENT_X + 16, CONTENT_Y + 82, 120, 14}, tr(StringId::Settings_Project), Theme::TextSecondary, 1, Theme::Background, false),
+      projectValue(Rect{CONTENT_X + 16, CONTENT_Y + 96, 220, 18}, tr(StringId::Control_Name), Theme::Text, 2, Theme::Background, true),
 
       // Wi-Fi
       wifiBackButton(
           Rect{CONTENT_X + 8, CONTENT_Y + 4, 28, 24},
           Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
           Theme::Background, Theme::Text, false),
-      wifiTitleLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 100, 20}, "Wi-Fi", Theme::Text, 2, Theme::Background, false),
-      wifiStatusLabel(Rect{CONTENT_X + 16, CONTENT_Y + 30, 320, 18}, "No conectado", Theme::TextSecondary, 2, Theme::Background, false),
-      wifiScanButton(Rect{CONTENT_X + 150, CONTENT_Y - 5, 100, 32}, "Buscar redes"),
-      forgetNetworkButton(Rect{CONTENT_X + 150, CONTENT_Y - 5, 100, 32}, "Olvidar red"),
+      wifiTitleLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 100, 20}, tr(StringId::Settings_Wifi), Theme::Text, 2, Theme::Background, false),
+      wifiStatusLabel(Rect{CONTENT_X + 16, CONTENT_Y + 30, 320, 18}, tr(StringId::Settings_NotConnected), Theme::TextSecondary, 2, Theme::Background, false),
+      wifiScanButton(Rect{CONTENT_X + 150, CONTENT_Y, 100, 32}, tr(StringId::Settings_ScanNetworks)),
+      forgetNetworkButton(Rect{CONTENT_X + 150, CONTENT_Y, 100, 32}, tr(StringId::Settings_ForgetNetwork)),
+
       // Machine
       machineBackButton(
           Rect{CONTENT_X + 8, CONTENT_Y + 4, 28, 24},
           Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
           Theme::Background, Theme::Text, false),
-      machineTitleLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 150, 20}, "Machine", Theme::Text, 2, Theme::Background, false),
-      grblSettingsList(Rect{CONTENT_X + 8, CONTENT_Y + 44, 244, 156}, grbl, 40),
-      numericPad(Rect{0, 0, 320, 240}),
-      enumPicker(Rect{0, 0, 320, 240}),
+      machineTitleLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 150, 20}, tr(StringId::Settings_Machine), Theme::Text, 2, Theme::Background, false),
 
+      // Control
+      controlBackButton(
+          Rect{CONTENT_X + 8, CONTENT_Y + 4, 28, 24},
+          Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
+          Theme::Background, Theme::Text, false),
+      controlTitleLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 150, 20}, tr(StringId::Settings_Control), Theme::Text, 2, Theme::Background, false),
+      jogFeedRow(Rect{CONTENT_X + 8, CONTENT_Y + 42, 244, 36}, tr(StringId::Settings_JogSpeed)),
+      framingFeedRow(Rect{CONTENT_X + 8, CONTENT_Y + 80, 244, 36}, tr(StringId::Settings_FramingSpeed)),
+      previewLabel(Rect{CONTENT_X + 16, CONTENT_Y + 126, 150, 20}, tr(StringId::Settings_GcodePreview), Theme::Text, 2, Theme::Background, false),
+      previewToggle(Rect{CONTENT_X + 200, CONTENT_Y + 124, 48, 24}, true),
+      jobRecoveryLabel(Rect{0, 0, 150, 20}, tr(StringId::Settings_JobRecovery), Theme::Text, 2, Theme::Background, false),
+      jobRecoveryToggle(Rect{0, 0, 48, 24}, false),
+      languageRow(Rect{CONTENT_X + 8, CONTENT_Y + 158, 244, 36}, tr(StringId::Settings_Language)),
+      controlScrollPanel(Rect{CONTENT_X + 8, CONTENT_Y + 40, 244, 160}),
+
+      // Wifi manager
       wifi(wifiManager),
       networkList(Rect{CONTENT_X + 8, CONTENT_Y + 80, 244, 120}, 34),
       wifiDetailLabel(Rect{CONTENT_X + 16, CONTENT_Y + 58, 220, 16}, "", Theme::TextSecondary, 1, Theme::Background, true),
-      passwordKeyboard(Rect{0, 0, 320, 240})
+      passwordKeyboard(Rect{0, 0, 320, 240}),
+
+      // Grbl
+      grbl(grblController),
+      grblSettingsList(Rect{CONTENT_X + 8, CONTENT_Y + 44, 244, 156}, grbl, 40),
+
+      // App settings
+      appSettings(appSettingsManager),
+
+      numericPad(Rect{0, 0, 320, 240}),
+      enumPicker(Rect{0, 0, 320, 240})
 {
+    // MENU DIRECTIONS
     aboutRow.setOnPress([this]()
                         { switchToPage(SettingsPage::About); });
     wifiRow.setOnPress([this]()
                        { switchToPage(SettingsPage::Wifi); });
     machineRow.setOnPress([this]()
                           { switchToPage(SettingsPage::Machine); });
+    controlRow.setOnPress([this]()
+                          { switchToPage(SettingsPage::Control); });
 
     aboutBackButton.setOnPress([this]()
                                { switchToPage(SettingsPage::Menu); });
@@ -60,37 +90,42 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
                               { switchToPage(SettingsPage::Menu); });
     machineBackButton.setOnPress([this]()
                                  { switchToPage(SettingsPage::Menu); });
+    controlBackButton.setOnPress([this]()
+                                 { switchToPage(SettingsPage::Menu); });
+
+    // WIFI
 
     wifiScanButton.setOnPress([this]()
                               {
         wifi.startScan();
-        wifiStatusLabel.setText("Buscando redes..."); });
+        wifiStatusLabel.setText(tr(StringId::Settings_Scanning)); });
 
-    // WIFI
     forgetNetworkButton.setOnPress([this]()
                                    {
         wifi.forgetSavedNetwork();
-        wifiStatusLabel.setText("Modo punto de acceso");
+        wifiStatusLabel.setText(tr(StringId::Settings_AccessPointMode));
         wifiDetailLabel.setText("");
         networkList.clear(); });
+
     networkList.setOnSelect([this](const WifiNetworkEntry &entry)
                             {
         if (entry.encrypted)
         {
             pendingSsid = entry.ssid;
-            passwordKeyboard.show("Contrasena para " + entry.ssid);
+            passwordKeyboard.show(tr(StringId::Settings_Password) + entry.ssid);
         }
         else
         {
             wifi.connect(entry.ssid, "", true);
-            wifiStatusLabel.setText("Conectando...");
+            wifiStatusLabel.setText(tr(StringId::Settings_Connecting));
             wifiDetailLabel.setText(entry.ssid);
         } });
 
     passwordKeyboard.setOnSubmit([this](const String &password)
                                  {
         wifi.connect(pendingSsid, password, true);
-        wifiStatusLabel.setText("Conectando a " + pendingSsid + "..."); });
+        wifiStatusLabel.setText(tr(StringId::Settings_Connecting_To)); 
+        wifiDetailLabel.setText(pendingSsid + "..."); });
 
     passwordKeyboard.setOnCancel([this]() {});
 
@@ -106,28 +141,97 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
         }
         else if (def.type == GrblSettingType::Enum)
         {
-            enumPicker.show(String(def.name), def.enumLabels, def.enumCount, (uint8_t)currentValue);
+            static const char* resolvedLabels[8];
+            for (uint8_t i = 0; i < def.enumCount; i++)
+                resolvedLabels[i] = tr(def.enumLabelIds[i]);
+
+            enumPickerTarget = EnumPickerTarget::GrblSetting;
+            enumPicker.show(tr(def.nameId), resolvedLabels, def.enumCount, (uint8_t)currentValue);
         }
         else
         {
-            numericPad.show(String(def.name), currentValue);
+            numericPadTarget = NumericPadTarget::GrblSetting;
+            numericPad.show(tr(def.nameId), currentValue);
         } });
+
+    // Control
+    jogFeedRow.setValue(String((int)appSettings.getJogFeedRate()) + " mm/min");
+    jogFeedRow.setOnPress([this]()
+                          {
+        numericPadTarget = NumericPadTarget::JogFeed;
+        numericPad.show(tr(StringId::Settings_Modal_JogSpeed), appSettings.getJogFeedRate()); });
+
+    framingFeedRow.setValue(String((int)appSettings.getFramingFeedRate()) + " mm/min");
+    framingFeedRow.setOnPress([this]()
+                              {
+        numericPadTarget = NumericPadTarget::FramingFeed;
+        numericPad.show(tr(StringId::Settings_Modal_FramingSpeed), appSettings.getFramingFeedRate()); });
+
+    previewToggle.setState(appSettings.isGcodePreviewEnabled());
+    previewToggle.setOnChange([this](bool state)
+                              { appSettings.setGcodePreviewEnabled(state); });
+
+    jobRecoveryToggle.setState(appSettings.isJobRecoveryEnabled());
+    jobRecoveryToggle.setOnChange([this](bool state)
+                                  { appSettings.setJobRecoveryEnabled(state); });
+
+    languageRow.setValue(appSettings.getLanguage() == AppLanguage::Spanish ? "Espanol" : "English");
+    languageRow.setOnPress([this]()
+                           {
+        enumPickerTarget = EnumPickerTarget::Language;
+        enumPicker.show(tr(StringId::Settings_Language), LANGUAGE_OPTIONS, 2, (uint8_t)appSettings.getLanguage()); });
+
+    controlScrollPanel.addChild(&jogFeedRow, 0, 0);
+    controlScrollPanel.addChild(&framingFeedRow, 0, 38);
+    controlScrollPanel.addChild(&previewLabel, 8, 84);
+    controlScrollPanel.addChild(&previewToggle, 192, 82);
+    controlScrollPanel.addChild(&jobRecoveryLabel, 8, 116);
+    controlScrollPanel.addChild(&jobRecoveryToggle, 192, 114);
+    controlScrollPanel.addChild(&languageRow, 0, 150);
+
+    // general
 
     numericPad.setOnSubmit([this](float value)
                            {
-        grbl.setSetting(editingSettingIndex, value);
-        grblSettingsList.refresh(); });
+        switch (numericPadTarget)
+        {
+            case NumericPadTarget::GrblSetting:
+                grbl.setSetting(editingSettingIndex, value);
+                grblSettingsList.refresh();
+                break;
+
+            case NumericPadTarget::JogFeed:
+                appSettings.setJogFeedRate(value);
+                jogFeedRow.setValue(String((int)value) + " mm/min");
+                break;
+
+            case NumericPadTarget::FramingFeed:
+                appSettings.setFramingFeedRate(value);
+                framingFeedRow.setValue(String((int)value) + " mm/min");
+                break;
+        } });
 
     numericPad.setOnCancel([this]() {});
 
     enumPicker.setOnSubmit([this](uint8_t index)
                            {
-        grbl.setSetting(editingSettingIndex, (float)index);
-        grblSettingsList.refresh(); });
+        switch (enumPickerTarget)
+        {
+            case EnumPickerTarget::GrblSetting:
+                grbl.setSetting(editingSettingIndex, (float)index);
+                grblSettingsList.refresh();
+                break;
 
-    // ------------------------------------------
+            case EnumPickerTarget::Language:
+                appSettings.setLanguage((AppLanguage)index);
+                languageRow.setValue(index == 0 ? "Espanol" : "English");
+                if (onLanguageChanged) onLanguageChanged();
+                break;
+        } });
 
-    menuWidgets = {&aboutRow, &wifiRow, &machineRow};
+    // ---------- widgets control--------------
+
+    menuWidgets = {&aboutRow, &wifiRow, &machineRow, &controlRow};
 
     aboutWidgets = {
         &aboutBackButton, &aboutTitleLabel,
@@ -143,6 +247,10 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
         &machineBackButton, &machineTitleLabel,
         &grblSettingsList};
 
+    controlWidgets = {
+        &controlBackButton, &controlTitleLabel,
+        &controlScrollPanel};
+
     widgets = menuWidgets;
 }
 
@@ -151,7 +259,16 @@ void SettingsScreen::switchToPage(SettingsPage page)
     currentPage = page;
 
     if (page == SettingsPage::Wifi)
-        wifiWidgetsNeedRebuild = true;
+    {
+        wifiWidgets = {&wifiBackButton, &wifiTitleLabel, &wifiStatusLabel, &wifiDetailLabel};
+
+        if (wifi.getMode() == WifiMode::Connected)
+            wifiWidgets.push_back(&forgetNetworkButton);
+        else
+            wifiWidgets.push_back(&wifiScanButton);
+
+        wifiWidgets.push_back(&networkList);
+    }
 
     switch (page)
     {
@@ -166,6 +283,9 @@ void SettingsScreen::switchToPage(SettingsPage page)
         break;
     case SettingsPage::Machine:
         widgets = machineWidgets;
+        break;
+    case SettingsPage::Control:
+        widgets = controlWidgets;
         break;
     }
 
@@ -208,27 +328,29 @@ void SettingsScreen::update()
 
     wasScanning = isScanning;
 
+    static WifiMode lastMode = WifiMode::Disconnected;
     WifiMode currentMode = wifi.getMode();
 
     if (currentMode == WifiMode::Connected)
     {
-        wifiStatusLabel.setText("Conectado");
+        wifiStatusLabel.setText(tr(StringId::Settings_Connected));
         wifiDetailLabel.setText(wifi.getConnectedSSID() + "  " + wifi.getIP());
     }
     else if (currentMode == WifiMode::Connecting)
     {
-        wifiStatusLabel.setText("Conectando...");
+        wifiStatusLabel.setText(tr(StringId::Settings_Connecting));
     }
     else if (currentMode == WifiMode::AccessPoint)
     {
-        wifiStatusLabel.setText("Modo punto de acceso");
+        wifiStatusLabel.setText(tr(StringId::Settings_AccessPointMode));
         wifiDetailLabel.setText(String("CNC-Controller  ") + wifi.getIP());
     }
     else if (currentMode == WifiMode::Scanning)
     {
-        wifiStatusLabel.setText("Buscando redes");
+        wifiStatusLabel.setText(tr(StringId::Settings_Scanning));
     }
-    if ((currentMode != lastWifiMode || wifiWidgetsNeedRebuild) && currentPage == SettingsPage::Wifi)
+
+    if (currentMode != lastMode && currentPage == SettingsPage::Wifi)
     {
         wifiWidgets = {&wifiBackButton, &wifiTitleLabel, &wifiStatusLabel, &wifiDetailLabel};
 
@@ -241,9 +363,23 @@ void SettingsScreen::update()
 
         widgets = wifiWidgets;
         invalidateAll();
-
-        wifiWidgetsNeedRebuild = false;
     }
 
-    lastWifiMode = currentMode;
+    lastMode = currentMode;
+}
+
+void SettingsScreen::onEnter()
+{
+    IScreen::onEnter();
+
+    jogFeedRow.setValue(String((int)appSettings.getJogFeedRate()) + " mm/min");
+    framingFeedRow.setValue(String((int)appSettings.getFramingFeedRate()) + " mm/min");
+    previewToggle.setState(appSettings.isGcodePreviewEnabled());
+    jobRecoveryToggle.setState(appSettings.isJobRecoveryEnabled());
+    languageRow.setValue(appSettings.getLanguage() == AppLanguage::Spanish ? "Espanol" : "English");
+}
+
+void SettingsScreen::setOnLanguageChanged(LanguageChangeCallback callback)
+{
+    onLanguageChanged = callback;
 }

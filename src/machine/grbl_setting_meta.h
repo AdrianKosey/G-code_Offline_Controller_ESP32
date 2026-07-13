@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
-
+#include "../i18n/translations.h"
 enum class GrblSettingType
 {
     Toggle,   // 0/1
@@ -12,16 +12,16 @@ enum class GrblSettingType
 struct GrblSettingDef
 {
     uint8_t index;
-    const char* name;
+    StringId nameId; 
     GrblSettingType type;
 
-    const char** enumLabels = nullptr; // Enum only
+    const StringId* enumLabelIds = nullptr;
     uint8_t enumCount = 0;
 
     float min = 0;
     float max = 100000;
     float step = 1;
-    const char* unit = ""; // "mm", "mm/min", "RPM", etc
+    StringId unitId = StringId::GRBL_Value_Type1;
 };
 
 // Table of known parameters - expand this list with any that are missing

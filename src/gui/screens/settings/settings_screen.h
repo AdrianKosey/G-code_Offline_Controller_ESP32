@@ -17,20 +17,38 @@
 #include "../../widgets/numeric_pad/numeric_pad_modal_widget.h"
 #include "../../widgets/enum_picker/enum_picker_modal_widget.h"
 #include "../../../machine/grbl_controller.h"
+#include "../../../app/app_settings_manager.h"
+#include "../../core/scroll_panel_widget.h"
 
 enum class SettingsPage
 {
     Menu,
     About,
     Wifi,
-    Machine
+    Machine,
+    Control
+};
+
+enum class NumericPadTarget
+{
+    GrblSetting,
+    JogFeed,
+    FramingFeed
+};
+
+enum class EnumPickerTarget
+{
+    GrblSetting,
+    Language
 };
 
 class SettingsScreen : public IScreen
 {
 public:
 
-    SettingsScreen(WifiManager& wifiManager, GrblController& grblController);
+    SettingsScreen(WifiManager& wifiManager, GrblController& grblController, AppSettingsManager& appSettingsManager);
+    void onEnter() override;
+
     void draw(DisplayManager& display) override;
     void update() override;
 
@@ -48,8 +66,11 @@ public:
     void drawEnumPicker(DisplayManager& display) { enumPicker.draw(display); }
     bool handleEnumPickerTouch(const TouchEvent& event) { return enumPicker.handleTouch(event); }
 
+    using LanguageChangeCallback = std::function<void()>;
+    void setOnLanguageChanged(LanguageChangeCallback callback);
+
 private:
-    GrblController& grbl;
+    LanguageChangeCallback onLanguageChanged;
     SettingsPage currentPage = SettingsPage::Menu;
     bool needsClear = false;
 
@@ -57,6 +78,7 @@ private:
     MenuRowWidget aboutRow;
     MenuRowWidget wifiRow;
     MenuRowWidget machineRow;
+    MenuRowWidget controlRow;
 
     // About the device
     IconButtonWidget aboutBackButton;
@@ -74,29 +96,44 @@ private:
     // Machine
     IconButtonWidget machineBackButton;
     LabelWidget machineTitleLabel;
-    GrblSettingsListWidget grblSettingsList;
-    NumericPadModalWidget numericPad;
-    EnumPickerModalWidget enumPicker;
 
-    uint8_t editingSettingIndex = 0;
+    // Control (app settings)
+    IconButtonWidget controlBackButton;
+    LabelWidget controlTitleLabel;
+    MenuRowWidget jogFeedRow;
+    MenuRowWidget framingFeedRow;
+    LabelWidget previewLabel;
+    ToggleWidget previewToggle;
+    MenuRowWidget languageRow;
+    ScrollPanelWidget controlScrollPanel;
+    LabelWidget jobRecoveryLabel;
+    ToggleWidget jobRecoveryToggle;
 
     std::vector<Widget*> menuWidgets;
     std::vector<Widget*> aboutWidgets;
     std::vector<Widget*> wifiWidgets;
     std::vector<Widget*> machineWidgets;
+    std::vector<Widget*> controlWidgets;
 
     void switchToPage(SettingsPage page);
+    void refreshNetworkList();
 
     WifiManager& wifi;
 
-    static constexpr uint8_t MAX_NETWORK_ROWS = 8;
     WifiNetworkListWidget networkList;
-    String pendingSsid;
     LabelWidget wifiDetailLabel;
-
     KeyboardModalWidget passwordKeyboard;
-    WifiMode lastWifiMode = WifiMode::Disconnected;
-    bool wifiWidgetsNeedRebuild = true;
+    String pendingSsid;
 
-    void refreshNetworkList();
+    GrblController& grbl;
+    GrblSettingsListWidget grblSettingsList;
+    uint8_t editingSettingIndex = 0;
+
+    AppSettingsManager& appSettings;
+
+    NumericPadModalWidget numericPad;
+    NumericPadTarget numericPadTarget = NumericPadTarget::GrblSetting;
+
+    EnumPickerModalWidget enumPicker;
+    EnumPickerTarget enumPickerTarget = EnumPickerTarget::GrblSetting;
 };

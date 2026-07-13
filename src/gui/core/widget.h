@@ -45,6 +45,16 @@ public:
         return bounds;
     }
 
+    void setPosition(int16_t x, int16_t y)
+    {
+        if (bounds.x == x && bounds.y == y)
+            return;
+
+        bounds.x = x;
+        bounds.y = y;
+        invalidate();
+    }
+
 protected:
 
     Rect bounds;

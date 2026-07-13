@@ -17,6 +17,9 @@
 #include "../machine/grbl_controller.h"
 #include "../gcode/gcode_job_runner.h"
 #include "../machine/framing_runner.h"
+#include "app_settings_manager.h"
+#include "../i18n/translations.h"
+enum class ConfirmModalTarget { LoadFile, LanguageRestart };
 class App
 {
 public:
@@ -25,6 +28,8 @@ public:
     void update();
 
 private:
+    AppSettingsManager appSettings;
+    ConfirmModalTarget confirmTarget = ConfirmModalTarget::LoadFile;
     bool sdReady = false;
     WifiManager wifiManager;
     GrblController grblController;

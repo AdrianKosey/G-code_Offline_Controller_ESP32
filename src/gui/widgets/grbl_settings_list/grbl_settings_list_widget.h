@@ -6,6 +6,7 @@
 #include "../../theme.h"
 #include "../../../machine/grbl_controller.h"
 #include "../../../machine/grbl_setting_meta.h"
+#include "../toggle/toggle_widget.h" 
 
 class GrblSettingsListWidget : public Widget
 {

@@ -4,6 +4,9 @@
 #include "../../core/widget.h"
 #include "../../theme.h"
 
+
+void drawToggleVisual(DisplayManager& display, const Rect& bounds, bool state);
+
 class ToggleWidget : public Widget
 {
 public:

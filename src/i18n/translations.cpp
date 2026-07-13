@@ -1,0 +1,93 @@
+#include "translations.h"
+#include "../app/app_settings_manager.h"
+
+
+static const char* SPANISH[(int)StringId::StringId_Count] = {
+    "Abrir: ", "Esto reinicia el control.", "Cargando archivo...", "Reiniciando Dispositivo...", 
+    "Si", "No",
+
+    "Inicio", "Archivos", "Manual", "Utilidad", "Ajustes", // Max 8 for sidebar
+
+    "X+", "X-", "Y+", "Y-", "Z+", "Z-",
+    "Paso (mm)", "CASA", "SET X0", "SET Y0", "SET Z0", "PROBAR Z",
+
+    "CONTROL CNC", "En Curso:", "Sin Archivo", "CORRIENDO", "PAUSADO", "TERMINADO", "ERROR", "LISTO",
+    "Velocidad", "Potencia",
+    "X", "Y", "Z",
+
+    "Archivos", "No se detecta la tarjeta SD",
+    "Archivo Invalido",
+
+    "Tipo de herramienta","Husillo", "Laser", "Potencia", "ON", "OFF", "CW", "CCW",
+
+    "Acerca del dispositivo", "Wi-Fi", "Maquina", "Ajustes del Control",
+    "Firmware", "Proyecto", "G-code Offline Controller",
+    "Buscar redes", "Olvidar red", "No conectado",
+    "Conectando...", "Conectando a", "Conectado", "Contraseña para: ", "Modo punto de acceso", "Buscando redes...",
+    "Velocidad de Jog", "Velocidad de Framing", "Previsualizacion G-code", "Recuperar trabajos CNC", "Idioma",
+    "Velocidad de Jog (mm/min)", "Velocidad de Framing (mm/min)",
+
+    "Posicion maquina (MPos)", "Posicion de trabajo (WPos)",
+    "Duracion pulso step", "Retardo desactivar steppers", "Invertir puerto step", "Invertir puerto direccion",
+    "Invertir habilitar steppers", "Invertir limit switches", "Invertir probe", "Opciones reporte estado",
+    "Desviacion de union", "Tolerancia de arco", "Reporte en pulgadas", "Limites de software",
+    "Limites de hardware", "Ciclo de homing", "Direccion de homing", "Feed de homing",
+    "Feed de busqueda homing", "Debounce homing", "Retraccion homing", "Velocidad max spindle",
+    "Velocidad min spindle", "Modo laser", "Pasos/mm eje X", "Pasos/mm eje Y",
+    "Pasos/mm eje Z", "Velocidad max X", "Velocidad max Y", "Velocidad max Z",
+    "Aceleracion X", "Aceleracion Y", "Aceleracion Z", "Recorrido max X",
+    "Recorrido max Y", "Recorrido max Z", 
+    "us", "ms", "mascara", "mm", "mm/min", "RPM", "pasos/mm", "mm/s2",
+
+    "Cancelar", "OK", "Cargar archivo?", "Cargando...",
+};
+
+static const char* ENGLISH[(int)StringId::StringId_Count] = {
+    "Open: ", "This resets the control.", "Loading file...", "Restarting Device...",
+    "Yes", "No",
+
+    "Home", "Files", "Jog", "Tools", "Settings",
+
+    "X+", "X-", "Y+", "Y-", "Z+", "Z-",
+    "Step (mm)", "HOME", "SET X0", "SET Y0", "SET Z0", "PROBE Z",
+
+    "CNC CONTROL", "In Progress:", "No File.", "RUNNING", "PAUSED", "COMPLETED", "ERROR", "READY",
+    "Feed", "Power",
+    "X", "Y", "Z",
+
+    "Files", "SD card not detected",
+    "Invalid File",
+
+    "Tool type","Spindle", "Laser", "Power", "ON", "OFF", "CW", "CCW",
+
+    "About device", "Wi-Fi", "Machine", "Control Settings",
+    "Firmware", "Project", "G-code Offline Controller",
+    "Scan networks", "Forget network", "Not connected",
+    "Connecting...", "Connecting to", "Connected", "Password for: ", "Access point mode", "Scanning networks...",
+    "Jog speed", "Framing speed", "G-code preview", "CNC Job Recovery", "Language",
+    "Jogging Speed (mm/min)", "Framing Speed (mm/min)",
+
+    "Machine position (MPos)", "Work position (WPos)",
+    "Step pulse time", "Step idle delay", "Step port invert", "Direction port invert",
+    "Step enable invert", "Limit pins invert", "Probe pin invert", "Status report options",
+    "Junction deviation", "Arc tolerance", "Report inches", "Soft limits",
+    "Hard limits", "Homing cycle", "Homing direction invert", "Homing locate feed",
+    "Homing search feed", "Homing debounce", "Homing pull-off", "Max spindle speed",
+    "Min spindle speed", "Laser mode", "X-axis steps/mm", "Y-axis steps/mm",
+    "Z-axis steps/mm", "X-axis max rate", "Y-axis max rate", "Z-axis max rate",
+    "X-axis acceleration", "Y-axis acceleration", "Z-axis acceleration", "X-axis max travel",
+    "Y-axis max travel", "Z-axis max travel", 
+    "us", "ms", "mask", "mm", "mm/min", "RPM", "steps/mm", "mm/s2",
+
+    "Cancel", "OK", "Load file?", "Loading...",
+};
+
+const char* tr(StringId id)
+{
+    int index = (int)id;
+
+    if (g_appSettings && g_appSettings->getLanguage() == AppLanguage::English)
+        return ENGLISH[index];
+
+    return SPANISH[index];
+}

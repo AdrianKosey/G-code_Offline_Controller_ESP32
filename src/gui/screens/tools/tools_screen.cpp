@@ -1,5 +1,5 @@
 #include "tools_screen.h"
-
+#include "../../../i18n/translations.h"
 static constexpr int16_t CONTENT_X = 60;
 
 ToolsScreen::ToolsScreen(GrblController& grblController)
@@ -7,18 +7,18 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
 
       panel(Rect{CONTENT_X + 8, 34, 200, 160}, Theme::Panel, 10),
 
-      modeLabel(Rect{CONTENT_X + 18, 42, 100, 14}, "Tipo de herramienta", Theme::TextSecondary, 1, Theme::Panel, false),
-      spindleModeButton(Rect{CONTENT_X + 18, 58, 85, 30}, "Spindle"),
-      laserModeButton(Rect{CONTENT_X + 111, 58, 85, 30}, "Laser"),
+      modeLabel(Rect{CONTENT_X + 18, 42, 100, 14}, tr(StringId::Tool_Type), Theme::TextSecondary, 1, Theme::Panel, false),
+      spindleModeButton(Rect{CONTENT_X + 18, 58, 85, 30}, tr(StringId::Tools_Spindle)),
+      laserModeButton(Rect{CONTENT_X + 111, 58, 85, 30}, tr(StringId::Tools_Laser)),
 
-      powerLabel(Rect{CONTENT_X + 18, 98, 100, 14}, "Potencia", Theme::TextSecondary, 1, Theme::Panel, false),
+      powerLabel(Rect{CONTENT_X + 18, 98, 100, 14}, tr(StringId::Tools_Power), Theme::TextSecondary, 1, Theme::Panel, false),
       powerValueLabel(Rect{CONTENT_X + 18, 112, 100, 24}, "0 RPM", Theme::Text, 2, Theme::Panel, false),
 
       powerMinusButton(Rect{CONTENT_X + 120, 108, 36, 32}, "-10"),
       powerPlusButton(Rect{CONTENT_X + 162, 108, 36, 32}, "+10"),
 
-      directionButton(Rect{CONTENT_X + 18, 148, 85, 32}, "CW"),
-      toggleButton(Rect{CONTENT_X + 111, 148, 85, 32}, "ON")
+      directionButton(Rect{CONTENT_X + 18, 148, 85, 32}, tr(StringId::Tools_CW)),
+      toggleButton(Rect{CONTENT_X + 111, 148, 85, 32}, tr(StringId::Tools_On))
 {
     spindleModeButton.setSelected(true);
 
@@ -39,13 +39,13 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
 
     directionButton.setOnPress([this]() {
         clockwise = !clockwise;
-        directionButton.setText(clockwise ? "CW" : "CCW");
+        directionButton.setText(clockwise ? tr(StringId::Tools_CW) : tr(StringId::Tools_CCW));
         if (on) applyOutput();
     });
 
     toggleButton.setOnPress([this]() {
         on = !on;
-        toggleButton.setText(on ? "OFF" : "ON");
+        toggleButton.setText(on ? tr(StringId::Tools_Off) : tr(StringId::Tools_On));
         applyOutput();
     });
 
@@ -64,7 +64,7 @@ void ToolsScreen::selectMode(ToolMode newMode)
     if (on)
     {
         on = false;
-        toggleButton.setText("ON");
+        toggleButton.setText(tr(StringId::Tools_On));
         grbl.setSpindlePower(0.0f);
     }
 
@@ -81,7 +81,7 @@ void ToolsScreen::updatePowerLabel()
     if (mode == ToolMode::Spindle)
     {
         int rpm = (int)(power / 100.0f * grbl.getMaxSpindleSpeed());
-        powerValueLabel.setText(String(rpm) + " RPM");
+        powerValueLabel.setText(String(rpm) + " " + tr(StringId::GRBL_Value_Type6));
     }
     else
     {

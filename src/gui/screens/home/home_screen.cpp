@@ -1,28 +1,29 @@
 #include "home_screen.h"
+#include "../../../i18n/translations.h"
 
 static constexpr int16_t CONTENT_X = 60;
 
 HomeScreen::HomeScreen(GrblController& grblController)
     : grbl(grblController),
-      statusBadge(Rect{CONTENT_X + 170, 34, 80, 22}, "RUNNING", Theme::Text, 2),
+      statusBadge(Rect{CONTENT_X + 170, 34, 80, 22}, tr(StringId::Home_Ready), Theme::Text, 2),
       jobPanel(Rect{CONTENT_X + 8, 34, 150, 200}, Theme::Panel, 10),
-      jobCaption(Rect{CONTENT_X + 15, 40, 130, 16}, "En Curso:", Theme::TextSecondary, 1, Theme::Panel, false),
-      jobFilename(Rect{CONTENT_X + 15, 54, 130, 20}, "No Job", Theme::Text, 2, Theme::Panel, true),
+      jobCaption(Rect{CONTENT_X + 15, 40, 130, 16}, tr(StringId::Home_InProgress), Theme::TextSecondary, 1, Theme::Panel, false),
+      jobFilename(Rect{CONTENT_X + 15, 54, 130, 20}, tr(StringId::Home_NoFile), Theme::Text, 2, Theme::Panel, true),
       jobProgress(Rect{CONTENT_X + 15, 156, 130, 10}, Theme::JobPanel, Theme::Progress),
       jobProgressText(Rect{CONTENT_X + 15, 168, 90, 14}, "0 / 0", Theme::TextSecondary, 1, Theme::Panel, false),
       jobProgressPercentage(Rect{CONTENT_X + 115, 168, 40, 14}, "0%", Theme::TextSecondary, 1, Theme::Panel, false),
 
       xyzPanel(Rect{CONTENT_X + 170, 62, 80, 136}, Theme::Panel, 10),
-      labelX(Rect{CONTENT_X + 178, 68, 30, 14}, "X", Theme::TextSecondary, 1, Theme::Panel, false),
+      labelX(Rect{CONTENT_X + 178, 68, 30, 14}, tr(StringId::Coords_X), Theme::TextSecondary, 1, Theme::Panel, false),
       valueX(Rect{CONTENT_X + 178, 80, 64, 16}, "0.000", Theme::Text, 2, Theme::Panel, false),
-      labelY(Rect{CONTENT_X + 178, 100, 30, 14}, "Y", Theme::TextSecondary, 1, Theme::Panel, false),
+      labelY(Rect{CONTENT_X + 178, 100, 30, 14}, tr(StringId::Coords_Y), Theme::TextSecondary, 1, Theme::Panel, false),
       valueY(Rect{CONTENT_X + 178, 112, 64, 16}, "0.000", Theme::Text, 2, Theme::Panel, false),
-      labelZ(Rect{CONTENT_X + 178, 132, 30, 14}, "Z", Theme::TextSecondary, 1, Theme::Panel, false),
+      labelZ(Rect{CONTENT_X + 178, 132, 30, 14}, tr(StringId::Coords_Z), Theme::TextSecondary, 1, Theme::Panel, false),
       valueZ(Rect{CONTENT_X + 178, 144, 64, 16}, "0.000", Theme::Text, 2, Theme::Panel, false),
-      labelS(Rect{CONTENT_X + 178, 164, 30, 14}, "Feed", Theme::TextSecondary, 1, Theme::Panel, false),
+      labelS(Rect{CONTENT_X + 178, 164, 30, 14}, tr(StringId::Home_Speed), Theme::TextSecondary, 1, Theme::Panel, false),
       valueS(Rect{CONTENT_X + 178, 176, 64, 16}, "0", Theme::Text, 2, Theme::Panel, false),
 
-      powerLabel(Rect{CONTENT_X + 170, 200, 60, 16}, "Power", Theme::TextSecondary, 1, Theme::Background, false),
+      powerLabel(Rect{CONTENT_X + 170, 200, 60, 16}, tr(StringId::Home_Power), Theme::TextSecondary, 1, Theme::Background, false),
       powerBar(Rect{CONTENT_X + 170, 216, 80, 8}, Theme::JobPanel, Theme::Progress),
 
       gcodePreview(
@@ -75,7 +76,7 @@ void HomeScreen::loadJob(const String &path)
 
     if (!info.valid)
     {
-        jobFilename.setText("Archivo invalido");
+        jobFilename.setText(tr(StringId::Files_Invalid));
         gcodePreview.clearPath();
         return;
     }
@@ -153,27 +154,27 @@ void HomeScreen::updateMachineState(JobState jobState, const GrblStatus &status,
     switch (jobState)
     {
     case JobState::Running:
-        stateText = "RUNNING";
+        stateText = tr(StringId::Home_Running);
         stateColor = Theme::Success;
         playPauseButton.setIcon(Icons::Pause);
         break;
     case JobState::Paused:
-        stateText = "PAUSADO";
+        stateText = tr(StringId::Home_Paused);
         stateColor = Theme::Warning;
         playPauseButton.setIcon(Icons::Play);
         break;
     case JobState::Completed:
-        stateText = "TERMINADO";
+        stateText = tr(StringId::Home_Completed);
         stateColor = Theme::Progress;
         playPauseButton.setIcon(Icons::Play);
         break;
     case JobState::Error:
-        stateText = "ERROR";
+        stateText = tr(StringId::Home_Error);
         stateColor = Theme::Error;
         playPauseButton.setIcon(Icons::Play);
         break;
     default:
-        stateText = "LISTO";
+        stateText = tr(StringId::Home_Ready);
         stateColor = Theme::TextSecondary;
         playPauseButton.setIcon(Icons::Play);
         break;

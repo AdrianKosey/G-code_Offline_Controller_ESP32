@@ -1,5 +1,5 @@
 #include "confirm_modal_widget.h"
-
+#include "../../../i18n/translations.h"
 namespace
 {
     Rect dialogBounds(const Rect& screenBounds)
@@ -37,8 +37,8 @@ ConfirmModalWidget::ConfirmModalWidget(const Rect& screenBounds)
     : screenBounds(screenBounds),
       panel(dialogBounds(screenBounds), Theme::Panel, 10),
       messageLabel(messageLabelBounds(screenBounds), "", Theme::Text, 2, Theme::Panel),
-      yesButton(yesButtonBounds(screenBounds), "Si"),
-      noButton(noButtonBounds(screenBounds), "No")
+      yesButton(yesButtonBounds(screenBounds), tr(StringId::App_Yes)),
+      noButton(noButtonBounds(screenBounds), tr(StringId::App_No))
 {
     yesButton.setOnPress([this]() {
         visible = false;
