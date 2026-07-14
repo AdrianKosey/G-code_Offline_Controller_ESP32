@@ -17,4 +17,5 @@ public:
     // Iterates through the entire file ONCE (streaming, without loading it into memory).
     // This is the "expensive" operation - it's done only once when the file is selected, not on every frame.
     static GCodeFileInfo analyze(const String& path);
+    static uint32_t countLinesOnly(const String& path); // Fast - Does NOT calculate bounding box, only counts lines
 };

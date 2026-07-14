@@ -12,6 +12,7 @@ AppSettingsManager::AppSettingsManager()
     gcodePreviewEnabled = prefs.getBool("preview", true);
     jobRecoveryEnabled = prefs.getBool("jobRecov", false);
     safeZHeight = prefs.getFloat("safeZ", SAFE_Z_HEIGHT);
+    framingEnabled = prefs.getBool("framing", FRAMING_ENABLED_DEFAULT);
     language = (AppLanguage)prefs.getUChar("lang", (uint8_t)AppLanguage::Spanish);
 
     Serial.printf("[Settings] Cargado: jogFeed=%.1f framFeed=%.1f preview=%d lang=%d\n",
@@ -67,4 +68,12 @@ void AppSettingsManager::setSafeZHeight(float value)
 {
     safeZHeight = value;
     prefs.putFloat("safeZ", value);
+}
+
+bool AppSettingsManager::isFramingEnabled() const { return framingEnabled; }
+
+void AppSettingsManager::setFramingEnabled(bool enabled)
+{
+    framingEnabled = enabled;
+    prefs.putBool("framing", enabled);
 }

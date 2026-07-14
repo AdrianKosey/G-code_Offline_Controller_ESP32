@@ -70,58 +70,72 @@ HomeScreen::HomeScreen(GrblController& grblController)
         &playPauseButton, &stopButton, &framingButton};
 }
 
-void HomeScreen::loadJob(const String& path, bool previewEnabled)
+void HomeScreen::loadJob(const String& path, bool previewEnabled, bool framingEnabled)
 {
-    GCodeFileInfo info = GCodeFileAnalyzer::analyze(path); // This ALWAYS runs - necessary for Framing
-
-    if (!info.valid)
-    {
-        jobFilename.setText(tr(StringId::Files_Invalid));
-        gcodePreview.clearPath();
-        return;
-    }
-
     int lastSlash = path.lastIndexOf('/');
     String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
-    jobFilename.setText(filename);
-
-    totalLines = info.totalLines;
-    currentLine = 0;
-
-    // Project boundaries are always saved - Framing requires them regardless of the preview.
-    projectMinX = info.minX;
-    projectMinY = info.minY;
-    projectMaxX = info.maxX;
-    projectMaxY = info.maxY;
 
     gcodePreview.clearPath();
     gcodePreview.setDisabledMessage(!previewEnabled);
 
-    if (previewEnabled)
+    if (framingEnabled)
     {
-        gcodePreview.setProjectBounds(info.minX, info.minY, info.maxX, info.maxY);
+        // Full path - analyzes bounding box (necessary for Framing) and optionally the preview
+        GCodeFileInfo info = GCodeFileAnalyzer::analyze(path);
 
-        uint32_t stride = max((uint32_t)1, info.totalLines / GCodePreviewWidget::MAX_POINTS);
-
-        File file = SD.open(path);
-        if (file)
+        if (!info.valid)
         {
-            GCodeParser parser;
-            uint32_t lineIndex = 0;
-
-            while (file.available())
-            {
-                String line = file.readStringUntil('\n');
-                GCodeCommand command = parser.parseLine(line);
-
-                if (command.hasTarget && (lineIndex % stride == 0))
-                    gcodePreview.addPoint(command.target.x, command.target.y);
-
-                lineIndex++;
-            }
-
-            file.close();
+            jobFilename.setText(tr(StringId::Files_Invalid));
+            projectBoundsValid = false;
+            return;
         }
+
+        jobFilename.setText(filename);
+        totalLines = info.totalLines;
+        currentLine = 0;
+
+        projectMinX = info.minX;
+        projectMinY = info.minY;
+        projectMaxX = info.maxX;
+        projectMaxY = info.maxY;
+        projectBoundsValid = true;
+
+        if (previewEnabled)
+        {
+            gcodePreview.setProjectBounds(info.minX, info.minY, info.maxX, info.maxY);
+
+            uint32_t stride = max((uint32_t)1, info.totalLines / GCodePreviewWidget::MAX_POINTS);
+
+            File file = SD.open(path);
+            if (file)
+            {
+                GCodeParser parser;
+                uint32_t lineIndex = 0;
+
+                while (file.available())
+                {
+                    String line = file.readStringUntil('\n');
+                    GCodeCommand command = parser.parseLine(line);
+
+                    if (command.hasTarget && (lineIndex % stride == 0))
+                        gcodePreview.addPoint(command.target.x, command.target.y);
+
+                    lineIndex++;
+                }
+
+                file.close();
+            }
+        }
+    }
+    else
+    {
+        // Fast path - only counts lines, no bounding box, no preview possible
+        jobFilename.setText(filename);
+        totalLines = GCodeFileAnalyzer::countLinesOnly(path);
+        currentLine = 0;
+
+        projectBoundsValid = false; // Framing cannot function without state - App must verify before use
+        gcodePreview.setDisabledMessage(true); // A preview is also not possible without the full analysis
     }
 
     gcodePreview.setProgress(0);
@@ -201,3 +215,5 @@ void HomeScreen::updateMachineState(JobState jobState, const GrblStatus &status,
         gcodePreview.setProgress(percent);
     }
 }
+
+bool HomeScreen::hasValidProjectBounds() const { return projectBoundsValid; }

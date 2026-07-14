@@ -40,3 +40,27 @@ GCodeFileInfo GCodeFileAnalyzer::analyze(const String& path)
 
     return info;
 }
+
+uint32_t GCodeFileAnalyzer::countLinesOnly(const String& path)
+{
+    File file = SD.open(path);
+    if (!file || file.isDirectory())
+        return 0;
+
+    uint32_t lines = 0;
+    uint8_t buffer[512];
+
+    while (file.available())
+    {
+        size_t bytesRead = file.read(buffer, sizeof(buffer));
+
+        for (size_t i = 0; i < bytesRead; i++)
+        {
+            if (buffer[i] == '\n')
+                lines++;
+        }
+    }
+
+    file.close();
+    return lines;
+}

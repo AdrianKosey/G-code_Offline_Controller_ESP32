@@ -44,5 +44,5 @@ namespace GrblDefaults
 
 constexpr float JOG_FEED_RATE = 1000.0f;      // mm/min
 constexpr float FRAMING_FEED_RATE = 2000.0f;  // idem
-
+constexpr bool FRAMING_ENABLED_DEFAULT = true;
 constexpr float SAFE_Z_HEIGHT = 5.0f;

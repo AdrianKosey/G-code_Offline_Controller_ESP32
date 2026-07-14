@@ -34,7 +34,7 @@ enum class StringId
     Settings_Connecting, Settings_Connecting_To, Settings_Connected, Settings_Password, Settings_AccessPointMode, Settings_Scanning,
     Settings_JogSpeed, Settings_FramingSpeed, Settings_GcodePreview, Settings_JobRecovery, Settings_Language,
     Settings_Modal_JogSpeed, Settings_Modal_FramingSpeed,
-    Settings_SafeZ,
+    Settings_SafeZ, Settings_Framing,
 
     // GRBL Settings & Status
     StatusMPos, StatusWPos,
@@ -50,7 +50,7 @@ enum class StringId
     GRBL_Value_Type1, GRBL_Value_Type2, GRBL_Value_Type3, GRBL_Value_Type4, GRBL_Value_Type5, GRBL_Value_Type6, GRBL_Value_Type7, GRBL_Value_Type8,
 
     // Modales
-    Modal_Cancel, Modal_Ok, Modal_LoadFile, Modal_Loading,
+    Modal_Cancel, Modal_Ok, Modal_LoadFile, Modal_Loading, Modal_Framing_Error,
 
     StringId_Count
 };

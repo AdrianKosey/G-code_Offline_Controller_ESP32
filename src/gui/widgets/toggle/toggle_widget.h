@@ -19,10 +19,13 @@ public:
 
     void setState(bool value);
     bool getState() const;
+    void setEnabled(bool enabled);
+    bool isEnabled() const;
 
     void setOnChange(ChangeCallback callback);
 
 private:
     bool state;
+    bool enabled = true;
     ChangeCallback onChange;
 };

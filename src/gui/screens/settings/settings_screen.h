@@ -110,6 +110,8 @@ private:
     ScrollPanelWidget controlScrollPanel;
     LabelWidget jobRecoveryLabel;
     ToggleWidget jobRecoveryToggle;
+    LabelWidget framingLabel;
+    ToggleWidget framingToggle;
 
     std::vector<Widget*> menuWidgets;
     std::vector<Widget*> aboutWidgets;

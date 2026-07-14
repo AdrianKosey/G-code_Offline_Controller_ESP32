@@ -54,6 +54,8 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
       safeZRow(Rect{CONTENT_X + 8, CONTENT_Y + 118, 244, 36}, tr(StringId::Settings_SafeZ)),
       previewLabel(Rect{CONTENT_X + 16, CONTENT_Y + 126, 150, 20}, tr(StringId::Settings_GcodePreview), Theme::Text, 2, Theme::Background, false),
       previewToggle(Rect{CONTENT_X + 200, CONTENT_Y + 124, 48, 24}, true),
+      framingLabel(Rect{0, 0, 150, 20}, tr(StringId::Settings_Framing), Theme::Text, 2, Theme::Background, false),
+      framingToggle(Rect{0, 0, 48, 24}, true),
       jobRecoveryLabel(Rect{0, 0, 150, 20}, tr(StringId::Settings_JobRecovery), Theme::Text, 2, Theme::Background, false),
       jobRecoveryToggle(Rect{0, 0, 48, 24}, false),
       languageRow(Rect{CONTENT_X + 8, CONTENT_Y + 158, 244, 36}, tr(StringId::Settings_Language)),
@@ -167,16 +169,32 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
                               {
         numericPadTarget = NumericPadTarget::FramingFeed;
         numericPad.show(tr(StringId::Settings_Modal_FramingSpeed), appSettings.getFramingFeedRate()); });
-    
+
     safeZRow.setValue(String(appSettings.getSafeZHeight(), 1) + " mm");
-    safeZRow.setOnPress([this]() {
+    safeZRow.setOnPress([this]()
+                        {
         numericPadTarget = NumericPadTarget::SafeZ;
-        numericPad.show(tr(StringId::Settings_SafeZ), appSettings.getSafeZHeight());
-    });
+        numericPad.show(tr(StringId::Settings_SafeZ), appSettings.getSafeZHeight()); });
 
     previewToggle.setState(appSettings.isGcodePreviewEnabled());
     previewToggle.setOnChange([this](bool state)
                               { appSettings.setGcodePreviewEnabled(state); });
+
+    framingToggle.setState(appSettings.isFramingEnabled());
+    framingToggle.setOnChange([this](bool state){
+        appSettings.setFramingEnabled(state);
+
+        if (!state)
+        {
+            appSettings.setGcodePreviewEnabled(false);
+            previewToggle.setState(false);
+            previewToggle.setEnabled(false);
+        }
+        else
+        {
+            previewToggle.setEnabled(true);
+        } });
+    previewToggle.setEnabled(appSettings.isFramingEnabled());
 
     jobRecoveryToggle.setState(appSettings.isJobRecoveryEnabled());
     jobRecoveryToggle.setOnChange([this](bool state)
@@ -193,9 +211,11 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
     controlScrollPanel.addChild(&safeZRow, 0, 38 + 38);
     controlScrollPanel.addChild(&previewLabel, 8, 122);
     controlScrollPanel.addChild(&previewToggle, 192, 120);
-    controlScrollPanel.addChild(&jobRecoveryLabel, 8, 154);
-    controlScrollPanel.addChild(&jobRecoveryToggle, 192, 152);
-    controlScrollPanel.addChild(&languageRow, 0, 188);
+    controlScrollPanel.addChild(&framingLabel, 8, 154);
+    controlScrollPanel.addChild(&framingToggle, 192, 152);
+    controlScrollPanel.addChild(&jobRecoveryLabel, 8, 188);
+    controlScrollPanel.addChild(&jobRecoveryToggle, 192, 186);
+    controlScrollPanel.addChild(&languageRow, 0, 222);
 
     // general
 
@@ -389,6 +409,8 @@ void SettingsScreen::onEnter()
     framingFeedRow.setValue(String((int)appSettings.getFramingFeedRate()) + " mm/min");
     safeZRow.setValue(String(appSettings.getSafeZHeight(), 1) + " mm");
     previewToggle.setState(appSettings.isGcodePreviewEnabled());
+    previewToggle.setEnabled(appSettings.isFramingEnabled());
+    framingToggle.setState(appSettings.isFramingEnabled());
     jobRecoveryToggle.setState(appSettings.isJobRecoveryEnabled());
     languageRow.setValue(appSettings.getLanguage() == AppLanguage::Spanish ? "Espanol" : "English");
 }

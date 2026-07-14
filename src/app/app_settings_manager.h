@@ -22,6 +22,9 @@ public:
     bool isJobRecoveryEnabled() const;
     void setJobRecoveryEnabled(bool enabled);
 
+    bool isFramingEnabled() const;
+    void setFramingEnabled(bool enabled);
+
     AppLanguage getLanguage() const;
     void setLanguage(AppLanguage lang);
 
@@ -36,6 +39,7 @@ private:
     bool gcodePreviewEnabled = true;
     bool jobRecoveryEnabled = false;
     float safeZHeight = SAFE_Z_HEIGHT;
+    bool framingEnabled = FRAMING_ENABLED_DEFAULT;
     AppLanguage language = AppLanguage::Spanish;
 };
 

@@ -99,11 +99,18 @@ void App::begin()
         jobRecovery.clear();
     });
 
-    homeScreen.setOnFraming([this]()
-                            { framingRunner.start(
-                                  homeScreen.getProjectMinX(), homeScreen.getProjectMinY(),
-                                  homeScreen.getProjectMaxX(), homeScreen.getProjectMaxY(),
-                                  appSettings.getFramingFeedRate()); });
+    homeScreen.setOnFraming([this]() {
+        if (!homeScreen.hasValidProjectBounds())
+        {
+            confirmModal.show(tr(StringId::Modal_Framing_Error));
+            return;
+        }
+
+        framingRunner.start(
+            homeScreen.getProjectMinX(), homeScreen.getProjectMinY(),
+            homeScreen.getProjectMaxX(), homeScreen.getProjectMaxY(),
+            appSettings.getFramingFeedRate());
+    });
 
     filesScreen.setOnFileSelected([this](const String &path) {
         pendingFilePath = path;
@@ -126,7 +133,7 @@ void App::begin()
             loadingModal.show(tr(StringId::App_Loading_File));
             loadingModal.draw(display);
 
-            homeScreen.loadJob(pendingFilePath, appSettings.isGcodePreviewEnabled()); 
+            homeScreen.loadJob(pendingFilePath, appSettings.isGcodePreviewEnabled(), appSettings.isFramingEnabled()); 
 
             jobRunner.load(pendingFilePath, homeScreen.getTotalLines());
 

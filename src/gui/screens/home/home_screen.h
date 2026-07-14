@@ -22,7 +22,7 @@ class HomeScreen : public IScreen
 {
 public:
     HomeScreen(GrblController& grblController);
-    void loadJob(const String& path, bool previewEnabled);
+    void loadJob(const String& path, bool previewEnabled, bool framingEnabled);
     using ActionCallback = std::function<void()>;
 
     void setOnPlayPause(ActionCallback callback);
@@ -35,6 +35,7 @@ public:
     float getProjectMaxY() const;
 
     uint32_t getTotalLines() const;
+    bool hasValidProjectBounds() const;
 
     void updateMachineState(JobState jobState, const GrblStatus& status, uint32_t currentLine, uint32_t totalLines);
 private:
@@ -70,6 +71,7 @@ private:
 
     uint32_t totalLines = 0;
     uint32_t currentLine = 0;
+    bool projectBoundsValid = false;
 
     ActionCallback onPlayPause; 
     ActionCallback onStop;
