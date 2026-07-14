@@ -19,7 +19,7 @@
 #include "../../../machine/grbl_controller.h"
 #include "../../../app/app_settings_manager.h"
 #include "../../core/scroll_panel_widget.h"
-
+#include "about_content_builder.h"
 enum class SettingsPage
 {
     Menu,
@@ -84,8 +84,8 @@ private:
     // About the device
     IconButtonWidget aboutBackButton;
     LabelWidget aboutTitleLabel;
-    LabelWidget firmwareLabel, firmwareValue;
-    LabelWidget projectLabel, projectValue;
+    ScrollPanelWidget aboutScrollPanel;
+    AboutContentBuilder aboutContent;
 
     // Wi-Fi
     IconButtonWidget wifiBackButton;

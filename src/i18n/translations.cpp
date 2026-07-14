@@ -24,11 +24,14 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
 
     "Acerca del dispositivo", "Wi-Fi", "Maquina", "Ajustes del Control",
     "Firmware", "Proyecto", "G-code Offline Controller",
-    "Buscar redes", "Olvidar red", "No conectado",
+    "Buscar redes", "Olvidar red", "No conectado", " (Protegida)",
     "Conectando...", "Conectando a", "Conectado", "Contraseña para: ", "Modo punto de acceso", "Buscando redes...",
     "Velocidad de Jog", "Velocidad de Framing", "Previsualizacion G-code", "Recuperar trabajos CNC", "Idioma",
     "Velocidad de Jog (mm/min)", "Velocidad de Framing (mm/min)",
     "Altura segura Z", "Calcular Framing",
+    "Almacenamiento SD", "Control", "Version CNC (Grbl)", "Temperatura ESP32",
+    "Tiempo encendido", "RAM usada / total", "Frecuencia CPU",
+    "Puerto serial (Grbl)", "Senal Wi-Fi", "Direccion IP", "Direccion MAC",
 
     "Posicion maquina (MPos)", "Posicion de trabajo (WPos)",
     "Duracion pulso step", "Retardo desactivar steppers", "Invertir puerto step", "Invertir puerto direccion",
@@ -67,11 +70,14 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
 
     "About device", "Wi-Fi", "Machine", "Control Settings",
     "Firmware", "Project", "G-code Offline Controller",
-    "Scan networks", "Forget network", "Not connected",
+    "Scan networks", "Forget network", "Not connected", " (Protected)",
     "Connecting...", "Connecting to", "Connected", "Password for: ", "Access point mode", "Scanning networks...",
     "Jog speed", "Framing speed", "G-code preview", "CNC Job Recovery", "Language",
     "Jogging Speed (mm/min)", "Framing Speed (mm/min)",
     "Safe Z height", "Calculate Framing",
+    "SD Storage", "Control", "CNC Version (Grbl)", "ESP32 Temperature",
+    "Power-On Time", "RAM Used / Total", "CPU Frequency",
+    "Serial Port (Grbl)", "Wi-Fi Signal", "IP Address", "MAC Address",
 
     "Machine position (MPos)", "Work position (WPos)",
     "Step pulse time", "Step idle delay", "Step port invert", "Direction port invert",
@@ -97,3 +103,6 @@ const char* tr(StringId id)
 
     return SPANISH[index];
 }
+
+static_assert(sizeof(SPANISH)/sizeof(SPANISH[0]) == (int)StringId::StringId_Count, "SPANISH array size mismatch");
+static_assert(sizeof(ENGLISH)/sizeof(ENGLISH[0]) == (int)StringId::StringId_Count, "ENGLISH array size mismatch");

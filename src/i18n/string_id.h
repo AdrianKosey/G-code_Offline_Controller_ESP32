@@ -30,11 +30,15 @@ enum class StringId
     // Settings - menu
     Settings_About, Settings_Wifi, Settings_Machine, Settings_Control,
     Settings_Firmware, Settings_Project, Control_Name,
-    Settings_ScanNetworks, Settings_ForgetNetwork, Settings_NotConnected,
+    Settings_ScanNetworks, Settings_ForgetNetwork, Settings_NotConnected, Settings_WiFiProtected,
     Settings_Connecting, Settings_Connecting_To, Settings_Connected, Settings_Password, Settings_AccessPointMode, Settings_Scanning,
     Settings_JogSpeed, Settings_FramingSpeed, Settings_GcodePreview, Settings_JobRecovery, Settings_Language,
     Settings_Modal_JogSpeed, Settings_Modal_FramingSpeed,
     Settings_SafeZ, Settings_Framing,
+    // About device
+    Settings_SD, Settings_NameDevice, Settings_VersionCNC, Settings_Temperature, 
+    Settings_TimeOn, Settings_RAM, Settings_FrequencyCPU,
+    Settings_Serial, Settings_WiFiSignal, Settings_IP, Settings_MAC,
 
     // GRBL Settings & Status
     StatusMPos, StatusWPos,

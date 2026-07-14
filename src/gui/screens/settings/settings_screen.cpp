@@ -21,10 +21,8 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
           Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
           Theme::Background, Theme::Text, false),
       aboutTitleLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 150, 20}, tr(StringId::Settings_About), Theme::Text, 2, Theme::Background, false),
-      firmwareLabel(Rect{CONTENT_X + 16, CONTENT_Y + 40, 120, 14}, tr(StringId::Settings_Firmware), Theme::TextSecondary, 1, Theme::Background, false),
-      firmwareValue(Rect{CONTENT_X + 16, CONTENT_Y + 54, 200, 18}, "v0.1.0", Theme::Text, 2, Theme::Background, false),
-      projectLabel(Rect{CONTENT_X + 16, CONTENT_Y + 82, 120, 14}, tr(StringId::Settings_Project), Theme::TextSecondary, 1, Theme::Background, false),
-      projectValue(Rect{CONTENT_X + 16, CONTENT_Y + 96, 220, 18}, tr(StringId::Control_Name), Theme::Text, 2, Theme::Background, true),
+      aboutScrollPanel(Rect{CONTENT_X + 8, CONTENT_Y + 40, 244, 160}),
+      aboutContent(grblController, wifiManager),
 
       // Wi-Fi
       wifiBackButton(
@@ -95,6 +93,9 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
                                  { switchToPage(SettingsPage::Menu); });
     controlBackButton.setOnPress([this]()
                                  { switchToPage(SettingsPage::Menu); });
+
+    // About Device
+    aboutContent.attachTo(aboutScrollPanel);
 
     // WIFI
 
@@ -268,8 +269,8 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
 
     aboutWidgets = {
         &aboutBackButton, &aboutTitleLabel,
-        &firmwareLabel, &firmwareValue,
-        &projectLabel, &projectValue};
+        &aboutScrollPanel
+    };
 
     wifiWidgets = {
         &wifiBackButton, &wifiTitleLabel,
@@ -290,6 +291,9 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
 void SettingsScreen::switchToPage(SettingsPage page)
 {
     currentPage = page;
+
+    if (page == SettingsPage::About)
+        aboutContent.refresh();
 
     if (page == SettingsPage::Wifi)
     {
@@ -404,7 +408,7 @@ void SettingsScreen::update()
 void SettingsScreen::onEnter()
 {
     IScreen::onEnter();
-
+    
     jogFeedRow.setValue(String((int)appSettings.getJogFeedRate()) + " mm/min");
     framingFeedRow.setValue(String((int)appSettings.getFramingFeedRate()) + " mm/min");
     safeZRow.setValue(String(appSettings.getSafeZHeight(), 1) + " mm");

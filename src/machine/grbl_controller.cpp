@@ -23,7 +23,7 @@ void GrblController::beginSimulated()
     settings.values[131] = 200.0f;  settings.present[131] = true; // max travel Y
     settings.values[132] = 100.0f;  settings.present[132] = true; // max travel Z
     settings.values[32] = 1.0f;     settings.present[32] = true; // laser mode
-
+    firmwareVersion = "Grbl 1.1h (simulated)";
     settingsLoaded = true;
 }
 
@@ -184,6 +184,13 @@ void GrblController::processLine(const String &line)
     if (line.startsWith("ALARM:"))
     {
         status.state = GrblState::Alarm;
+        return;
+    }
+
+    if (line.startsWith("Grbl"))
+    {
+        firmwareVersion = line; // ej: "Grbl 1.1h ['$' for help]"
+        settingsRequested = false;
         return;
     }
 
@@ -447,3 +454,5 @@ void GrblController::setSetting(uint8_t index, float value)
     settings.values[index] = value;
     settings.present[index] = true;
 }
+
+String GrblController::getFirmwareVersion() const { return firmwareVersion; }

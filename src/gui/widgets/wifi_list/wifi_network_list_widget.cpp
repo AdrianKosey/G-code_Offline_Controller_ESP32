@@ -1,5 +1,5 @@
 #include "wifi_network_list_widget.h"
-
+#include "../../../i18n/translations.h"
 WifiNetworkListWidget::WifiNetworkListWidget(const Rect& bounds, int16_t rowHeight)
     : Widget(bounds), rowHeight(rowHeight)
 {}
@@ -102,7 +102,7 @@ void WifiNetworkListWidget::draw(DisplayManager& display)
     {
         const WifiNetworkEntry& entry = entries[i];
 
-        String label = entry.ssid + (entry.encrypted ? " (protegida)" : "");
+        String label = entry.ssid + (entry.encrypted ? tr(StringId::Settings_WiFiProtected) : "");
         display.drawText(label, bounds.x + 8, y + rowHeight / 2 - 8, Theme::Text, 2);
         display.drawLine(bounds.x, y + rowHeight, bounds.x + bounds.width, y + rowHeight, Theme::Border);
 

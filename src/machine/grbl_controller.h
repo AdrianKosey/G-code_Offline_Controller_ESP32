@@ -62,7 +62,7 @@ public:
     GrblConnectionState getConnectionState() const;
     bool isSettingsLoaded() const;
     const GrblSettings& getSettings() const;
-
+    String getFirmwareVersion() const;
 
     float getMaxSpindleSpeed() const { return settings.get(30, GrblDefaults::S30); }
     float getMaxTravelX() const { return settings.get(130, GrblDefaults::S130); }
@@ -71,6 +71,7 @@ public:
     bool isLaserMode() const { return settings.get(32, GrblDefaults::S32) > 0.5f; }
 
     void setSetting(uint8_t index, float value);
+    
 
     // Simulation
     void beginSimulated();
@@ -79,7 +80,7 @@ private:
     HardwareSerial* serial = nullptr;
     String lineBuffer;
     GrblStatus status;
-
+    String firmwareVersion = "NONE";
     bool okFlag = false;
     bool errorFlag = false;
 

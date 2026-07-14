@@ -38,8 +38,8 @@ App::App()
 
 void App::begin()
 {
-    // grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
-    grblController.beginSimulated();
+    grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
+    //grblController.beginSimulated();
     SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
     sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
     if (!sdReady)
