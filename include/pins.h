@@ -8,3 +8,7 @@ constexpr uint8_t SD_CS_PIN = 21;
 
 constexpr uint8_t GRBL_RX_PIN = 16;
 constexpr uint8_t GRBL_TX_PIN = 17;
+
+constexpr int8_t TFT_BACKLIGHT_PIN = 22;
+
+constexpr int8_t BUZZER_PIN = 13;

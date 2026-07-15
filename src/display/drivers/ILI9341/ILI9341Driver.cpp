@@ -1,5 +1,8 @@
 #include "ILI9341Driver.h"
-
+#include <pins.h>
+#include <driver/ledc.h>
+static constexpr uint32_t BACKLIGHT_LEDC_FREQ = 5000;
+static constexpr uint8_t BACKLIGHT_LEDC_RESOLUTION = 8; // 0-255
 ILI9341Driver::ILI9341Driver()
 {
 }
@@ -10,6 +13,11 @@ bool ILI9341Driver::begin()
     tft.setRotation(1);
     tft.fillScreen(TFT_BLACK);
     invertDisplay(true);
+    if (TFT_BACKLIGHT_PIN >= 0)
+    {
+        ledcAttach(TFT_BACKLIGHT_PIN, BACKLIGHT_LEDC_FREQ, BACKLIGHT_LEDC_RESOLUTION);
+        ledcWrite(TFT_BACKLIGHT_PIN, 255);
+    }
     return true;
 }
 
@@ -162,4 +170,20 @@ void ILI9341Driver::clearClipRect()
 int16_t ILI9341Driver::getTextWidth(const String& text, uint8_t font)
 {
     return tft.textWidth(text, font);
+}
+
+void ILI9341Driver::setBacklightLevel(uint8_t percent)
+{
+    if (TFT_BACKLIGHT_PIN < 0)
+        return;
+
+    percent = constrain(percent, (uint8_t)0, (uint8_t)100);
+    uint8_t dutyValue = map(percent, 0, 100, 0, 255);
+
+    ledcWrite(TFT_BACKLIGHT_PIN, dutyValue);
+}
+
+bool ILI9341Driver::hasBacklightControl() const
+{
+    return TFT_BACKLIGHT_PIN >= 0;
 }

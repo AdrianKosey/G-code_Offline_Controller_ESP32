@@ -17,12 +17,14 @@ AboutContentBuilder::AboutContentBuilder(GrblController& grblController, WifiMan
     : grbl(grblController), wifi(wifiManager),
 
       controlNameValue(Rect{0, 0, 220, 18}, "", Theme::Text, 2, Theme::Background, true),
+      controlVersionValue(Rect{0, 0, 220, 18}, "", Theme::Text, 2, Theme::Background, true),
       cncVersionValue(Rect{0, 0, 220, 18}, "", Theme::Text, 2, Theme::Background, true),
 
       sdLabel(Rect{0, 0, 150, 16}, tr(StringId::Settings_SD), Theme::TextSecondary, 1, Theme::Background, false),
       sdBar(Rect{0, 0, 220, 10}, Theme::SidebarBackground, Theme::Progress),
       sdValue(Rect{0, 0, 220, 16}, "", Theme::TextSecondary, 1, Theme::Background, false),
       controlNameCaption(Rect{0,0,150,14}, tr(StringId::Settings_NameDevice), Theme::TextSecondary, 1, Theme::Background, false),
+      controlVersionCaption(Rect{0,0,150,14}, tr(StringId::Settings_VersionDevice), Theme::TextSecondary, 1, Theme::Background, false),
       cncVersionCaption(Rect{0,0,150,14}, tr(StringId::Settings_VersionCNC), Theme::TextSecondary, 1, Theme::Background, false),
       tempCaption(Rect{0,0,150,14}, tr(StringId::Settings_Temperature), Theme::TextSecondary, 1, Theme::Background, false),
       uptimeCaption(Rect{0,0,150,14}, tr(StringId::Settings_TimeOn), Theme::TextSecondary, 1, Theme::Background, false),
@@ -66,7 +68,8 @@ String AboutContentBuilder::formatUptime(unsigned long seconds)
 
 void AboutContentBuilder::refresh()
 {
-    controlNameValue.setText(String(CONTROL_NAME) + " " + CONTROL_VERSION);
+    controlNameValue.setText(String(CONTROL_NAME));
+    controlVersionValue.setText(CONTROL_VERSION);
     cncVersionValue.setText(grbl.getFirmwareVersion());
 
     DeviceInfo info = DeviceInfoProvider::collect(true);
@@ -122,6 +125,7 @@ void AboutContentBuilder::attachTo(ScrollPanelWidget& panel)
     };
 
     addRow(controlNameCaption, controlNameValue);
+    addRow(controlVersionCaption, controlVersionValue);
     addRow(cncVersionCaption, cncVersionValue);
 
     panel.addChild(&sdLabel, 8, y);

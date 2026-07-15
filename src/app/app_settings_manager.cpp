@@ -14,7 +14,9 @@ AppSettingsManager::AppSettingsManager()
     safeZHeight = prefs.getFloat("safeZ", SAFE_Z_HEIGHT);
     framingEnabled = prefs.getBool("framing", FRAMING_ENABLED_DEFAULT);
     language = (AppLanguage)prefs.getUChar("lang", (uint8_t)AppLanguage::Spanish);
-
+    screenSleepEnabled = prefs.getBool("sleepEn", SCREEN_SLEEP_ENABLED_DEFAULT);
+    screenSleepMinutes = prefs.getUShort("sleepMin", SCREEN_SLEEP_MINUTES_DEFAULT);
+    buzzerEnabled = prefs.getBool("buzzer", BUZZER_ENABLED_DEFAULT);
     Serial.printf("[Settings] Cargado: jogFeed=%.1f framFeed=%.1f preview=%d lang=%d\n",
         jogFeedRate, framingFeedRate, gcodePreviewEnabled, (int)language);
 
@@ -76,4 +78,28 @@ void AppSettingsManager::setFramingEnabled(bool enabled)
 {
     framingEnabled = enabled;
     prefs.putBool("framing", enabled);
+}
+
+bool AppSettingsManager::isScreenSleepEnabled() const { return screenSleepEnabled; }
+
+void AppSettingsManager::setScreenSleepEnabled(bool enabled)
+{
+    screenSleepEnabled = enabled;
+    prefs.putBool("sleepEn", enabled);
+}
+
+uint16_t AppSettingsManager::getScreenSleepMinutes() const { return screenSleepMinutes; }
+
+void AppSettingsManager::setScreenSleepMinutes(uint16_t minutes)
+{
+    screenSleepMinutes = minutes;
+    prefs.putUShort("sleepMin", minutes);
+}
+
+bool AppSettingsManager::isBuzzerEnabled() const { return buzzerEnabled; }
+
+void AppSettingsManager::setBuzzerEnabled(bool enabled)
+{
+    buzzerEnabled = enabled;
+    prefs.putBool("buzzer", enabled);
 }

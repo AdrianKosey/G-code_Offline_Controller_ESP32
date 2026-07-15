@@ -34,7 +34,8 @@ enum class NumericPadTarget
     GrblSetting,
     JogFeed,
     FramingFeed,
-    SafeZ
+    SafeZ,
+    ScreenSleepMinutes
 };
 
 enum class EnumPickerTarget
@@ -67,11 +68,16 @@ public:
     void drawEnumPicker(DisplayManager& display) { enumPicker.draw(display); }
     bool handleEnumPickerTouch(const TouchEvent& event) { return enumPicker.handleTouch(event); }
 
+    // Config
+    using BoolChangeCallback = std::function<void(bool)>;
+    void setOnBuzzerChanged(BoolChangeCallback callback);
+
     using LanguageChangeCallback = std::function<void()>;
     void setOnLanguageChanged(LanguageChangeCallback callback);
 
 private:
     LanguageChangeCallback onLanguageChanged;
+    BoolChangeCallback onBuzzerChanged;
     SettingsPage currentPage = SettingsPage::Menu;
     bool needsClear = false;
 
@@ -112,6 +118,11 @@ private:
     ToggleWidget jobRecoveryToggle;
     LabelWidget framingLabel;
     ToggleWidget framingToggle;
+    LabelWidget screenSleepLabel;
+    ToggleWidget screenSleepToggle;
+    MenuRowWidget screenSleepMinutesRow;
+    LabelWidget buzzerLabel;
+    ToggleWidget buzzerToggle;
 
     std::vector<Widget*> menuWidgets;
     std::vector<Widget*> aboutWidgets;

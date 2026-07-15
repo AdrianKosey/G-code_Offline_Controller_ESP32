@@ -31,15 +31,16 @@ App::App()
       jogScreen(grblController, appSettings),
       toolsScreen(grblController),
       framingRunner(grblController),
-      settingsScreen(wifiManager, grblController, appSettings)
+      settingsScreen(wifiManager, grblController, appSettings),
+      screenSleep(display, appSettings)
 {
     g_appSettings = &appSettings;
 }
 
 void App::begin()
 {
-    grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
-    //grblController.beginSimulated();
+    //grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
+    grblController.beginSimulated();
     SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
     sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
     if (!sdReady)
@@ -120,6 +121,10 @@ void App::begin()
         String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
 
         confirmModal.show(tr(StringId::App_Open_File) + filename + "?");
+    });
+
+    settingsScreen.setOnBuzzerChanged([this](bool enabled) {
+        buzzer.setEnabled(enabled);
     });
 
     settingsScreen.setOnLanguageChanged([this]() {
@@ -203,62 +208,73 @@ void App::begin()
     screenManager.setSdStatus(sdReady);
     screenManager.setWifiStatus(false);
 
+    buzzer.begin();
+    buzzer.setEnabled(appSettings.isBuzzerEnabled());
+
     screenManager.draw(display);
 }
 
 void App::update()
 {
     TouchEvent event = touch.poll();
+
+    screenSleep.update();
+    buzzer.update();
+
+    if (screenSleep.handleTouch(event))
+    {
+        if (!screenSleep.isSleeping())
+            screenManager.redrawAll();
+        return;
+    }
+
     jobRunner.update();
     framingRunner.update();
     wifiManager.update();
-
     screenManager.setWifiStatus(wifiManager.getMode() == WifiMode::Connected);
     screenManager.setMachineStatus(grblController.getConnectionState() == GrblConnectionState::Connected);
-
     homeScreen.updateMachineState(
         jobRunner.getState(),
         grblController.getStatus(),
         jobRunner.getCurrentLine(),
         jobRunner.getTotalLines());
 
-    bool anyModalVisible =
-        confirmModal.isVisible() ||
-        loadingModal.isVisible() ||
-        settingsScreen.isKeyboardVisible() ||
-        settingsScreen.isNumericPadVisible() ||
-        settingsScreen.isEnumPickerVisible();
+    bool consumed = false;
 
     if (confirmModal.isVisible())
-        confirmModal.handleTouch(event);
+        consumed = confirmModal.handleTouch(event);
     else if (loadingModal.isVisible())
-        loadingModal.handleTouch(event);
+        consumed = loadingModal.handleTouch(event);
     else if (settingsScreen.isKeyboardVisible())
     {
-        settingsScreen.handleKeyboardTouch(event);
+        consumed = settingsScreen.handleKeyboardTouch(event);
         if (!settingsScreen.isKeyboardVisible())
             screenManager.redrawAll();
     }
     else if (settingsScreen.isNumericPadVisible())
     {
-        settingsScreen.handleNumericPadTouch(event);
+        consumed = settingsScreen.handleNumericPadTouch(event);
         if (!settingsScreen.isNumericPadVisible())
             screenManager.redrawAll();
     }
     else if (settingsScreen.isEnumPickerVisible())
     {
-        settingsScreen.handleEnumPickerTouch(event);
+        consumed = settingsScreen.handleEnumPickerTouch(event);
         if (!settingsScreen.isEnumPickerVisible())
             screenManager.redrawAll();
     }
     else
     {
-        screenManager.handleTouch(event);
+        consumed = screenManager.handleTouch(event);
         screenManager.update();
     }
 
-    if (!anyModalVisible)
+    if (event.type == TouchType::Pressed && consumed)
+        buzzer.beep(); 
+
+    if (!screenSleep.isSleeping())
         screenManager.draw(display);
+
     confirmModal.draw(display);
     loadingModal.draw(display);
 
@@ -268,13 +284,4 @@ void App::update()
         settingsScreen.drawNumericPad(display);
     if (settingsScreen.isEnumPickerVisible())
         settingsScreen.drawEnumPicker(display);
-
-    if (jobRunner.getState() == JobState::Running && appSettings.isJobRecoveryEnabled())
-    {
-        uint8_t spindleStateValue = 0; 
-        jobRecovery.updateProgress(jobRunner.getCurrentLine(), jobRunner.getParserState(), spindleStateValue);
-    }
-
-    if (jobRunner.getState() == JobState::Completed)
-        jobRecovery.clear(); 
 }

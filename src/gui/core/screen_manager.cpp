@@ -64,13 +64,15 @@ void ScreenManager::update()
         screens[currentId].screen->update();
 }
 
-void ScreenManager::handleTouch(const TouchEvent &event)
+bool ScreenManager::handleTouch(const TouchEvent &event)
 {
     if (sidebar.handleTouch(event))
-        return;
+        return true;
 
     if (screens[currentId].screen)
-        screens[currentId].screen->handleTouch(event);
+        return screens[currentId].screen->handleTouch(event);
+
+    return false;
 }
 
 void ScreenManager::setSdStatus(bool ready)

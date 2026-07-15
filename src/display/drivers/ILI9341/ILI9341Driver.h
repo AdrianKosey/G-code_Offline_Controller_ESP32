@@ -94,6 +94,9 @@ public:
 
     int16_t getTextWidth(const String& text, uint8_t font) override;
 
+    void setBacklightLevel(uint8_t percent) override;
+    bool hasBacklightControl() const override;
+
 private:
     TFT_eSPI tft;
 };

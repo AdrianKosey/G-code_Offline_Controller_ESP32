@@ -34,9 +34,9 @@ enum class StringId
     Settings_Connecting, Settings_Connecting_To, Settings_Connected, Settings_Password, Settings_AccessPointMode, Settings_Scanning,
     Settings_JogSpeed, Settings_FramingSpeed, Settings_GcodePreview, Settings_JobRecovery, Settings_Language,
     Settings_Modal_JogSpeed, Settings_Modal_FramingSpeed,
-    Settings_SafeZ, Settings_Framing,
+    Settings_SafeZ, Settings_Framing, Settings_ScreenSleep, Settings_ScreenSleepMinutes, Settings_Buzzer,
     // About device
-    Settings_SD, Settings_NameDevice, Settings_VersionCNC, Settings_Temperature, 
+    Settings_SD, Settings_NameDevice, Settings_VersionDevice, Settings_VersionCNC, Settings_Temperature, 
     Settings_TimeOn, Settings_RAM, Settings_FrequencyCPU,
     Settings_Serial, Settings_WiFiSignal, Settings_IP, Settings_MAC,
 

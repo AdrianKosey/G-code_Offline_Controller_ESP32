@@ -19,7 +19,8 @@ public:
 
     void draw(DisplayManager& display);
     void update();
-    void handleTouch(const TouchEvent& event);
+    bool handleTouch(const TouchEvent& event);
+    
 
     void setSdStatus(bool ready);
     void setWifiStatus(bool connected);

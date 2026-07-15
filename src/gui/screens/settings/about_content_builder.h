@@ -20,8 +20,9 @@ private:
     WifiManager& wifi;
 
     LabelWidget controlNameValue;
+    LabelWidget controlVersionValue;
     LabelWidget cncVersionValue;
-    LabelWidget controlNameCaption, cncVersionCaption;
+    LabelWidget controlNameCaption, controlVersionCaption, cncVersionCaption;
     LabelWidget tempCaption, uptimeCaption, ramCaption, cpuFreqCaption, baudCaption, wifiSignalCaption, ipCaption, macCaption;
     LabelWidget sdLabel;
     ProgressBarWidget sdBar;

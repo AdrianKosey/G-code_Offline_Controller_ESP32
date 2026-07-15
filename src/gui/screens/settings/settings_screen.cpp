@@ -58,6 +58,11 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
       jobRecoveryToggle(Rect{0, 0, 48, 24}, false),
       languageRow(Rect{CONTENT_X + 8, CONTENT_Y + 158, 244, 36}, tr(StringId::Settings_Language)),
       controlScrollPanel(Rect{CONTENT_X + 8, CONTENT_Y + 40, 244, 160}),
+      screenSleepLabel(Rect{0,0,150,20}, tr(StringId::Settings_ScreenSleep), Theme::Text, 2, Theme::Background, false),
+      screenSleepToggle(Rect{0,0,48,24}, false),
+      screenSleepMinutesRow(Rect{0,0,244,36}, tr(StringId::Settings_ScreenSleepMinutes)),
+      buzzerLabel(Rect{0,0,150,20}, tr(StringId::Settings_Buzzer), Theme::Text, 2, Theme::Background, false),
+      buzzerToggle(Rect{0,0,48,24}, true),
 
       // Wifi manager
       wifi(wifiManager),
@@ -201,6 +206,23 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
     jobRecoveryToggle.setOnChange([this](bool state)
                                   { appSettings.setJobRecoveryEnabled(state); });
 
+    buzzerToggle.setState(appSettings.isBuzzerEnabled());
+    buzzerToggle.setOnChange([this](bool state) {
+        appSettings.setBuzzerEnabled(state);
+        if (onBuzzerChanged) onBuzzerChanged(state); 
+    });
+
+    screenSleepToggle.setState(appSettings.isScreenSleepEnabled());
+    screenSleepToggle.setOnChange([this](bool state) {
+        appSettings.setScreenSleepEnabled(state);
+    });
+
+    screenSleepMinutesRow.setValue(String(appSettings.getScreenSleepMinutes()) + " min");
+    screenSleepMinutesRow.setOnPress([this]() {
+        numericPadTarget = NumericPadTarget::ScreenSleepMinutes;
+        numericPad.show(tr(StringId::Settings_ScreenSleepMinutes), appSettings.getScreenSleepMinutes());
+    });
+
     languageRow.setValue(appSettings.getLanguage() == AppLanguage::Spanish ? "Espanol" : "English");
     languageRow.setOnPress([this]()
                            {
@@ -216,7 +238,12 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
     controlScrollPanel.addChild(&framingToggle, 192, 152);
     controlScrollPanel.addChild(&jobRecoveryLabel, 8, 188);
     controlScrollPanel.addChild(&jobRecoveryToggle, 192, 186);
-    controlScrollPanel.addChild(&languageRow, 0, 222);
+    controlScrollPanel.addChild(&buzzerLabel, 8, 222);
+    controlScrollPanel.addChild(&buzzerToggle, 192, 220);
+    controlScrollPanel.addChild(&screenSleepLabel, 8, 256);
+    controlScrollPanel.addChild(&screenSleepToggle, 192, 254);
+    controlScrollPanel.addChild(&screenSleepMinutesRow, 0, 290);
+    controlScrollPanel.addChild(&languageRow, 0, 324);
 
     // general
 
@@ -243,6 +270,14 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
                 appSettings.setSafeZHeight(value);
                 safeZRow.setValue(String(value, 1) + " mm");
                 break;
+
+            case NumericPadTarget::ScreenSleepMinutes:
+            {
+                uint16_t minutes = (uint16_t)max(1.0f, roundf(value));
+                appSettings.setScreenSleepMinutes(minutes);
+                screenSleepMinutesRow.setValue(String(minutes) + " min");
+                break;
+            }
         } });
 
     numericPad.setOnCancel([this]() {});
@@ -416,10 +451,18 @@ void SettingsScreen::onEnter()
     previewToggle.setEnabled(appSettings.isFramingEnabled());
     framingToggle.setState(appSettings.isFramingEnabled());
     jobRecoveryToggle.setState(appSettings.isJobRecoveryEnabled());
+    buzzerToggle.setState(appSettings.isBuzzerEnabled());
+    screenSleepToggle.setState(appSettings.isScreenSleepEnabled());
+    screenSleepMinutesRow.setValue(String(appSettings.getScreenSleepMinutes()) + " min");
     languageRow.setValue(appSettings.getLanguage() == AppLanguage::Spanish ? "Espanol" : "English");
 }
 
 void SettingsScreen::setOnLanguageChanged(LanguageChangeCallback callback)
 {
     onLanguageChanged = callback;
+}
+
+void SettingsScreen::setOnBuzzerChanged(BoolChangeCallback callback)
+{
+    onBuzzerChanged = callback;
 }

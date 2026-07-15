@@ -20,7 +20,8 @@
 #include "app_settings_manager.h"
 #include "../i18n/translations.h"
 #include "../machine/job_recovery_manager.h"
-
+#include "../gui/core/screen_sleep_manager.h"
+#include "../app/buzzer_manager.h"
 enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery };
 class App
 {
@@ -38,9 +39,12 @@ private:
     GCodeJobRunner jobRunner;
     FramingRunner framingRunner;
     ILI9341Driver displayDriver;
+    BuzzerManager buzzer;
+
     DisplayManager display;
     TouchManager touch;
     ScreenManager screenManager;
+    ScreenSleepManager screenSleep;
 
     HomeScreen homeScreen;
     FilesScreen filesScreen;
