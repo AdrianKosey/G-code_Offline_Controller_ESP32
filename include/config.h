@@ -1,7 +1,7 @@
 #pragma once
 
 constexpr const char* CONTROL_NAME = "G-code Offline Controller";
-constexpr const char* CONTROL_VERSION = "v0.11.6";
+constexpr const char* CONTROL_VERSION = "v0.12.0";
 
 // Fallback values ​​for Grbl parameters.
 // These are only used if the connected machine has not yet responded with "$$" (or in simulated mode

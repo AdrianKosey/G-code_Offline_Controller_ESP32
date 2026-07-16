@@ -32,15 +32,16 @@ App::App()
       toolsScreen(grblController),
       framingRunner(grblController),
       settingsScreen(wifiManager, grblController, appSettings),
-      screenSleep(display, appSettings)
+      screenSleep(display, appSettings),
+      webServer(grblController, jobRunner, framingRunner, appSettings)
 {
     g_appSettings = &appSettings;
 }
 
 void App::begin()
 {
-    //grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
-    grblController.beginSimulated();
+    grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
+    //grblController.beginSimulated();
     SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
     sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
     if (!sdReady)
@@ -63,6 +64,7 @@ void App::begin()
 
     wifiManager.begin();
     jobRecovery.begin();
+    webServer.begin();
 
     if (appSettings.isJobRecoveryEnabled() && jobRecovery.hasPendingRecovery())
     {
@@ -73,7 +75,7 @@ void App::begin()
                           tr(StringId::Work_Of) + String(snap.totalLines) + tr(StringId::Work_Resume);
 
         confirmTarget = ConfirmModalTarget::JobRecovery;
-        confirmModal.show(message);
+        confirmModal.show(display ,message);
     }
 
     homeScreen.setOnPlayPause([this](){
@@ -103,7 +105,7 @@ void App::begin()
     homeScreen.setOnFraming([this]() {
         if (!homeScreen.hasValidProjectBounds())
         {
-            confirmModal.show(tr(StringId::Modal_Framing_Error));
+            confirmModal.show(display, tr(StringId::Modal_Framing_Error));
             return;
         }
 
@@ -120,7 +122,7 @@ void App::begin()
         int lastSlash = path.lastIndexOf('/');
         String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
 
-        confirmModal.show(tr(StringId::App_Open_File) + filename + "?");
+        confirmModal.show(display, tr(StringId::App_Open_File) + filename + "?");
     });
 
     settingsScreen.setOnBuzzerChanged([this](bool enabled) {
@@ -129,7 +131,7 @@ void App::begin()
 
     settingsScreen.setOnLanguageChanged([this]() {
         confirmTarget = ConfirmModalTarget::LanguageRestart;
-        confirmModal.show(tr(StringId::App_Modal_Language));
+        confirmModal.show(display, tr(StringId::App_Modal_Language));
     });
 
     confirmModal.setOnConfirm([this]() {
@@ -204,6 +206,16 @@ void App::begin()
         screenManager.redrawAll(); 
     });
 
+    webServer.setOnFileSelected([this](const String& path) {
+        pendingFilePath = path;
+        confirmTarget = ConfirmModalTarget::LoadFile;
+
+        int lastSlash = path.lastIndexOf('/');
+        String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
+
+        confirmModal.show(display, tr(StringId::App_Open_File) + filename + "?");
+    });
+
     screenManager.showInitialScreen(0);
     screenManager.setSdStatus(sdReady);
     screenManager.setWifiStatus(false);
@@ -220,6 +232,7 @@ void App::update()
 
     screenSleep.update();
     buzzer.update();
+    webServer.update();
 
     if (screenSleep.handleTouch(event))
     {
@@ -231,13 +244,31 @@ void App::update()
     jobRunner.update();
     framingRunner.update();
     wifiManager.update();
+
     screenManager.setWifiStatus(wifiManager.getMode() == WifiMode::Connected);
     screenManager.setMachineStatus(grblController.getConnectionState() == GrblConnectionState::Connected);
+
     homeScreen.updateMachineState(
         jobRunner.getState(),
         grblController.getStatus(),
         jobRunner.getCurrentLine(),
         jobRunner.getTotalLines());
+
+    if (jobRunner.getState() == JobState::Running && appSettings.isJobRecoveryEnabled())
+    {
+        uint8_t spindleStateValue = 0;
+        jobRecovery.updateProgress(jobRunner.getCurrentLine(), jobRunner.getParserState(), spindleStateValue);
+    }
+
+    if (jobRunner.getState() == JobState::Completed)
+        jobRecovery.clear();
+
+    bool anyModalVisible =
+        confirmModal.isVisible() ||
+        loadingModal.isVisible() ||
+        settingsScreen.isKeyboardVisible() ||
+        settingsScreen.isNumericPadVisible() ||
+        settingsScreen.isEnumPickerVisible();
 
     bool consumed = false;
 
@@ -270,9 +301,9 @@ void App::update()
     }
 
     if (event.type == TouchType::Pressed && consumed)
-        buzzer.beep(); 
+        buzzer.beep();
 
-    if (!screenSleep.isSleeping())
+    if (!anyModalVisible)
         screenManager.draw(display);
 
     confirmModal.draw(display);

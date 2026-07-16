@@ -40,6 +40,16 @@ public:
         return dirty;
     }
 
+    void setBounds(const Rect& newBounds)
+    {
+        if (bounds.x == newBounds.x && bounds.y == newBounds.y &&
+            bounds.width == newBounds.width && bounds.height == newBounds.height)
+            return;
+
+        bounds = newBounds;
+        invalidate();
+    }
+
     const Rect& getBounds() const
     {
         return bounds;

@@ -2,43 +2,28 @@
 #include "../../../i18n/translations.h"
 namespace
 {
-    Rect dialogBounds(const Rect& screenBounds)
-    {
-        constexpr int16_t w = 220;
-        constexpr int16_t h = 110;
+    constexpr int16_t DIALOG_WIDTH = 240;
+    constexpr int16_t MIN_DIALOG_HEIGHT = 110;
+    constexpr int16_t MAX_DIALOG_HEIGHT = 200;
+    constexpr int16_t BUTTON_AREA_HEIGHT = 40;
+    constexpr int16_t TEXT_PADDING_TOP = 14;
 
+    Rect centeredRect(const Rect& screenBounds, int16_t w, int16_t h)
+    {
         return Rect{
             (int16_t)(screenBounds.x + (screenBounds.width - w) / 2),
             (int16_t)(screenBounds.y + (screenBounds.height - h) / 2),
             w, h
         };
     }
-
-    Rect messageLabelBounds(const Rect& screenBounds)
-    {
-        Rect d = dialogBounds(screenBounds);
-        return Rect{ (int16_t)(d.x + 12), (int16_t)(d.y + 14), (int16_t)(d.width - 24), 40 };
-    }
-
-    Rect yesButtonBounds(const Rect& screenBounds)
-    {
-        Rect d = dialogBounds(screenBounds);
-        return Rect{ (int16_t)(d.x + 20), (int16_t)(d.y + d.height - 40), 80, 28 };
-    }
-
-    Rect noButtonBounds(const Rect& screenBounds)
-    {
-        Rect d = dialogBounds(screenBounds);
-        return Rect{ (int16_t)(d.x + d.width - 100), (int16_t)(d.y + d.height - 40), 80, 28 };
-    }
 }
 
 ConfirmModalWidget::ConfirmModalWidget(const Rect& screenBounds)
     : screenBounds(screenBounds),
-      panel(dialogBounds(screenBounds), Theme::Panel, 10),
-      messageLabel(messageLabelBounds(screenBounds), "", Theme::Text, 2, Theme::Panel),
-      yesButton(yesButtonBounds(screenBounds), tr(StringId::App_Yes)),
-      noButton(noButtonBounds(screenBounds), tr(StringId::App_No))
+      panel(Rect{0, 0, DIALOG_WIDTH, MIN_DIALOG_HEIGHT}, Theme::Panel, 10),
+      messageArea(Rect{0, 0, DIALOG_WIDTH - 20, 40}, Theme::Text, 2, Theme::Panel),
+      yesButton(Rect{0, 0, 80, 28}, tr(StringId::App_Yes)),
+      noButton(Rect{0, 0, 80, 28}, tr(StringId::App_No))
 {
     yesButton.setOnPress([this]() {
         visible = false;
@@ -54,14 +39,41 @@ ConfirmModalWidget::ConfirmModalWidget(const Rect& screenBounds)
 void ConfirmModalWidget::setOnConfirm(ConfirmCallback callback) { onConfirm = callback; }
 void ConfirmModalWidget::setOnCancel(ConfirmCallback callback) { onCancel = callback; }
 
-void ConfirmModalWidget::show(const String& message)
+void ConfirmModalWidget::show(DisplayManager& display, const String& message)
 {
-    messageLabel.setText(message);
+    // 1. Mide cuanto texto envuelto necesita, con el ancho fijo del dialogo
+    int16_t textAreaWidth = DIALOG_WIDTH - 20;
+    messageArea.setBounds(Rect{0, 0, textAreaWidth, 1000}); // alto temporal grande solo para medir
+    messageArea.setText(message);
+    int16_t contentHeight = messageArea.measure(display);
+
+    // 2. Calcula el alto real del dialogo, respetando min/max
+    int16_t availableTextHeight = min(contentHeight, (int16_t)(MAX_DIALOG_HEIGHT - BUTTON_AREA_HEIGHT - TEXT_PADDING_TOP));
+    int16_t dialogHeight = max(MIN_DIALOG_HEIGHT, (int16_t)(TEXT_PADDING_TOP + availableTextHeight + BUTTON_AREA_HEIGHT));
+    dialogHeight = min(dialogHeight, MAX_DIALOG_HEIGHT);
+
+    Rect dialog = centeredRect(screenBounds, DIALOG_WIDTH, dialogHeight);
+
+    // 3. Reposiciona todo segun el tamano final
+    panel.setBounds(dialog);
+
+    Rect textBounds{
+        (int16_t)(dialog.x + 10),
+        (int16_t)(dialog.y + TEXT_PADDING_TOP),
+        textAreaWidth,
+        (int16_t)(dialogHeight - TEXT_PADDING_TOP - BUTTON_AREA_HEIGHT)
+    };
+    messageArea.setBounds(textBounds);
+    messageArea.setText(message); // se vuelve a envolver, ahora con el alto real (por si cambia el scroll)
+
+    yesButton.setBounds(Rect{(int16_t)(dialog.x + 20), (int16_t)(dialog.y + dialogHeight - 34), 80, 28});
+    noButton.setBounds(Rect{(int16_t)(dialog.x + dialog.width - 100), (int16_t)(dialog.y + dialogHeight - 34), 80, 28});
+
     visible = true;
     dirty = true;
 
     panel.invalidate();
-    messageLabel.invalidate();
+    messageArea.invalidate();
     yesButton.invalidate();
     noButton.invalidate();
 }
@@ -71,17 +83,24 @@ bool ConfirmModalWidget::isVisible() const { return visible; }
 
 void ConfirmModalWidget::draw(DisplayManager& display)
 {
-    if (!visible || !dirty)
+    if (!visible)
         return;
 
-    display.fillRect(screenBounds.x, screenBounds.y, screenBounds.width, screenBounds.height, Theme::Border);
+    if (dirty)
+    {
+        display.fillRect(screenBounds.x, screenBounds.y, screenBounds.width, screenBounds.height, Theme::Border);
+        dirty = false;
+
+        panel.invalidate();
+        messageArea.invalidate();
+        yesButton.invalidate();
+        noButton.invalidate();
+    }
 
     panel.draw(display);
-    messageLabel.draw(display);
+    messageArea.draw(display);
     yesButton.draw(display);
     noButton.draw(display);
-
-    dirty = false;
 }
 
 bool ConfirmModalWidget::handleTouch(const TouchEvent& event)
@@ -89,6 +108,7 @@ bool ConfirmModalWidget::handleTouch(const TouchEvent& event)
     if (!visible)
         return false;
 
+    messageArea.handleTouch(event);
     yesButton.handleTouch(event);
     noButton.handleTouch(event);
 

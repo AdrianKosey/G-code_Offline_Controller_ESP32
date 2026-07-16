@@ -18,7 +18,10 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
 
     "Archivos", "No se detecta la tarjeta SD",
     "Archivo Invalido",
-    "Trabajo Interrumpido:\n", "\nLinea ", " de ", ". Reanudar?", "Reanudando trabajo...",
+    "================================== \n ¡ADVERTENCIA! Trabajo Interrumpido \n ================================== \n", 
+    "\nEn la linea ", " de ", 
+    ". \n ================================== \n COMO FUNCIONA: \n 1- Se realizara el protocolo HOME. \n 2- Se posicionara la herramienta en la ultima ubicación registrada. \n 3- Iniciara nuevamente el trabajo desde la ultima linea de codigo leida. \n ================================== \n¿Desea reanudar?  ", 
+    "Reanudando trabajo...",
 
     "Tipo de herramienta","Husillo", "Laser", "Potencia", "ON", "OFF", "CW", "CCW",
 
@@ -64,7 +67,10 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
 
     "Files", "SD card not detected",
     "Invalid File",
-    "Work Interrupted:\n", "\nLine ", " of ", ". Resume?", "Resuming work...",
+    "================================== \n WARNING! Work Interrupted \n ================================== \n ", 
+    "\n On line ", " of ", 
+    ". \n ================================== \n HOW IT WORKS: \n 1- The HOME protocol will be executed. \n2- The tool will be positioned at the last registered location. \n3- The job will restart from the last line of code read. \n ================================== \n Do you want to resume?", 
+    "Resuming work...",
 
     "Tool type","Spindle", "Laser", "Power", "ON", "OFF", "CW", "CCW",
 

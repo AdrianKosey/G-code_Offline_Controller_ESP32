@@ -5,7 +5,7 @@
 
 #include "../../core/rect.h"
 #include "../../widgets/panel/panel_widget.h"
-#include "../../widgets/label/label_widget.h"
+#include "../../widgets/text_area/text_area_widget.h"
 #include "../../widgets/button/button_widget.h"
 #include "../../theme.h"
 
@@ -16,23 +16,23 @@ public:
 
     ConfirmModalWidget(const Rect& screenBounds);
 
-    void show(const String& message);
+    void show(DisplayManager& display, const String& message);
     void hide();
     bool isVisible() const;
 
     void draw(DisplayManager& display);
-    bool handleTouch(const TouchEvent& event); 
+    bool handleTouch(const TouchEvent& event);
 
     void setOnConfirm(ConfirmCallback callback);
     void setOnCancel(ConfirmCallback callback);
 
 private:
     Rect screenBounds;
-    bool dirty = false;
     bool visible = false;
+    bool dirty = false;
 
     PanelWidget panel;
-    LabelWidget messageLabel;
+    TextAreaWidget messageArea; 
     ButtonWidget yesButton;
     ButtonWidget noButton;
 

@@ -22,6 +22,8 @@
 #include "../machine/job_recovery_manager.h"
 #include "../gui/core/screen_sleep_manager.h"
 #include "../app/buzzer_manager.h"
+#include "../network/web_server_manager.h"
+
 enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery };
 class App
 {
@@ -35,6 +37,7 @@ private:
     ConfirmModalTarget confirmTarget = ConfirmModalTarget::LoadFile;
     bool sdReady = false;
     WifiManager wifiManager;
+    WebServerManager webServer;
     GrblController grblController;
     GCodeJobRunner jobRunner;
     FramingRunner framingRunner;
