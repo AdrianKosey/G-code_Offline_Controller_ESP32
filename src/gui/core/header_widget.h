@@ -16,10 +16,12 @@ public:
     void setSdStatus(bool ready);
     void setWifiStatus(bool connected);
     void setMachineStatus(bool connected);
+    void setUsbStatus(bool connected);
     void invalidate()
     {
         titleLabel.invalidate();
         sdIcon.invalidate();
+        usbIcon.invalidate();
         wifiIcon.invalidate();
         machineIcon.invalidate();
     }
@@ -28,4 +30,5 @@ private:
     IconWidget sdIcon;
     IconWidget wifiIcon;
     IconWidget machineIcon;
+    IconWidget usbIcon;
 };

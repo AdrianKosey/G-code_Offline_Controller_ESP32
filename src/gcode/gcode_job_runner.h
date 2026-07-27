@@ -1,20 +1,20 @@
 #pragma once
 
 #include <Arduino.h>
-#include <SD.h>
 #include "../machine/grbl_controller.h"
-#include "../gcode/gcode_parser.h"
-enum class JobState
-{
-    Idle, Loaded, Running, Paused, Completed, Error
-};
+#include "../storage/istorage_driver.h"
+#include "gcode_parser.h"
+
+enum class JobState { Idle, Loaded, Running, Paused, Completed, Error };
 
 class GCodeJobRunner
 {
 public:
     GCodeJobRunner(GrblController& grbl);
 
-    bool load(const String& path, uint32_t totalLines);
+    bool load(IStorageDriver& driver, const String& path, uint32_t totalLines);
+    void resumeFrom(IStorageDriver& driver, const String& path, uint32_t fromLine, uint32_t totalLines);
+
     void start();
     void pause();
     void resume();
@@ -22,18 +22,19 @@ public:
 
     void update();
 
-    void resumeFrom(const String& path, uint32_t fromLine, uint32_t totalLines);
-
-    const GCodeState& getParserState() const { return parser.getState(); }
-
     JobState getState() const;
     uint32_t getCurrentLine() const;
     uint32_t getTotalLines() const;
 
+    const GCodeState& getParserState() const { return parser.getState(); }
+
 private:
     GrblController& grbl;
-    GCodeParser parser;
-    File file;
+
+    IStorageDriver* driver = nullptr;
+    IStorageFile* file = nullptr;
+    String currentPath;
+
     JobState state = JobState::Idle;
 
     uint32_t currentLine = 0;
@@ -41,8 +42,8 @@ private:
 
     bool waitingForOk = false;
 
-    unsigned long lastStatusRequest = 0;
-    static constexpr unsigned long STATUS_INTERVAL_MS = 200;
+    GCodeParser parser;
 
     void sendNextLine();
+    void closeFile();
 };

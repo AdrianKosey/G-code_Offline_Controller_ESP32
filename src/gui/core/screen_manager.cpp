@@ -80,6 +80,10 @@ void ScreenManager::setSdStatus(bool ready)
     header.setSdStatus(ready);
 }
 
+void ScreenManager::setUsbStatus(bool connected) { 
+    header.setUsbStatus(connected); 
+}
+
 void ScreenManager::setWifiStatus(bool connected)
 {
     header.setWifiStatus(connected);

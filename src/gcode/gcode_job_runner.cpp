@@ -2,12 +2,25 @@
 
 GCodeJobRunner::GCodeJobRunner(GrblController& grbl) : grbl(grbl) {}
 
-bool GCodeJobRunner::load(const String& path, uint32_t newTotalLines)
+void GCodeJobRunner::closeFile()
 {
-    if (file) file.close();
+    if (file)
+    {
+        file->close();
+        delete file;
+        file = nullptr;
+    }
+}
 
-    file = SD.open(path);
-    if (!file || file.isDirectory())
+bool GCodeJobRunner::load(IStorageDriver& storageDriver, const String& path, uint32_t newTotalLines)
+{
+    closeFile();
+
+    driver = &storageDriver;
+    currentPath = path;
+
+    file = driver->openRead(path);
+    if (!file || !file->isValid())
     {
         state = JobState::Error;
         return false;
@@ -25,9 +38,12 @@ void GCodeJobRunner::start()
     if (state != JobState::Loaded && state != JobState::Completed)
         return;
 
-    file.seek(0);
+    closeFile();
+    file = driver->openRead(currentPath);
+
     currentLine = 0;
     waitingForOk = false;
+    parser.reset();
     state = JobState::Running;
 }
 
@@ -50,7 +66,7 @@ void GCodeJobRunner::stop()
     if (state != JobState::Running && state != JobState::Paused) return;
 
     grbl.softReset();
-    if (file) file.close();
+    closeFile();
 
     state = JobState::Idle;
     currentLine = 0;
@@ -62,9 +78,9 @@ uint32_t GCodeJobRunner::getTotalLines() const { return totalLines; }
 
 void GCodeJobRunner::sendNextLine()
 {
-    while (file.available())
+    while (file && file->available())
     {
-        String line = file.readStringUntil('\n');
+        String line = file->readStringUntil('\n');
         line.trim();
         currentLine++;
 
@@ -79,40 +95,18 @@ void GCodeJobRunner::sendNextLine()
     }
 
     state = JobState::Completed;
-    file.close();
+    closeFile();
 }
 
-void GCodeJobRunner::update()
+void GCodeJobRunner::resumeFrom(IStorageDriver& storageDriver, const String& path, uint32_t fromLine, uint32_t totalLinesParam)
 {
-    grbl.update();
+    closeFile();
 
-    unsigned long now = millis();
-    if (now - lastStatusRequest > STATUS_INTERVAL_MS)
-    {
-        grbl.requestStatus();
-        lastStatusRequest = now;
-    }
+    driver = &storageDriver;
+    currentPath = path;
 
-    if (state != JobState::Running)
-        return;
-
-    if (waitingForOk)
-    {
-        if (!grbl.hasPendingOk())
-            return; 
-
-        waitingForOk = false;
-    }
-
-    sendNextLine();
-}
-
-void GCodeJobRunner::resumeFrom(const String& path, uint32_t fromLine, uint32_t totalLinesParam)
-{
-    if (file) file.close();
-
-    file = SD.open(path);
-    if (!file || file.isDirectory())
+    file = driver->openRead(path);
+    if (!file || !file->isValid())
     {
         state = JobState::Error;
         return;
@@ -124,15 +118,31 @@ void GCodeJobRunner::resumeFrom(const String& path, uint32_t fromLine, uint32_t 
 
     parser.reset();
 
-    // Advance the file to the saved line WITHOUT sending it to Grbl - only update the parser
-    // so that its modal state is correct upon reaching that point
-    while (file.available() && currentLine < fromLine)
+    while (file->available() && currentLine < fromLine)
     {
-        String line = file.readStringUntil('\n');
+        String line = file->readStringUntil('\n');
         line.trim();
         parser.parseLine(line);
         currentLine++;
     }
 
-    state = JobState::Running; // The caller (App) already took care of rehome and repositioning before this
+    state = JobState::Running;
+}
+
+void GCodeJobRunner::update()
+{
+    grbl.update();
+
+    if (state != JobState::Running)
+        return;
+
+    if (waitingForOk)
+    {
+        if (!grbl.hasPendingOk())
+            return;
+
+        waitingForOk = false;
+    }
+
+    sendNextLine();
 }

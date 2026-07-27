@@ -1,19 +1,19 @@
 #include "gcode_file_analyzer.h"
 
-GCodeFileInfo GCodeFileAnalyzer::analyze(const String& path)
+GCodeFileInfo GCodeFileAnalyzer::analyze(IStorageDriver& driver, const String& path)
 {
     GCodeFileInfo info;
 
-    File file = SD.open(path);
-    if (!file || file.isDirectory())
+    IStorageFile* file = driver.openRead(path);
+    if (!file || !file->isValid())
         return info;
 
     GCodeParser parser;
     bool first = true;
 
-    while (file.available())
+    while (file->available())
     {
-        String line = file.readStringUntil('\n');
+        String line = file->readStringUntil('\n');
         GCodeCommand command = parser.parseLine(line);
         info.totalLines++;
 
@@ -35,24 +35,25 @@ GCodeFileInfo GCodeFileAnalyzer::analyze(const String& path)
         }
     }
 
-    file.close();
-    info.valid = !first;
+    file->close();
+    delete file;
 
+    info.valid = !first;
     return info;
 }
 
-uint32_t GCodeFileAnalyzer::countLinesOnly(const String& path)
+uint32_t GCodeFileAnalyzer::countLinesOnly(IStorageDriver& driver, const String& path)
 {
-    File file = SD.open(path);
-    if (!file || file.isDirectory())
+    IStorageFile* file = driver.openRead(path);
+    if (!file || !file->isValid())
         return 0;
 
     uint32_t lines = 0;
     uint8_t buffer[512];
 
-    while (file.available())
+    while (file->available())
     {
-        size_t bytesRead = file.read(buffer, sizeof(buffer));
+        size_t bytesRead = file->read(buffer, sizeof(buffer));
 
         for (size_t i = 0; i < bytesRead; i++)
         {
@@ -61,6 +62,8 @@ uint32_t GCodeFileAnalyzer::countLinesOnly(const String& path)
         }
     }
 
-    file.close();
+    file->close();
+    delete file;
+
     return lines;
 }

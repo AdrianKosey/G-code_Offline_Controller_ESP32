@@ -23,6 +23,7 @@
 #include "../gui/core/screen_sleep_manager.h"
 #include "../app/buzzer_manager.h"
 #include "../network/web_server_manager.h"
+#include "../storage/storage_manager.h"
 
 enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery };
 class App
@@ -35,6 +36,8 @@ public:
 private:
     AppSettingsManager appSettings;
     ConfirmModalTarget confirmTarget = ConfirmModalTarget::LoadFile;
+    StorageManager storageManager;
+    StorageSource pendingSource = StorageSource::SD;
     bool sdReady = false;
     WifiManager wifiManager;
     WebServerManager webServer;

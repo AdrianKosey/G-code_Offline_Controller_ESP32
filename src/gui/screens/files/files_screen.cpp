@@ -2,48 +2,6 @@
 
 static constexpr int16_t CONTENT_X = 60;
 
-FilesScreen::FilesScreen()
-    : pathLabel(Rect{CONTENT_X + 44, 30, 200, 16}, "/", Theme::TextSecondary, 1, Theme::Background, true),
-      backButton(
-          Rect{CONTENT_X + 8, 26, 28, 24},
-          Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
-          Theme::Background,
-          Theme::Text,
-          false),
-      fileList(Rect{CONTENT_X + 8, 56, 244, 178}, 28)
-{
-    backButton.setOnPress([this]()
-                          {
-        if (currentPath == "/")
-            return;
-
-        int lastSlash = currentPath.lastIndexOf('/', currentPath.length() - 2);
-        currentPath = (lastSlash <= 0) ? "/" : currentPath.substring(0, lastSlash + 1);
-
-        loadDirectory(currentPath); });
-
-    fileList.setOnSelect([this](const FileEntry &entry)
-                         {
-        if (entry.type == FileEntryType::Folder)
-        {
-            currentPath += entry.name + "/";
-            loadDirectory(currentPath);
-        }
-        else
-        {
-            if (onFileSelected)
-            onFileSelected(currentPath + entry.name);
-        } });
-
-    widgets = {&pathLabel, &backButton, &fileList};
-}
-
-void FilesScreen::onEnter()
-{
-    IScreen::onEnter(); // invalidates all widgets in the vector (behavior inherited from IScreen)
-    loadDirectory(currentPath);
-}
-
 namespace
 {
     bool isGCodeFile(const String& filename)
@@ -58,39 +16,104 @@ namespace
     }
 }
 
+FilesScreen::FilesScreen(StorageManager& storageManager)
+    : storage(storageManager),
+
+      pathLabel(Rect{CONTENT_X + 8, 56, 244, 16}, "/", Theme::TextSecondary, 1, Theme::Background, true),
+
+      backButton(
+          Rect{CONTENT_X + 216, 28, 28, 24},
+          Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
+          Theme::Background,
+          Theme::Text,
+          false),
+
+      sdTabButton(Rect{CONTENT_X + 8, 30, 60, 24}, "SD"),
+      usbTabButton(Rect{CONTENT_X + 72, 30, 60, 24}, "USB"),
+
+      fileList(Rect{CONTENT_X + 8, 76, 244, 158}, 28)
+{
+    backButton.setOnPress([this]() {
+        if (currentPath == "/")
+            return;
+
+        int lastSlash = currentPath.lastIndexOf('/', currentPath.length() - 2);
+        currentPath = (lastSlash <= 0) ? "/" : currentPath.substring(0, lastSlash + 1);
+
+        loadDirectory(currentPath);
+    });
+
+    fileList.setOnSelect([this](const FileEntry& entry) {
+        if (entry.type == FileEntryType::Folder)
+        {
+            currentPath += entry.name + "/";
+            loadDirectory(currentPath);
+        }
+        else
+        {
+            if (onFileSelected)
+                onFileSelected(currentPath + entry.name);
+        }
+    });
+
+    sdTabButton.setSelected(true);
+
+    sdTabButton.setOnPress([this]() {
+        currentSource = StorageSource::SD;
+        sdTabButton.setSelected(true);
+        usbTabButton.setSelected(false);
+        currentPath = "/";
+        loadDirectory(currentPath);
+    });
+
+    usbTabButton.setOnPress([this]() {
+        currentSource = StorageSource::USB;
+        sdTabButton.setSelected(false);
+        usbTabButton.setSelected(true);
+        currentPath = "/";
+        loadDirectory(currentPath);
+    });
+
+    widgets = { &sdTabButton, &usbTabButton, &backButton, &pathLabel, &fileList };
+}
+
+void FilesScreen::onEnter()
+{
+    IScreen::onEnter();
+    loadDirectory(currentPath);
+}
+
 void FilesScreen::loadDirectory(const String& path)
 {
     pathLabel.setText(path);
 
-    FileEntry entries[FileListWidget::MAX_ITEMS];
-    uint8_t count = 0;
+    IStorageDriver& driver = storage.getDriver(currentSource);
 
-    File dir = SD.open(path);
-
-    if (!dir || !dir.isDirectory())
+    if (!driver.isAvailable())
     {
-        fileList.clear();
+        FileEntry errorEntry[1] = { { "No Detected.", FileEntryType::File } };
+        fileList.setEntries(errorEntry, 1);
         return;
     }
 
-    File file = dir.openNextFile();
+    auto entries = driver.listDir(path);
 
-    while (file && count < FileListWidget::MAX_ITEMS)
+    FileEntry mapped[FileListWidget::MAX_ITEMS];
+    uint8_t count = 0;
+
+    for (auto& e : entries)
     {
-        bool isFolder = file.isDirectory();
-        String name = file.name();
+        bool include = e.isDirectory || isGCodeFile(e.name);
 
-        if (isFolder || isGCodeFile(name))
+        if (include && count < FileListWidget::MAX_ITEMS)
         {
-            entries[count].name = name;
-            entries[count].type = isFolder ? FileEntryType::Folder : FileEntryType::File;
+            mapped[count].name = e.name;
+            mapped[count].type = e.isDirectory ? FileEntryType::Folder : FileEntryType::File;
             count++;
         }
-
-        file = dir.openNextFile();
     }
 
-    fileList.setEntries(entries, count);
+    fileList.setEntries(mapped, count);
 }
 
 void FilesScreen::setOnFileSelected(FileSelectedCallback callback)

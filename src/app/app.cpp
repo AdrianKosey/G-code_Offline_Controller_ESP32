@@ -27,7 +27,9 @@ App::App()
       confirmModal(Rect{0, 0, 320, 240}),
       loadingModal(Rect{0, 0, 320, 240}),
       jobRunner(grblController),
+      storageManager(SD_CS_PIN, CH376_CS_PIN, CH376_INT_PIN),
       homeScreen(grblController),
+      filesScreen(storageManager),
       jogScreen(grblController, appSettings),
       toolsScreen(grblController),
       framingRunner(grblController),
@@ -40,8 +42,8 @@ App::App()
 
 void App::begin()
 {
-    grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
-    //grblController.beginSimulated();
+    //grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
+    grblController.beginSimulated();
     SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
     sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
     if (!sdReady)
@@ -65,7 +67,7 @@ void App::begin()
     wifiManager.begin();
     jobRecovery.begin();
     webServer.begin();
-
+    storageManager.begin();
     if (appSettings.isJobRecoveryEnabled() && jobRecovery.hasPendingRecovery())
     {
         const RecoverySnapshot& snap = jobRecovery.getSnapshot();
@@ -115,8 +117,9 @@ void App::begin()
             appSettings.getFramingFeedRate());
     });
 
-    filesScreen.setOnFileSelected([this](const String &path) {
+    filesScreen.setOnFileSelected([this](const String& path) {
         pendingFilePath = path;
+        pendingSource = filesScreen.getCurrentSource();
         confirmTarget = ConfirmModalTarget::LoadFile;
 
         int lastSlash = path.lastIndexOf('/');
@@ -140,9 +143,10 @@ void App::begin()
             loadingModal.show(tr(StringId::App_Loading_File));
             loadingModal.draw(display);
 
-            homeScreen.loadJob(pendingFilePath, appSettings.isGcodePreviewEnabled(), appSettings.isFramingEnabled()); 
+            IStorageDriver& driver = storageManager.getDriver(pendingSource);
 
-            jobRunner.load(pendingFilePath, homeScreen.getTotalLines());
+            homeScreen.loadJob(driver, pendingFilePath, appSettings.isGcodePreviewEnabled(), appSettings.isFramingEnabled());
+            jobRunner.load(driver, pendingFilePath, homeScreen.getTotalLines());
 
             loadingModal.hide();
             screenManager.switchToScreen(0);
@@ -190,7 +194,7 @@ void App::begin()
             grblController.sendLine("G1 Z" + String(snap.z, 3) + " F" + String(min(snap.feedRate, 300.0f), 0));
 
             // and continue streaming the file from the saved line
-            jobRunner.resumeFrom(snap.path, snap.line, snap.totalLines);
+            jobRunner.resumeFrom(storageManager.getDriver(StorageSource::SD), snap.path, snap.line, snap.totalLines);
 
             resumingJob = true;
 
@@ -219,7 +223,7 @@ void App::begin()
     screenManager.showInitialScreen(0);
     screenManager.setSdStatus(sdReady);
     screenManager.setWifiStatus(false);
-
+    screenManager.setUsbStatus(false);
     buzzer.begin();
     buzzer.setEnabled(appSettings.isBuzzerEnabled());
 
@@ -233,7 +237,7 @@ void App::update()
     screenSleep.update();
     buzzer.update();
     webServer.update();
-
+    storageManager.update();
     if (screenSleep.handleTouch(event))
     {
         if (!screenSleep.isSleeping())
@@ -247,6 +251,7 @@ void App::update()
 
     screenManager.setWifiStatus(wifiManager.getMode() == WifiMode::Connected);
     screenManager.setMachineStatus(grblController.getConnectionState() == GrblConnectionState::Connected);
+    screenManager.setUsbStatus(storageManager.isUsbAvailable());
 
     homeScreen.updateMachineState(
         jobRunner.getState(),

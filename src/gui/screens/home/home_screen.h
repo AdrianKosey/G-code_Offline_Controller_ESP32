@@ -1,6 +1,7 @@
 #pragma once
 #include <SD.h>
 #include <functional>
+#include "../../../storage/istorage_driver.h"
 #include "../../../../include/config.h"
 #include "../../../machine/grbl_controller.h"
 #include "../../../gcode/gcode_job_runner.h"
@@ -22,7 +23,7 @@ class HomeScreen : public IScreen
 {
 public:
     HomeScreen(GrblController& grblController);
-    void loadJob(const String& path, bool previewEnabled, bool framingEnabled);
+    void loadJob(IStorageDriver& driver, const String& path, bool previewEnabled, bool framingEnabled);
     using ActionCallback = std::function<void()>;
 
     void setOnPlayPause(ActionCallback callback);
