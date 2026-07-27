@@ -152,6 +152,8 @@ float HomeScreen::getProjectMinY() const { return projectMinY; }
 float HomeScreen::getProjectMaxX() const { return projectMaxX; }
 float HomeScreen::getProjectMaxY() const { return projectMaxY; }
 
+String HomeScreen::getFilename() const { return jobFilename.getText(); }
+
 uint32_t HomeScreen::getTotalLines() const { return totalLines; }
 
 void HomeScreen::updateMachineState(JobState jobState, const GrblStatus &status, uint32_t currentLine, uint32_t totalLinesParam)

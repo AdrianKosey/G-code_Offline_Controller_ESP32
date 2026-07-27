@@ -32,6 +32,8 @@ void GrblController::sendLine(const String &line)
     okFlag = false;
     errorFlag = false;
 
+    logConsole(true, line);
+
     if (simulated)
     {
         GCodeCommand command = simParser.parseLine(line);
@@ -159,13 +161,18 @@ void GrblController::update()
 
 void GrblController::processLine(const String &line)
 {
-    markResponseReceived(); // Any actual Grbl line counts as "alive"
+    markResponseReceived();
+    bool isStatusReport = line.startsWith("<") && line.endsWith(">");
 
-    if (line.startsWith("<") && line.endsWith(">"))
+    if (!isStatusReport)
+        logConsole(false, line);
+
+    if (isStatusReport)
     {
         parseStatusReport(line);
         return;
     }
+
 
     if (line == "ok")
     {
@@ -453,6 +460,24 @@ void GrblController::setSetting(uint8_t index, float value)
     // we also update locally - if Grbl rejects the value (out of range), an "error:" message would appear
     settings.values[index] = value;
     settings.present[index] = true;
+}
+
+void GrblController::logConsole(bool outgoing, const String& text)
+{
+    consoleHistory.push_back({ outgoing, text });
+
+    if (consoleHistory.size() > MAX_CONSOLE_ENTRIES)
+        consoleHistory.erase(consoleHistory.begin());
+
+    consoleVersion++;
+}
+
+const std::vector<ConsoleEntry>& GrblController::getConsoleHistory() const { return consoleHistory; }
+uint32_t GrblController::getConsoleVersion() const { return consoleVersion; }
+
+void GrblController::sendRaw(const String& line)
+{
+    sendLine(line);
 }
 
 String GrblController::getFirmwareVersion() const { return firmwareVersion; }

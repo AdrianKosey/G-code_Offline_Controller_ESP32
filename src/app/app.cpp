@@ -35,7 +35,7 @@ App::App()
       framingRunner(grblController),
       settingsScreen(wifiManager, grblController, appSettings),
       screenSleep(display, appSettings),
-      webServer(grblController, jobRunner, framingRunner, appSettings)
+      webServer(grblController, jobRunner, framingRunner, appSettings, storageManager, homeScreen)
 {
     g_appSettings = &appSettings;
 }
@@ -210,8 +210,9 @@ void App::begin()
         screenManager.redrawAll(); 
     });
 
-    webServer.setOnFileSelected([this](const String& path) {
+    webServer.setOnFileSelected([this](StorageSource source, const String& path) {
         pendingFilePath = path;
+        pendingSource = source; 
         confirmTarget = ConfirmModalTarget::LoadFile;
 
         int lastSlash = path.lastIndexOf('/');

@@ -34,6 +34,7 @@ public:
     float getProjectMinY() const;
     float getProjectMaxX() const;
     float getProjectMaxY() const;
+    String getFilename() const;
 
     uint32_t getTotalLines() const;
     bool hasValidProjectBounds() const;

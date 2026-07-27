@@ -4,6 +4,7 @@
 #include <map>
 #include "../gcode/gcode_parser.h" // for simulation
 #include "../../include/config.h"
+#include <vector>
 
 enum class GrblConnectionState { Disconnected, Connected };
 
@@ -29,6 +30,12 @@ struct GrblStatus
     float x = 0, y = 0, z = 0;
     float feedRate = 0;
     float spindleSpeed = 0;
+};
+
+struct ConsoleEntry
+{
+    bool isOutgoing;
+    String text;
 };
 
 class GrblController
@@ -71,6 +78,10 @@ public:
     bool isLaserMode() const { return settings.get(32, GrblDefaults::S32) > 0.5f; }
 
     void setSetting(uint8_t index, float value);
+
+    void sendRaw(const String& line);
+    const std::vector<ConsoleEntry>& getConsoleHistory() const;
+    uint32_t getConsoleVersion() const;
     
 
     // Simulation
@@ -98,6 +109,11 @@ private:
 
     void parseSettingLine(const String& line); // "$100=80.000"
     void markResponseReceived();
+    std::vector<ConsoleEntry> consoleHistory;
+    uint32_t consoleVersion = 0;
+    static constexpr size_t MAX_CONSOLE_ENTRIES = 100;
+
+    void logConsole(bool outgoing, const String& text);
 
     // Simulation
     bool simulated = false;

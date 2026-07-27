@@ -21,7 +21,7 @@ public:
     void setColor(uint16_t value);
     void setBackgroundColor(uint16_t value);
     void setAllowTruncate(bool allow);
-
+    const String& getText() const { return text; }
     void setBadge(uint16_t badgeColor, uint8_t radius);
 
 private:
