@@ -1,4 +1,4 @@
-# 🛠️ G-code Offline Controller (ESP32)
+# G-code Offline Controller (ESP32)
 
 <div align="center">
   
@@ -21,7 +21,7 @@ This project allows you to load, preview, and execute G-code files without a con
 - [Interface & Screenshots](#-interface--screenshots)
 - [Hardware Requirements](#-hardware)
 - [Firmware & Build](#-firmware)
-- [Software Architecture](#-architecture)
+- [Software Architecture](#%EF%B8%8F-architecture)
 - [Motivation](#-motivation)
 - [License](#-license)
 
