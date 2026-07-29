@@ -18,7 +18,7 @@ This project allows you to load, preview, and execute G-code files without a con
 
 ## 📑 Table of Contents
 - [Key Features](#-key-features)
-- [Interface & Screenshots](#-interface--screenshots)
+- [Interface & Screenshots](#-interface)
 - [Hardware Requirements](#-hardware)
 - [Firmware & Build](#-firmware)
 - [Software Architecture](#%EF%B8%8F-architecture)
@@ -54,7 +54,7 @@ This project allows you to load, preview, and execute G-code files without a con
 
 ---
 
-## 📸 Interface & Screenshots
+## 📸 Interface
 
 | 🏠 Home (Preview) | 📂 Files (SD/USB) | 🕹️ Jog (Manual Control) |
 | :---: | :---: | :---: |
