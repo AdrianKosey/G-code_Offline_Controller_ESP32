@@ -68,15 +68,32 @@ This project allows you to load, preview, and execute G-code files without a con
 
 ## 🔌 Hardware
 
-| Component | Function |
-|---|---|
-| **ESP32** | Main microcontroller handling all logic and UI. |
-| **ILI9341 Touch Display** | Graphic User Interface. |
-| **microSD Module** | Primary storage for G-code files. |
-| **CH376S Module** | Interface for reading USB flash drives. |
-| **Grbl Controller** | External board (e.g., Arduino Uno) responsible for actual G-code execution and driving stepper motors. |
+### Controller Wiring Guides
 
-> ⚠️ **Note:** Communication with Grbl is done via **UART**. This project acts as a G-code *streamer* and master controller; it does **not** control stepper motors directly.
+This schematic illustrates the correct wiring configuration required for the controller to function properly with the firmware.
+
+![Controller Schematic](docs/img/schematic.png)
+
+ ⚠️ **Notes**
+
+* Some components are only available in **SMD format**, which makes them difficult to use without a dedicated PCB. 
+
+* Fortunately, **ready-to-wire modules** are available for these components, simplifying integration.
+
+* Communication with Grbl is done via **UART**. This project acts as a G-code *streamer* and master controller; it does **not** control stepper motors directly.
+
+### Component Availability & Alternatives
+
+| Component | Format | Notes |
+| :--- | :--- | :--- |
+| **ESP32 Dev Kit** | Through Hole | This version uses the 30-pin ESP32 dev kit.|
+| **ILI9341 Touch Display** | Through Hole | The 240x320 TFT-ILI9341 display with a microSD card reader is used.|
+| **USB-A Famale** | SMD / Through Hole | USB-A female connector.|
+| **IDC Header 2x4** | SMD / Through Hole | 90-degree 8-pin (2x4) IDC header connector|
+| **CH376S** | SMD Only | Module version exists. For reading USB drives|
+| **AMS1117-3.3** | SMD Only | Available as a module. Any 3.3V regulator can also be used.|
+| **BSS138** | SMD Only | Modules using this MOSFET work equally well as level shifters. |
+
 
 ---
 
@@ -92,8 +109,21 @@ This project is built with [PlatformIO](https://platformio.org/) on top of the A
 
 1. Clone the repository.
 2. Open the project in VS Code with PlatformIO.
-3. Configure your hardware pins in `include/pins.h` according to your wiring setup.
-4. Run the build/upload command:
+3. Navigate to the `.pio` and `libdeps` folders to modify the **TFT_eSPI** library.
+4. Open the `User_Setup_Select.h` file and comment out line **#27**:
+```User_Setup_Select.h
+// #include <User_Setup.h>
+```
+5. Uncomment line #76:
+```User_Setup_Select.h
+#include <User_Setups/Setup42_ILI9341_ESP32.h>
+```
+6. In the library's `User_Setups` folder, locate the `Setup42_ILI9341_ESP32.h` file and uncomment line #14 to enable the touchscreen:
+```User_Setups/Setup42_ILI9341_ESP32.h
+#define TOUCH_CS 5 // Chip select pin (T_CS) of touch screen
+```
+8. Configure your hardware pins according to the provided schematic, or adjust the `include/pins.h` file to match your custom wiring.
+9. Run the build/upload command:
 
 ```bash
 pio run --target upload
