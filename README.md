@@ -94,6 +94,13 @@ This schematic illustrates the correct wiring configuration required for the con
 | **AMS1117-3.3** | SMD Only | Available as a module. Any 3.3V regulator can also be used.|
 | **BSS138** | SMD Only | Modules using this MOSFET work equally well as level shifters. |
 
+### Component Availability & Alternatives
+
+I have designed a dedicated PCB in KiCad. Using the [Gerber files](docs/gerber/Gcode-Offline-Controller.zip) provided in this repository, you can have it manufactured or even make it yourself, as I ensured that the pin pads do not require soldering from the top side.
+
+![PÇBView](docs/img/pcb_view.jpg)
+
+> **NOTE:** To mount the display, you must solder on female headers to provide enough clearance for the components located underneath it.
 
 ---
 
