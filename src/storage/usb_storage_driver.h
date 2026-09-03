@@ -14,34 +14,20 @@ public:
 
     bool available() override
     {
-        return bytesRead < fileSizeCached;
+        return readOffset < readLength || bytesRead < fileSizeCached;
     }
 
     String readStringUntil(char terminator) override
     {
         String line;
-        char buf[2] = {0, 0};
-
-        while (bytesRead < fileSizeCached)
+        while (fillReadBuffer())
         {
-            // Ch376msc::readFile reserves its last buffer byte for '\0',
-            // therefore a two-byte buffer is needed to request one byte.
-            chip->readFile(buf, sizeof(buf));
-            uint8_t received = chip->getStreamLen();
+            char character = readBuffer[readOffset++];
 
-            if (received == 0)
-            {
-                bytesRead = fileSizeCached;
-                valid = false;
-                break;
-            }
-
-            bytesRead += received;
-
-            if (buf[0] == terminator)
+            if (character == terminator)
                 break;
 
-            line += buf[0];
+            line += character;
         }
 
         return line;
@@ -55,26 +41,14 @@ public:
     size_t read(uint8_t* buffer, size_t size) override
     {
         size_t totalRead = 0;
-        char chunk[255];
 
-        while (totalRead < size && bytesRead < fileSizeCached)
+        while (totalRead < size && fillReadBuffer())
         {
-            // readFile takes an uint8_t length and reserves one byte for its
-            // null terminator, so a request is limited to 254 data bytes.
-            size_t requested = min((size_t)254, size - totalRead);
-            chip->readFile(chunk, (uint8_t)(requested + 1));
-
-            uint8_t received = chip->getStreamLen();
-            if (received == 0)
-            {
-                bytesRead = fileSizeCached;
-                valid = false;
-                break;
-            }
-
-            memcpy(buffer + totalRead, chunk, received);
-            totalRead += received;
-            bytesRead += received;
+            size_t availableBytes = readLength - readOffset;
+            size_t copyLength = min(availableBytes, size - totalRead);
+            memcpy(buffer + totalRead, readBuffer + readOffset, copyLength);
+            readOffset += copyLength;
+            totalRead += copyLength;
         }
 
         return totalRead;
@@ -93,6 +67,36 @@ private:
     bool valid = true;
     uint32_t bytesRead = 0;
     uint32_t fileSizeCached;
+    char readBuffer[255];
+    uint8_t readOffset = 0;
+    uint8_t readLength = 0;
+
+    bool fillReadBuffer()
+    {
+        if (readOffset < readLength)
+            return true;
+
+        if (bytesRead >= fileSizeCached)
+            return false;
+
+        // readFile reserves its final buffer byte for '\0', leaving 254 bytes
+        // of useful data per CH376 transaction.
+        uint8_t requested = (uint8_t)min((uint32_t)254, fileSizeCached - bytesRead);
+        chip->readFile(readBuffer, requested + 1);
+
+        readLength = chip->getStreamLen();
+        readOffset = 0;
+        bytesRead += readLength;
+
+        if (readLength == 0)
+        {
+            bytesRead = fileSizeCached;
+            valid = false;
+            return false;
+        }
+
+        return true;
+    }
 };
 
 class UsbStorageDriver : public IStorageDriver

@@ -80,7 +80,7 @@ void HomeScreen::loadJob(IStorageDriver& driver, const String& path, bool previe
 
     if (framingEnabled)
     {
-        GCodeFileInfo info = GCodeFileAnalyzer::analyze(driver, path);
+        GCodeFileInfo info = GCodeFileAnalyzer::analyze(driver, path, previewEnabled);
 
         if (!info.valid)
         {
@@ -103,34 +103,20 @@ void HomeScreen::loadJob(IStorageDriver& driver, const String& path, bool previe
         {
             gcodePreview.setProjectBounds(info.minX, info.minY, info.maxX, info.maxY);
 
-            uint32_t stride = max((uint32_t)1, info.totalLines / GCodePreviewWidget::MAX_POINTS);
-
-            IStorageFile* file = driver.openRead(path);
-            if (file && file->isValid())
-            {
-                GCodeParser parser;
-                uint32_t lineIndex = 0;
-
-                while (file->available())
-                {
-                    String line = file->readStringUntil('\n');
-                    GCodeCommand command = parser.parseLine(line);
-
-                    if (command.hasTarget && (lineIndex % stride == 0))
-                        gcodePreview.addPoint(command.target.x, command.target.y);
-
-                    lineIndex++;
-                }
-
-                file->close();
-                delete file;
-            }
+            // The analyzer sampled these points while calculating the bounds,
+            // avoiding a second complete read of the storage medium.
+            for (uint16_t i = 0; i < info.previewPointCount; ++i)
+                gcodePreview.addPoint(info.previewPoints[i].x, info.previewPoints[i].y);
         }
     }
     else
     {
         jobFilename.setText(filename);
-        totalLines = GCodeFileAnalyzer::countLinesOnly(driver, path);
+        // With framing and preview disabled there is no need to inspect the
+        // file before starting it.  Counting lines here required a complete
+        // extra read and delayed opening on both SD and USB media.  A zero
+        // total means that percentage progress is unavailable for this job.
+        totalLines = 0;
         currentLine = 0;
 
         projectBoundsValid = false;
@@ -140,8 +126,8 @@ void HomeScreen::loadJob(IStorageDriver& driver, const String& path, bool previe
     gcodePreview.setProgress(0);
 
     jobProgress.setValue(0);
-    jobProgressText.setText("0 / " + String(totalLines));
-    jobProgressPercentage.setText("0%");
+    jobProgressText.setText(totalLines ? "0 / " + String(totalLines) : "0 / ?");
+    jobProgressPercentage.setText(totalLines ? "0%" : "--");
 }
 void HomeScreen::setOnPlayPause(ActionCallback callback) { onPlayPause = callback; }
 void HomeScreen::setOnFraming(ActionCallback callback) { onFraming = callback; }
@@ -213,6 +199,13 @@ void HomeScreen::updateMachineState(JobState jobState, const GrblStatus &status,
         jobProgressPercentage.setText(String((int)percent) + "%");
 
         gcodePreview.setProgress(percent);
+    }
+    else
+    {
+        // Fast-loading jobs skip the pre-scan, so only the current line is
+        // known while they run.
+        jobProgressText.setText(String(currentLine) + " / ?");
+        jobProgressPercentage.setText("--");
     }
 }
 
