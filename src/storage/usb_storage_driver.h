@@ -22,19 +22,26 @@ public:
         String line;
         char buf[2] = {0, 0};
 
-        // I read byte by byte
         while (bytesRead < fileSizeCached)
         {
-            bool more = chip->readFile(buf, 1);
-            bytesRead++;
+            // Ch376msc::readFile reserves its last buffer byte for '\0',
+            // therefore a two-byte buffer is needed to request one byte.
+            chip->readFile(buf, sizeof(buf));
+            uint8_t received = chip->getStreamLen();
+
+            if (received == 0)
+            {
+                bytesRead = fileSizeCached;
+                valid = false;
+                break;
+            }
+
+            bytesRead += received;
 
             if (buf[0] == terminator)
                 break;
 
             line += buf[0];
-
-            if (!more)
-                break;
         }
 
         return line;
@@ -47,9 +54,30 @@ public:
 
     size_t read(uint8_t* buffer, size_t size) override
     {
-        chip->readFile((char*)buffer, size);
-        bytesRead += size;
-        return size;
+        size_t totalRead = 0;
+        char chunk[255];
+
+        while (totalRead < size && bytesRead < fileSizeCached)
+        {
+            // readFile takes an uint8_t length and reserves one byte for its
+            // null terminator, so a request is limited to 254 data bytes.
+            size_t requested = min((size_t)254, size - totalRead);
+            chip->readFile(chunk, (uint8_t)(requested + 1));
+
+            uint8_t received = chip->getStreamLen();
+            if (received == 0)
+            {
+                bytesRead = fileSizeCached;
+                valid = false;
+                break;
+            }
+
+            memcpy(buffer + totalRead, chunk, received);
+            totalRead += received;
+            bytesRead += received;
+        }
+
+        return totalRead;
     }
 
     uint32_t size() const override { return fileSizeCached; }
@@ -97,11 +125,29 @@ public:
         if (!navigateTo(path))
             return entries;
 
+        // listDir() is stateful in Ch376msc.  A previous enumeration can leave
+        // its internal state machine waiting for the next entry, so always
+        // restart it after changing directory.  Without this, the root can be
+        // listed correctly while an immediately selected subdirectory appears
+        // empty.
+        chip.resetFileList();
+
         while (chip.listDir())
         {
             StorageEntry entry;
-            entry.name = String(chip.getFileName());
-            entry.isDirectory = (chip.getFileAttrb() == CH376_ATTR_DIRECTORY);
+            // Ch376msc exposes the 11 raw bytes of a FAT 8.3 name.  For
+            // example, TEST is returned as "TEST       " and JOB.NC as
+            // "JOB     NC".  Those bytes cannot be used directly in a path
+            // (nor can the latter pass the G-code extension filter).
+            entry.name = formatFatName(chip.getFileName());
+            entry.isDirectory = (chip.getFileAttrb() & CH376_ATTR_DIRECTORY) != 0;
+
+            // FAT stores these two directory-navigation entries in every
+            // subdirectory.  Navigation is provided by the screen's back
+            // button, so they must not be presented as ordinary folders.
+            if (entry.name == "." || entry.name == "..")
+                continue;
+
             entries.push_back(entry);
         }
 
@@ -182,6 +228,26 @@ private:
     Ch376msc chip;
     bool available = false;
 
+    static String formatFatName(const char* rawName)
+    {
+        String base;
+        String extension;
+
+        for (uint8_t i = 0; i < 8 && rawName[i] != '\0'; ++i)
+        {
+            if (rawName[i] != ' ')
+                base += rawName[i];
+        }
+
+        for (uint8_t i = 8; i < 11 && rawName[i] != '\0'; ++i)
+        {
+            if (rawName[i] != ' ')
+                extension += rawName[i];
+        }
+
+        return extension.length() ? base + "." + extension : base;
+    }
+
     void splitPath(const String& fullPath, String& dir, String& filename)
     {
         int lastSlash = fullPath.lastIndexOf('/');
@@ -200,10 +266,11 @@ private:
 
     bool navigateTo(const String& path)
     {
-        if (path == "/" || path.length() == 0)
-            return true; // root - cd() is not needed
-
-        uint8_t result = chip.cd(path.c_str(), 0); // 0 = do not create, only browse (to be confirmed)
+        // The CH376 keeps a current working directory.  Always issue cd(),
+        // including for '/', otherwise the UI can show '/' while the chip is
+        // still enumerating the previously opened subdirectory.
+        const char* target = (path.length() == 0) ? "/" : path.c_str();
+        uint8_t result = chip.cd(target, 0); // 0 = do not create, only browse
         return (result == ANSW_USB_INT_SUCCESS || result == ANSW_ERR_OPEN_DIR);
     }
 };

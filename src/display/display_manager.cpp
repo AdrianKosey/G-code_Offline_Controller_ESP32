@@ -8,7 +8,7 @@ DisplayManager::DisplayManager(IDisplayDriver &driver)
 bool DisplayManager::begin()
 {
     driver.begin();
-    driver.setRotation(1);
+    driver.setRotation(3);
 
     driver.clear(0x0000);
 
