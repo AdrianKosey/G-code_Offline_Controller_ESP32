@@ -115,6 +115,9 @@ private:
 
     void logConsole(bool outgoing, const String& text);
 
+    unsigned long lastStatusRequest = 0;
+    static constexpr unsigned long STATUS_INTERVAL_MS = 200;
+
     // Simulation
     bool simulated = false;
     GCodeParser simParser;

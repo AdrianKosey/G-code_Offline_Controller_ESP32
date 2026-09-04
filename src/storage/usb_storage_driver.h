@@ -1,14 +1,16 @@
 #pragma once
 
+#include <vector>
 #include <Ch376msc.h>
 #include "istorage_driver.h"
 
 class UsbStorageFile : public IStorageFile
 {
 public:
-    UsbStorageFile(Ch376msc* chip, uint32_t fileSize)
+    UsbStorageFile(Ch376msc *chip, uint32_t fileSize)
         : chip(chip), fileSizeCached(fileSize)
-    {}
+    {
+    }
 
     bool isValid() const override { return valid; }
 
@@ -33,12 +35,12 @@ public:
         return line;
     }
 
-    size_t write(const uint8_t* buffer, size_t size) override
+    size_t write(const uint8_t *buffer, size_t size) override
     {
-        return chip->writeFile((char*)buffer, size);
+        return chip->writeFile((char *)buffer, size);
     }
 
-    size_t read(uint8_t* buffer, size_t size) override
+    size_t read(uint8_t *buffer, size_t size) override
     {
         size_t totalRead = 0;
 
@@ -63,7 +65,7 @@ public:
     }
 
 private:
-    Ch376msc* chip;
+    Ch376msc *chip;
     bool valid = true;
     uint32_t bytesRead = 0;
     uint32_t fileSizeCached;
@@ -104,13 +106,19 @@ class UsbStorageDriver : public IStorageDriver
 public:
     UsbStorageDriver(uint8_t csPin, uint8_t intPin)
         : chip(csPin, intPin)
-    {}
+    {
+    }
 
     bool begin() override
     {
         chip.init();
+        delay(500);
         chip.setSource(0); // 0 = USB (the "1" in this library is an SD slot specific to the CH376 module; it is not used from this chip, it is used from the screen)
         available = chip.driveReady();
+        if (available)
+            Serial.println("USB: memoria detectada y lista.");
+        else
+            Serial.println("USB: CH376S inicializado, sin memoria insertada (o no responde).");
         return available;
     }
 
@@ -122,7 +130,7 @@ public:
         return available;
     }
 
-    std::vector<StorageEntry> listDir(const String& path) override
+    std::vector<StorageEntry> listDir(const String &path) override
     {
         std::vector<StorageEntry> entries;
 
@@ -158,7 +166,7 @@ public:
         return entries;
     }
 
-    IStorageFile* openRead(const String& path) override
+    IStorageFile *openRead(const String &path) override
     {
         String dir, filename;
         splitPath(path, dir, filename);
@@ -174,7 +182,7 @@ public:
         return new UsbStorageFile(&chip, chip.getFileSize());
     }
 
-    IStorageFile* openWrite(const String& path) override
+    IStorageFile *openWrite(const String &path) override
     {
         String dir, filename;
         splitPath(path, dir, filename);
@@ -188,7 +196,7 @@ public:
         return new UsbStorageFile(&chip, 0);
     }
 
-    bool remove(const String& path) override
+    bool remove(const String &path) override
     {
         String dir, filename;
         splitPath(path, dir, filename);
@@ -200,23 +208,23 @@ public:
         return chip.deleteFile();
     }
 
-    bool rename(const String& oldPath, const String& newPath) override
+    bool rename(const String &oldPath, const String &newPath) override
     {
         // This library doesn't expose a direct rename command in its public API -
-        //It would have to be implemented like copy+delete (read the entire old file,
+        // It would have to be implemented like copy+delete (read the entire old file,
         // write it with the new name, delete the old one). We'll leave that pending
         // until we confirm if there's a native method I've missed.
         return false;
     }
 
-    bool mkdir(const String& path) override
+    bool mkdir(const String &path) override
     {
         // `cd()` with `flag=1` seems to create the folder if it doesn't exist, according to the official example -
         // I can't confirm the hardware version yet; the PCB isn't ready.
         return chip.cd(path.c_str(), 1) == ANSW_USB_INT_SUCCESS;
     }
 
-    bool rmdir(const String& path) override
+    bool rmdir(const String &path) override
     {
         return false; // TODO: Implement with chip.deleteDir(path) after confirming its use
     }
@@ -226,13 +234,13 @@ public:
         return (uint64_t)chip.getTotalSectors() * 512ULL; // SECTORSIZE of the library = 512
     }
 
-    const char* driverName() const override { return "USB"; }
+    const char *driverName() const override { return "USB"; }
 
 private:
     Ch376msc chip;
     bool available = false;
 
-    static String formatFatName(const char* rawName)
+    static String formatFatName(const char *rawName)
     {
         String base;
         String extension;
@@ -252,7 +260,7 @@ private:
         return extension.length() ? base + "." + extension : base;
     }
 
-    void splitPath(const String& fullPath, String& dir, String& filename)
+    void splitPath(const String &fullPath, String &dir, String &filename)
     {
         int lastSlash = fullPath.lastIndexOf('/');
 
@@ -268,12 +276,12 @@ private:
         }
     }
 
-    bool navigateTo(const String& path)
+    bool navigateTo(const String &path)
     {
         // The CH376 keeps a current working directory.  Always issue cd(),
         // including for '/', otherwise the UI can show '/' while the chip is
         // still enumerating the previously opened subdirectory.
-        const char* target = (path.length() == 0) ? "/" : path.c_str();
+        const char *target = (path.length() == 0) ? "/" : path.c_str();
         uint8_t result = chip.cd(target, 0); // 0 = do not create, only browse
         return (result == ANSW_USB_INT_SUCCESS || result == ANSW_ERR_OPEN_DIR);
     }

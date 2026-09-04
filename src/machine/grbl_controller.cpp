@@ -148,6 +148,12 @@ void GrblController::update()
         }
     }
 
+    if (millis() - lastStatusRequest > STATUS_INTERVAL_MS)
+    {
+        requestStatus();
+        lastStatusRequest = millis();
+    }
+
     // Disconnection detection: if nothing has arrived for too long, the link has gone down
     if (hasReceivedAny && connectionState == GrblConnectionState::Connected)
     {
