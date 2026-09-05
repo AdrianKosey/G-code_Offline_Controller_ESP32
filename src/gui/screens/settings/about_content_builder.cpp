@@ -91,7 +91,7 @@ void AboutContentBuilder::refresh()
 
     uint32_t heapUsed = info.heapTotal - info.heapFree;
     float ramPercent = (float)heapUsed / (float)info.heapTotal * 100.0f;
-    ramBar.setValue(ramPercent); // <- nuevo
+    ramBar.setValue(ramPercent); 
     ramValue.setText(formatBytes(heapUsed) + " / " + formatBytes(info.heapTotal));
 
     cpuFreqValue.setText(String(info.cpuFreqMHz) + " MHz");
@@ -99,12 +99,12 @@ void AboutContentBuilder::refresh()
 
     if (info.wifiConnected)
     {
-        wifiSignalBar.setValue(rssiToPercent(info.wifiRssi)); // <- nuevo
+        wifiSignalBar.setValue(rssiToPercent(info.wifiRssi));
         wifiSignalValue.setText(String(info.wifiRssi) + " dBm");
     }
     else
     {
-        wifiSignalBar.setValue(0); // <- nuevo
+        wifiSignalBar.setValue(0);
         wifiSignalValue.setText(tr(StringId::Settings_NotConnected));
     }
 
@@ -136,7 +136,7 @@ void AboutContentBuilder::attachTo(ScrollPanelWidget& panel)
     addRow(tempCaption, tempValue);
     addRow(uptimeCaption, uptimeValue);
 
-    // RAM - con barra, igual formato que SD
+    // RAM - con barra
     panel.addChild(&ramCaption, 8, y);
     panel.addChild(&ramBar, 8, y + 16);
     panel.addChild(&ramValue, 8, y + 28);

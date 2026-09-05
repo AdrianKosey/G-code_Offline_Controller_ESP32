@@ -7,11 +7,12 @@ HomeScreen::HomeScreen(GrblController& grblController)
     : grbl(grblController),
       statusBadge(Rect{CONTENT_X + 170, 34, 80, 22}, tr(StringId::Home_Ready), Theme::Text, 2),
       jobPanel(Rect{CONTENT_X + 8, 34, 150, 200}, Theme::Panel, 10),
-      jobCaption(Rect{CONTENT_X + 15, 40, 130, 16}, tr(StringId::Home_InProgress), Theme::TextSecondary, 1, Theme::Panel, false),
-      jobFilename(Rect{CONTENT_X + 15, 54, 130, 20}, tr(StringId::Home_NoFile), Theme::Text, 2, Theme::Panel, true),
+      jobCaption(Rect{CONTENT_X + 15, 35, 130, 16}, tr(StringId::Home_InProgress), Theme::TextSecondary, 1, Theme::Panel, false),
+      jobFilename(Rect{CONTENT_X + 15, 49, 130, 20}, tr(StringId::Home_NoFile), Theme::Text, 2, Theme::Panel, true),
       jobProgress(Rect{CONTENT_X + 15, 156, 130, 10}, Theme::JobPanel, Theme::Progress),
-      jobProgressText(Rect{CONTENT_X + 15, 168, 90, 14}, "0 / 0", Theme::TextSecondary, 1, Theme::Panel, false),
+      jobProgressText(Rect{CONTENT_X + 15, 142, 90, 14}, "0 / 0", Theme::TextSecondary, 1, Theme::Panel, false),
       jobProgressPercentage(Rect{CONTENT_X + 115, 168, 40, 14}, "0%", Theme::TextSecondary, 1, Theme::Panel, false),
+      elapsedTimeLabel(Rect{CONTENT_X + 15, 168, 90, 14}, "00:00:00", Theme::TextSecondary, 1, Theme::Panel, false),
 
       xyzPanel(Rect{CONTENT_X + 170, 62, 80, 136}, Theme::Panel, 10),
       labelX(Rect{CONTENT_X + 178, 68, 30, 14}, tr(StringId::Coords_X), Theme::TextSecondary, 1, Theme::Panel, false),
@@ -27,7 +28,7 @@ HomeScreen::HomeScreen(GrblController& grblController)
       powerBar(Rect{CONTENT_X + 170, 216, 80, 8}, Theme::JobPanel, Theme::Progress),
 
       gcodePreview(
-          Rect{CONTENT_X + 18, 80, 130, 70},
+          Rect{CONTENT_X + 18, 70, 130, 70},
           Theme::Background,
           Theme::TextSecondary,
           Theme::Text),
@@ -65,7 +66,7 @@ HomeScreen::HomeScreen(GrblController& grblController)
         &jobCaption, &jobFilename, &jobProgressPercentage,
         &gcodePreview,
         &jobProgress, &jobProgressText,
-        &labelX, &valueX, &labelY, &valueY, &labelZ, &valueZ, &labelS, &valueS,
+        &labelX, &valueX, &labelY, &valueY, &labelZ, &valueZ, &labelS, &valueS, &elapsedTimeLabel,
         &powerLabel, &powerBar,
         &playPauseButton, &stopButton, &framingButton};
 }
@@ -142,13 +143,27 @@ String HomeScreen::getFilename() const { return jobFilename.getText(); }
 
 uint32_t HomeScreen::getTotalLines() const { return totalLines; }
 
-void HomeScreen::updateMachineState(JobState jobState, const GrblStatus &status, uint32_t currentLine, uint32_t totalLinesParam)
+namespace
+{
+    String formatElapsed(unsigned long totalSeconds)
+    {
+        unsigned long h = totalSeconds / 3600;
+        unsigned long m = (totalSeconds % 3600) / 60;
+        unsigned long s = totalSeconds % 60;
+
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%02lu:%02lu:%02lu", h, m, s);
+        return String(buf);
+    }
+}
+
+void HomeScreen::updateMachineState(JobState jobState, const GrblStatus &status, uint32_t currentLine, uint32_t totalLinesParam, unsigned long elapsedSeconds)
 {
     valueX.setText(String(status.x, 3));
     valueY.setText(String(status.y, 3));
     valueZ.setText(String(status.z, 3));
-
     valueS.setText(String((int)status.feedRate));
+    elapsedTimeLabel.setText(formatElapsed(elapsedSeconds));
 
     float powerPercent = constrain(status.spindleSpeed / grbl.getMaxSpindleSpeed() * 100.0f, 0.0f, 100.0f);
     powerBar.setValue(powerPercent);

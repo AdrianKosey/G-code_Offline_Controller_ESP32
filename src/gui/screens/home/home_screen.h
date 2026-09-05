@@ -39,7 +39,7 @@ public:
     uint32_t getTotalLines() const;
     bool hasValidProjectBounds() const;
 
-    void updateMachineState(JobState jobState, const GrblStatus& status, uint32_t currentLine, uint32_t totalLines);
+    void updateMachineState(JobState jobState, const GrblStatus& status, uint32_t currentLine, uint32_t totalLines, unsigned long elapsedSeconds);
 private:
     GrblController& grbl;
     // Header
@@ -59,7 +59,7 @@ private:
     LabelWidget labelY, valueY;
     LabelWidget labelZ, valueZ;
     LabelWidget labelS, valueS;
-
+    LabelWidget elapsedTimeLabel;
     // Power
     LabelWidget powerLabel;
     ProgressBarWidget powerBar;

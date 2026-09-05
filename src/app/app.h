@@ -24,8 +24,9 @@
 #include "../app/buzzer_manager.h"
 #include "../network/web_server_manager.h"
 #include "../storage/storage_manager.h"
-
-enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery };
+#include "splash_screen.h"
+#include "time_format.h"
+enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery, JobCompleted };
 class App
 {
 public:
@@ -34,6 +35,7 @@ public:
     void update();
 
 private:
+    JobState lastJobState = JobState::Idle;
     AppSettingsManager appSettings;
     ConfirmModalTarget confirmTarget = ConfirmModalTarget::LoadFile;
     StorageManager storageManager;

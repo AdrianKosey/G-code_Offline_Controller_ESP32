@@ -18,6 +18,7 @@ enum class StringId
     Home_Speed, Home_Power,
     Coords_X, Coords_Y, Coords_Z,
     Home_Preview,
+    Job_Completed_Title, Job_Completed_Time, Job_Completed_Lines,
 
     // Files
     Files_Title, Files_NoSdCard,

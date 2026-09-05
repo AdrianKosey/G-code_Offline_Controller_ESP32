@@ -4,15 +4,15 @@ static constexpr uint8_t SIDEBAR_WIDTH = 60;
 static constexpr int16_t HEADER_HEIGHT = 30;
 static constexpr int16_t SCREEN_HEIGHT = 240;
 
-static SidebarItem sidebarItemsBuffer[5]; 
+static SidebarItem sidebarItemsBuffer[5];
 
-static const SidebarItem* buildSidebarItems()
+static const SidebarItem *buildSidebarItems()
 {
-    sidebarItemsBuffer[0] = { IconId::Home, tr(StringId::Sidebar_Home) };
-    sidebarItemsBuffer[1] = { IconId::Files, tr(StringId::Sidebar_Files) };
-    sidebarItemsBuffer[2] = { IconId::Prepare, tr(StringId::Sidebar_Jog) };
-    sidebarItemsBuffer[3] = { IconId::Tools, tr(StringId::Sidebar_Tools) };
-    sidebarItemsBuffer[4] = { IconId::Settings, tr(StringId::Sidebar_Settings) };
+    sidebarItemsBuffer[0] = {IconId::Home, tr(StringId::Sidebar_Home)};
+    sidebarItemsBuffer[1] = {IconId::Files, tr(StringId::Sidebar_Files)};
+    sidebarItemsBuffer[2] = {IconId::Prepare, tr(StringId::Sidebar_Jog)};
+    sidebarItemsBuffer[3] = {IconId::Tools, tr(StringId::Sidebar_Tools)};
+    sidebarItemsBuffer[4] = {IconId::Settings, tr(StringId::Sidebar_Settings)};
 
     return sidebarItemsBuffer;
 }
@@ -43,7 +43,7 @@ App::App()
 void App::begin()
 {
     grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
-    //grblController.beginSimulated();
+    // grblController.beginSimulated();
     SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
     sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
     if (!sdReady)
@@ -52,11 +52,11 @@ void App::begin()
     }
 
     display.begin();
-
+    SplashScreen::show(display);
     constexpr bool FORCE_TOUCH_CALIBRATION = false;
     touch.begin(FORCE_TOUCH_CALIBRATION);
 
-    display.clear(Theme::Background);
+    // display.clear(Theme::Background);
 
     screenManager.registerScreen(0, &homeScreen, tr(StringId::Sidebar_Home));
     screenManager.registerScreen(1, &filesScreen, tr(StringId::Sidebar_Files));
@@ -70,41 +70,42 @@ void App::begin()
     storageManager.begin();
     if (appSettings.isJobRecoveryEnabled() && jobRecovery.hasPendingRecovery())
     {
-        const RecoverySnapshot& snap = jobRecovery.getSnapshot();
+        const RecoverySnapshot &snap = jobRecovery.getSnapshot();
 
         String message = tr(StringId::Work_Interrupted) +
-                          String(snap.path) + tr(StringId::Work_Line) + String(snap.line) +
-                          tr(StringId::Work_Of) + String(snap.totalLines) + tr(StringId::Work_Resume);
+                         String(snap.path) + tr(StringId::Work_Line) + String(snap.line) +
+                         tr(StringId::Work_Of) + String(snap.totalLines) + tr(StringId::Work_Resume);
 
         confirmTarget = ConfirmModalTarget::JobRecovery;
-        confirmModal.show(display ,message);
+        confirmModal.show(display, message);
     }
 
-    homeScreen.setOnPlayPause([this](){
-        JobState state = jobRunner.getState();
+    homeScreen.setOnPlayPause([this]()
+                              {
+                                  JobState state = jobRunner.getState();
 
-        if (state == JobState::Running)
-        {
-            jobRunner.pause();
-        }
-        else if (state == JobState::Paused)
-        {
-            jobRunner.resume();
-        }
-        else
-        {
-            jobRunner.start();
-            if (appSettings.isJobRecoveryEnabled())
-                jobRecovery.startJob(pendingFilePath, homeScreen.getTotalLines());
-        }
-    
-    });
-    homeScreen.setOnStop([this]() {
+                                  if (state == JobState::Running)
+                                  {
+                                      jobRunner.pause();
+                                  }
+                                  else if (state == JobState::Paused)
+                                  {
+                                      jobRunner.resume();
+                                  }
+                                  else
+                                  {
+                                      jobRunner.start();
+                                      if (appSettings.isJobRecoveryEnabled())
+                                          jobRecovery.startJob(pendingFilePath, homeScreen.getTotalLines());
+                                  }
+                              });
+    homeScreen.setOnStop([this]()
+                         {
         jobRunner.stop();
-        jobRecovery.clear();
-    });
+        jobRecovery.clear(); });
 
-    homeScreen.setOnFraming([this]() {
+    homeScreen.setOnFraming([this]()
+                            {
         if (!homeScreen.hasValidProjectBounds())
         {
             confirmModal.show(display, tr(StringId::Modal_Framing_Error));
@@ -114,10 +115,10 @@ void App::begin()
         framingRunner.start(
             homeScreen.getProjectMinX(), homeScreen.getProjectMinY(),
             homeScreen.getProjectMaxX(), homeScreen.getProjectMaxY(),
-            appSettings.getFramingFeedRate());
-    });
+            appSettings.getFramingFeedRate()); });
 
-    filesScreen.setOnFileSelected([this](const String& path) {
+    filesScreen.setOnFileSelected([this](const String &path)
+                                  {
         pendingFilePath = path;
         pendingSource = filesScreen.getCurrentSource();
         confirmTarget = ConfirmModalTarget::LoadFile;
@@ -125,19 +126,18 @@ void App::begin()
         int lastSlash = path.lastIndexOf('/');
         String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
 
-        confirmModal.show(display, tr(StringId::App_Open_File) + filename + "?");
-    });
+        confirmModal.show(display, tr(StringId::App_Open_File) + filename + "?"); });
 
-    settingsScreen.setOnBuzzerChanged([this](bool enabled) {
-        buzzer.setEnabled(enabled);
-    });
+    settingsScreen.setOnBuzzerChanged([this](bool enabled)
+                                      { buzzer.setEnabled(enabled); });
 
-    settingsScreen.setOnLanguageChanged([this]() {
+    settingsScreen.setOnLanguageChanged([this]()
+                                        {
         confirmTarget = ConfirmModalTarget::LanguageRestart;
-        confirmModal.show(display, tr(StringId::App_Modal_Language));
-    });
+        confirmModal.show(display, tr(StringId::App_Modal_Language)); });
 
-    confirmModal.setOnConfirm([this]() {
+    confirmModal.setOnConfirm([this]()
+                              {
         if (confirmTarget == ConfirmModalTarget::LoadFile)
         {
             loadingModal.show(tr(StringId::App_Loading_File));
@@ -158,6 +158,9 @@ void App::begin()
             loadingModal.draw(display);
             delay(1500);
             ESP.restart();
+        }else if (confirmTarget == ConfirmModalTarget::JobCompleted)
+        {
+            screenManager.redrawAll();
         }
         else if (confirmTarget == ConfirmModalTarget::JobRecovery)
         {
@@ -201,16 +204,16 @@ void App::begin()
             loadingModal.hide();
             screenManager.switchToScreen(0);
             screenManager.redrawAll();
-        }
-    });
+        } });
 
-    confirmModal.setOnCancel([this](){ 
+    confirmModal.setOnCancel([this]()
+                             { 
         if (confirmTarget == ConfirmModalTarget::JobRecovery)
             jobRecovery.clear();
-        screenManager.redrawAll(); 
-    });
+        screenManager.redrawAll(); });
 
-    webServer.setOnFileSelected([this](StorageSource source, const String& path) {
+    webServer.setOnFileSelected([this](StorageSource source, const String &path)
+                                {
         pendingFilePath = path;
         pendingSource = source; 
         confirmTarget = ConfirmModalTarget::LoadFile;
@@ -218,8 +221,7 @@ void App::begin()
         int lastSlash = path.lastIndexOf('/');
         String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
 
-        confirmModal.show(display, tr(StringId::App_Open_File) + filename + "?");
-    });
+        confirmModal.show(display, tr(StringId::App_Open_File) + filename + "?"); });
 
     screenManager.showInitialScreen(0);
     screenManager.setSdStatus(sdReady);
@@ -253,18 +255,39 @@ void App::update()
     screenManager.setWifiStatus(wifiManager.getMode() == WifiMode::Connected);
     screenManager.setMachineStatus(grblController.getConnectionState() == GrblConnectionState::Connected);
     screenManager.setUsbStatus(storageManager.isUsbAvailable());
+    screenManager.setSdStatus(storageManager.isSdAvailable());
 
     homeScreen.updateMachineState(
         jobRunner.getState(),
         grblController.getStatus(),
         jobRunner.getCurrentLine(),
-        jobRunner.getTotalLines());
+        jobRunner.getTotalLines(),
+        jobRunner.getElapsedSeconds());
 
     if (jobRunner.getState() == JobState::Running && appSettings.isJobRecoveryEnabled())
     {
         uint8_t spindleStateValue = 0;
         jobRecovery.updateProgress(jobRunner.getCurrentLine(), jobRunner.getParserState(), spindleStateValue);
     }
+
+    JobState currentJobState = jobRunner.getState();
+
+    if (currentJobState == JobState::Completed && lastJobState != JobState::Completed)
+    {
+        buzzer.playCompletionMelody();
+
+        String message = String(tr(StringId::Job_Completed_Title)) + "\n\n" +
+                         homeScreen.getFilename() + "\n" +
+                         tr(StringId::Job_Completed_Time) + formatElapsed(jobRunner.getElapsedSeconds()) + "\n" +
+                         tr(StringId::Job_Completed_Lines) + String(jobRunner.getTotalLines());
+
+        confirmTarget = ConfirmModalTarget::JobCompleted;
+        confirmModal.show(display, message);
+
+        jobRecovery.clear();
+    }
+
+    lastJobState = currentJobState;
 
     if (jobRunner.getState() == JobState::Completed)
         jobRecovery.clear();

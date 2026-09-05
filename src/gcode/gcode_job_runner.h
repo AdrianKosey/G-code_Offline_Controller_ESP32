@@ -22,6 +22,8 @@ public:
 
     void update();
 
+    unsigned long getElapsedSeconds() const;
+
     JobState getState() const;
     uint32_t getCurrentLine() const;
     uint32_t getTotalLines() const;
@@ -46,4 +48,10 @@ private:
 
     void sendNextLine();
     void closeFile();
+
+    unsigned long jobStartedAt = 0;
+    unsigned long pausedAccumulated = 0;
+    unsigned long pauseStartedAt = 0;
+    unsigned long frozenElapsedSeconds = 0;
+    bool timeFrozen = false;
 };

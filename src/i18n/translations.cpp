@@ -15,6 +15,7 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
     "Velocidad", "Potencia",
     "X", "Y", "Z",
     "Previsualizacion Desactivada.",
+    "Trabajo completado","Tiempo: ", "Lineas: ",
 
     "Archivos", "No se detecta la tarjeta SD",
     "Archivo Invalido",
@@ -29,7 +30,7 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
     "Firmware", "Proyecto", "G-code Offline Controller",
     "Buscar redes", "Olvidar red", "No conectado", " (Protegida)",
     "Conectando...", "Conectando a", "Conectado", "Contraseña para: ", "Modo punto de acceso", "Buscando redes...",
-    "Velocidad de Jog", "Velocidad de Framing", "Previsualizacion G-code", "Recuperar trabajos CNC", "Idioma",
+    "Velocidad de Jog", "Velocidad de Framing", "Previsualizacion G-code", "Recuperar trabajos CNC (BETA)", "Idioma",
     "Velocidad de Jog (mm/min)", "Velocidad de Framing (mm/min)",
     "Altura segura Z", "Calcular Framing", "Suspender pantalla", "Minutos de Suspension", "Sonido al Presionar",
     "Almacenamiento SD", "Controlador", "Version del Controlador", "Version CNC", "Temperatura Controlador",
@@ -64,6 +65,7 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
     "Feed", "Power",
     "X", "Y", "Z",
     "Preview Disabled",
+    "Job completed", "Time: ", "Lines: ",
 
     "Files", "SD card not detected",
     "Invalid File",
@@ -78,7 +80,7 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
     "Firmware", "Project", "G-code Offline Controller",
     "Scan networks", "Forget network", "Not connected", " (Protected)",
     "Connecting...", "Connecting to", "Connected", "Password for: ", "Access point mode", "Scanning networks...",
-    "Jog speed", "Framing speed", "G-code preview", "CNC Job Recovery", "Language",
+    "Jog speed", "Framing speed", "G-code preview", "CNC Job Recovery (BETA)", "Language",
     "Jogging Speed (mm/min)", "Framing Speed (mm/min)",
     "Safe Z height", "Calculate Framing", "Screen sleep", "Sleep timeout", "Sound when Pressed",
     "SD Storage", "Controller", "Controller Version", "CNC Version", "Controller Temperature",

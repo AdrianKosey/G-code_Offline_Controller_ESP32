@@ -45,6 +45,10 @@ void GCodeJobRunner::start()
     waitingForOk = false;
     parser.reset();
     state = JobState::Running;
+
+    jobStartedAt = millis();
+    pausedAccumulated = 0;
+    timeFrozen = false;
 }
 
 void GCodeJobRunner::pause()
@@ -52,6 +56,8 @@ void GCodeJobRunner::pause()
     if (state != JobState::Running) return;
     grbl.feedHold();
     state = JobState::Paused;
+
+    pauseStartedAt = millis();
 }
 
 void GCodeJobRunner::resume()
@@ -59,6 +65,8 @@ void GCodeJobRunner::resume()
     if (state != JobState::Paused) return;
     grbl.cycleStart();
     state = JobState::Running;
+
+    pausedAccumulated += millis() - pauseStartedAt;
 }
 
 void GCodeJobRunner::stop()
@@ -70,11 +78,28 @@ void GCodeJobRunner::stop()
 
     state = JobState::Idle;
     currentLine = 0;
+
+    frozenElapsedSeconds = getElapsedSeconds();
+    timeFrozen = true;
 }
 
 JobState GCodeJobRunner::getState() const { return state; }
 uint32_t GCodeJobRunner::getCurrentLine() const { return currentLine; }
 uint32_t GCodeJobRunner::getTotalLines() const { return totalLines; }
+
+unsigned long GCodeJobRunner::getElapsedSeconds() const
+{
+    if (timeFrozen)
+        return frozenElapsedSeconds;
+
+    if (jobStartedAt == 0)
+        return 0;
+
+    unsigned long now = (state == JobState::Paused) ? pauseStartedAt : millis();
+    unsigned long elapsed = now - jobStartedAt - pausedAccumulated;
+
+    return elapsed / 1000;
+}
 
 void GCodeJobRunner::sendNextLine()
 {
@@ -96,6 +121,9 @@ void GCodeJobRunner::sendNextLine()
 
     state = JobState::Completed;
     closeFile();
+
+    frozenElapsedSeconds = getElapsedSeconds();
+    timeFrozen = true;
 }
 
 void GCodeJobRunner::resumeFrom(IStorageDriver& storageDriver, const String& path, uint32_t fromLine, uint32_t totalLinesParam)
@@ -127,6 +155,11 @@ void GCodeJobRunner::resumeFrom(IStorageDriver& storageDriver, const String& pat
     }
 
     state = JobState::Running;
+
+    state = JobState::Running;
+    jobStartedAt = millis();
+    pausedAccumulated = 0;
+    timeFrozen = false;
 }
 
 void GCodeJobRunner::update()
