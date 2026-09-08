@@ -34,7 +34,7 @@ This project allows you to load, preview, and execute G-code files without a con
 - **Home:** 2D G-code toolpath preview with auto-scaling, real-time tool cursor, X/Y/Z coordinates, feed rate, spindle/laser power, job progress, and Play/Pause/Stop/Framing controls.
 - **Files:** SD/USB file explorer with folder navigation, momentum scrolling, and automatic G-code file filtering.
 - **Jog:** Manual axis control with configurable steps, homing, work zero setting per axis, and touch probe (Probe Z).
-- **Tools:** Spindle/Laser control with mode selector, power adjustment, and rotation direction.
+- **Tools:** Create various tool profiles—such as laser or spindle types—specifying bit or laser diameter and setting power levels for activation; assign tools to specific jobs to track usage time (e.g., for a specific bit diameter) and better manage your tooling and operational time. (NOTE: Assigning diameter or power settings does not affect the job itself; these parameters are determined by your file. The controller does not calculate or modify your G-code lines; it simply helps track and log the usage time of the tool in question.)
 - **Settings:** Device info, Wi-Fi configuration, native editing of Grbl parameters (`$$`) using specific controls (toggle/enum/numeric), and general app settings (speeds, language, sound, screen sleep, job recovery).
 - **Multilingual:** Native support for English, Spanish, Italian and German.
 
