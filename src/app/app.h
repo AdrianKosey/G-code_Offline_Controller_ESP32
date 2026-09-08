@@ -58,6 +58,7 @@ private:
     FilesScreen filesScreen;
     JogScreen jogScreen;
     ToolsScreen toolsScreen;
+    ToolProfileManager toolManager;
     SettingsScreen settingsScreen;
 
     JobRecoveryManager jobRecovery;

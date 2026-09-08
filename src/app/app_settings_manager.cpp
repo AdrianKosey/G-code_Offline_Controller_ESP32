@@ -13,7 +13,7 @@ AppSettingsManager::AppSettingsManager()
     jobRecoveryEnabled = prefs.getBool("jobRecov", false);
     safeZHeight = prefs.getFloat("safeZ", SAFE_Z_HEIGHT);
     framingEnabled = prefs.getBool("framing", FRAMING_ENABLED_DEFAULT);
-    language = (AppLanguage)prefs.getUChar("lang", (uint8_t)AppLanguage::Spanish);
+    language = (AppLanguage)prefs.getUChar("lang", (uint8_t)AppLanguage::English);
     screenSleepEnabled = prefs.getBool("sleepEn", SCREEN_SLEEP_ENABLED_DEFAULT);
     screenSleepMinutes = prefs.getUShort("sleepMin", SCREEN_SLEEP_MINUTES_DEFAULT);
     buzzerEnabled = prefs.getBool("buzzer", BUZZER_ENABLED_DEFAULT);

@@ -1,96 +1,255 @@
 #include "tools_screen.h"
 #include "../../../i18n/translations.h"
+#include "../../icons.h"
 static constexpr int16_t CONTENT_X = 60;
+static constexpr int16_t CONTENT_Y = 34;
+static constexpr int16_t CONTENT_WIDTH = 260;
+static constexpr int16_t CONTENT_HEIGHT = 206;
 
 ToolsScreen::ToolsScreen(GrblController& grblController)
     : grbl(grblController),
 
-      panel(Rect{CONTENT_X + 8, 34, 200, 160}, Theme::Panel, 10),
+      listScrollPanel(Rect{CONTENT_X + 8, CONTENT_Y + 8, 244, 198}),
+      addButton(Rect{0, 0, 244, 32}, tr(StringId::Tool_New)),
+      useButton(Rect{0, 0, 244, 32}, tr(StringId::Tool_Use)),
+      detailScrollPanel(Rect{CONTENT_X + 8, CONTENT_Y + 36, 244, 170}),
+      backButton(
+          Rect{CONTENT_X + 8, CONTENT_Y + 4, 28, 24},
+          Icons::Back, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT,
+          Theme::Background, Theme::Text, false),
+      nameLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 180, 20}, "", Theme::Text, 2, Theme::Background, true),
 
-      modeLabel(Rect{CONTENT_X + 18, 42, 100, 14}, tr(StringId::Tool_Type), Theme::TextSecondary, 1, Theme::Panel, false),
-      spindleModeButton(Rect{CONTENT_X + 18, 58, 85, 30}, tr(StringId::Tools_Spindle)),
-      laserModeButton(Rect{CONTENT_X + 111, 58, 85, 30}, tr(StringId::Tools_Laser)),
+      diameterRow(Rect{0, 0, 244, 36}, tr(StringId::Tool_Diameter)),
+      powerRow(Rect{0, 0, 244, 36}, tr(StringId::Tools_Power)),
 
-      powerLabel(Rect{CONTENT_X + 18, 98, 100, 14}, tr(StringId::Tools_Power), Theme::TextSecondary, 1, Theme::Panel, false),
-      powerValueLabel(Rect{CONTENT_X + 18, 112, 100, 24}, "0 RPM", Theme::Text, 2, Theme::Panel, false),
+      usageLabel(Rect{0, 0, 140, 14}, tr(StringId::Tool_Usage), Theme::TextSecondary, 1, Theme::Background, false),
+      usageValueLabel(Rect{0, 0, 200, 18}, "00:00:00", Theme::Text, 2, Theme::Background, false),
 
-      powerMinusButton(Rect{CONTENT_X + 120, 108, 36, 32}, "-10"),
-      powerPlusButton(Rect{CONTENT_X + 162, 108, 36, 32}, "+10"),
+      spindleTypeButton(Rect{0, 0, 118, 28}, tr(StringId::Tools_Spindle)),
+      laserTypeButton(Rect{0, 0, 118, 28}, tr(StringId::Tools_Laser)),
 
-      directionButton(Rect{CONTENT_X + 18, 148, 85, 32}, tr(StringId::Tools_CW)),
-      toggleButton(Rect{CONTENT_X + 111, 148, 85, 32}, tr(StringId::Tools_On))
+      directionButton(Rect{0, 0, 118, 32}, tr(StringId::Tools_CW)),
+      testToggle(Rect{0, 0, 48, 24}, false),
+      testLabelToggle(Rect{0, 0, 100, 24}, tr(StringId::Tools_OnOff), Theme::Text, 1, Theme::Background, false),
+      deleteButton(Rect{0, 0, 244, 28}, tr(StringId::Tool_Delete)),
+
+      nameKeyboard(Rect{0, 0, 320, 240}),
+      numericPad(Rect{0, 0, 320, 240})
 {
-    spindleModeButton.setSelected(true);
-
-    spindleModeButton.setOnPress([this]() { selectMode(ToolMode::Spindle); });
-    laserModeButton.setOnPress([this]()   { selectMode(ToolMode::Laser); });
-
-    powerMinusButton.setOnPress([this]() {
-        power = max(0.0f, power - 10.0f);
-        updatePowerLabel();
-        if (on) applyOutput();
+    addButton.setOnPress([this]() {
+        editingProfile = ToolProfile{};
+        editingProfile.name = tr(StringId::Tool_Count) + String(toolManager.getProfiles().size() + 1);
+        toolManager.addProfile(editingProfile);
+        openDetail((int8_t)(toolManager.getProfiles().size() - 1));
+    });
+    useButton.setOnPress([this]() {
+        toolManager.setActiveIndex(selectedIndex);
+    });
+    backButton.setOnPress([this]() {
+        stopTestIfRunning();
+        rebuildList();
     });
 
-    powerPlusButton.setOnPress([this]() {
-        power = min(100.0f, power + 10.0f);
-        updatePowerLabel();
-        if (on) applyOutput();
+    diameterRow.setOnPress([this]() {
+        numericTarget = ToolsNumericTarget::Diameter;
+        numericPad.show("Diametro (mm)", editingProfile.diameterMm);
+    });
+
+    powerRow.setOnPress([this]() {
+        numericTarget = ToolsNumericTarget::Power;
+        numericPad.show("Potencia de referencia (%)", editingProfile.defaultPower);
+    });
+
+    numericPad.setOnSubmit([this](float value) {
+        if (numericTarget == ToolsNumericTarget::Diameter)
+            editingProfile.diameterMm = max(0.1f, value);
+        else
+            editingProfile.defaultPower = constrain(value, 0.0f, 100.0f);
+
+        toolManager.updateProfile(selectedIndex, editingProfile);
+        refreshDetailLabels();
+    });
+
+    numericPad.setOnCancel([this]() {});
+
+    spindleTypeButton.setOnPress([this]() {
+        stopTestIfRunning();
+        editingProfile.type = ToolType::Spindle;
+        toolManager.updateProfile(selectedIndex, editingProfile);
+        spindleTypeButton.setSelected(true);
+        laserTypeButton.setSelected(false);
+        refreshDetailLabels();
+    });
+
+    laserTypeButton.setOnPress([this]() {
+        stopTestIfRunning();
+        editingProfile.type = ToolType::Laser;
+        toolManager.updateProfile(selectedIndex, editingProfile);
+        spindleTypeButton.setSelected(false);
+        laserTypeButton.setSelected(true);
+        refreshDetailLabels();
     });
 
     directionButton.setOnPress([this]() {
-        clockwise = !clockwise;
-        directionButton.setText(clockwise ? tr(StringId::Tools_CW) : tr(StringId::Tools_CCW));
-        if (on) applyOutput();
+        testClockwise = !testClockwise;
+        directionButton.setText(testClockwise ? tr(StringId::Tools_CW) : tr(StringId::Tools_CCW));
+        if (testOn) applyTestOutput();
     });
 
-    toggleButton.setOnPress([this]() {
-        on = !on;
-        toggleButton.setText(on ? tr(StringId::Tools_Off) : tr(StringId::Tools_On));
-        applyOutput();
+    testToggle.setOnChange([this](bool state) {
+        testOn = state;
+
+        if (testOn)
+            testStartedAt = millis();
+        else
+            stopTestIfRunning();
+
+        applyTestOutput();
     });
 
-    widgets = {
-        &panel,
-        &modeLabel, &spindleModeButton, &laserModeButton,
-        &powerLabel, &powerValueLabel, &powerMinusButton, &powerPlusButton,
-        &directionButton, &toggleButton
-    };
+    deleteButton.setOnPress([this]() {
+        stopTestIfRunning();
+        toolManager.deleteProfile(selectedIndex);
+        rebuildList();
+    });
+    
+    detailScrollPanel.addChild(&diameterRow, 0, 0);
+    detailScrollPanel.addChild(&powerRow, 0, 38);
+    detailScrollPanel.addChild(&usageLabel, 8, 84);
+    detailScrollPanel.addChild(&usageValueLabel, 8, 98);
+    detailScrollPanel.addChild(&spindleTypeButton, 0, 130);
+    detailScrollPanel.addChild(&laserTypeButton, 126, 130);
+    detailScrollPanel.addChild(&directionButton, 0, 164);
+    detailScrollPanel.addChild(&testToggle, 126, 164);
+    detailScrollPanel.addChild(&testLabelToggle, 180, 164);
+    detailScrollPanel.addChild(&deleteButton, 0, 206);
+    detailScrollPanel.addChild(&useButton, 0, 240);
+
+    rebuildList();
 }
 
-void ToolsScreen::selectMode(ToolMode newMode)
+void ToolsScreen::rebuildList()
 {
-    if (mode == newMode)
+    const auto& profiles = toolManager.getProfiles();
+    rowCount = min((uint8_t)profiles.size(), MAX_ROWS);
+
+    listScrollPanel = ScrollPanelWidget(Rect{CONTENT_X + 8, CONTENT_Y + 8, 244, 198});
+
+    for (uint8_t i = 0; i < rowCount; i++)
+    {
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%.1fmm", profiles[i].diameterMm);
+
+        profileRows[i] = MenuRowWidget(Rect{0, 0, 244, 36}, profiles[i].name);
+        profileRows[i].setValue(String(buf));
+
+        uint8_t idx = i;
+        profileRows[i].setOnPress([this, idx]() { openDetail(idx); });
+
+        listScrollPanel.addChild(&profileRows[i], 0, i * 40);
+    }
+
+    listScrollPanel.addChild(&addButton, 0, rowCount * 40 + 6);
+
+    currentPage = ToolsPage::List;
+    needsClear = true;
+
+    widgets = { &listScrollPanel };
+    invalidateAll();
+}
+
+void ToolsScreen::openDetail(int8_t index)
+{
+    const auto& profiles = toolManager.getProfiles();
+    if (index < 0 || index >= (int8_t)profiles.size())
         return;
-    if (on)
-    {
-        on = false;
-        toggleButton.setText(tr(StringId::Tools_On));
-        grbl.setSpindlePower(0.0f);
-    }
 
-    mode = newMode;
+    selectedIndex = index;
+    editingProfile = profiles[index];
+    testOn = false;
+    testClockwise = true;
 
-    spindleModeButton.setSelected(mode == ToolMode::Spindle);
-    laserModeButton.setSelected(mode == ToolMode::Laser);
+    spindleTypeButton.setSelected(editingProfile.type == ToolType::Spindle);
+    laserTypeButton.setSelected(editingProfile.type == ToolType::Laser);
+    directionButton.setText(tr(StringId::Tools_CW));
 
-    updatePowerLabel();
+    refreshDetailLabels();
+
+    currentPage = ToolsPage::Detail;
+    needsClear = true;
+
+    widgets = { &backButton, &nameLabel, &detailScrollPanel };
+    invalidateAll();
 }
 
-void ToolsScreen::updatePowerLabel()
+void ToolsScreen::refreshDetailLabels()
 {
-    if (mode == ToolMode::Spindle)
+    nameLabel.setText(editingProfile.name);
+    diameterRow.setValue(String(editingProfile.diameterMm, 1) + " mm");
+    powerRow.setValue(String((int)editingProfile.defaultPower) + "%");
+
+    uint32_t sec = editingProfile.usageSeconds;
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%02u:%02u:%02u", sec / 3600, (sec % 3600) / 60, sec % 60);
+    usageValueLabel.setText(String(buf));
+
+    //directionButton.setEnabled(editingProfile.type == ToolType::Spindle); // NO FUNTION 
+}
+
+void ToolsScreen::applyTestOutput()
+{
+    float outputPower = testOn ? editingProfile.defaultPower : 0.0f;
+    grbl.setSpindlePower(outputPower, editingProfile.type == ToolType::Spindle ? testClockwise : true);
+}
+
+void ToolsScreen::stopTestIfRunning()
+{
+    if (!testOn)
+        return;
+
+    testOn = false;
+    testToggle.setState(false);
+    grbl.setSpindlePower(0.0f);
+
+    uint32_t elapsed = (millis() - testStartedAt) / 1000;
+    toolManager.addUsageSeconds(selectedIndex, elapsed);
+
+    refreshDetailLabels();
+}
+
+void ToolsScreen::onExit()
+{
+    stopTestIfRunning();
+}
+
+void ToolsScreen::update()
+{
+    IScreen::update();
+
+    // While the test is running, visually refresh the hour meter every second,
+    // without writing to flash memory until it stops (to avoid unnecessary wear)
+    if (testOn)
     {
-        int rpm = (int)(power / 100.0f * grbl.getMaxSpindleSpeed());
-        powerValueLabel.setText(String(rpm) + " " + tr(StringId::GRBL_Value_Type6));
-    }
-    else
-    {
-        powerValueLabel.setText(String((int)power) + "%");
+        static unsigned long lastRefresh = 0;
+        if (millis() - lastRefresh > 1000)
+        {
+            lastRefresh = millis();
+
+            uint32_t liveSeconds = editingProfile.usageSeconds + (millis() - testStartedAt) / 1000;
+            char buf[16];
+            snprintf(buf, sizeof(buf), "%02u:%02u:%02u", liveSeconds / 3600, (liveSeconds % 3600) / 60, liveSeconds % 60);
+            usageValueLabel.setText(String(buf));
+        }
     }
 }
 
-void ToolsScreen::applyOutput()
+void ToolsScreen::draw(DisplayManager& display)
 {
-    float outputPower = on ? power : 0.0f;
-    grbl.setSpindlePower(outputPower, mode == ToolMode::Spindle ? clockwise : true);
+    if (needsClear)
+    {
+        display.fillRect(CONTENT_X, CONTENT_Y, CONTENT_WIDTH, CONTENT_HEIGHT, Theme::Background);
+        needsClear = false;
+    }
+
+    IScreen::draw(display);
 }

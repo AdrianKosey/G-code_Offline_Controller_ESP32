@@ -6,7 +6,8 @@ static constexpr int16_t CONTENT_Y = 34;
 static constexpr int16_t CONTENT_WIDTH = 260;
 static constexpr int16_t CONTENT_HEIGHT = 206;
 
-static const char *LANGUAGE_OPTIONS[] = {"Espanol", "English"};
+static const char *LANGUAGE_OPTIONS[] = {"Espanol", "English", "Italiano", "Deutsch"};
+static constexpr uint8_t LANGUAGE_COUNT = sizeof(LANGUAGE_OPTIONS) / sizeof(LANGUAGE_OPTIONS[0]);
 
 SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblController, AppSettingsManager &appSettingsManager)
     : // Menu principal
@@ -78,7 +79,7 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
       appSettings(appSettingsManager),
 
       numericPad(Rect{0, 0, 320, 240}),
-      enumPicker(Rect{0, 0, 320, 240})
+      enumPicker(Rect{0, 0, 320, 260})
 {
     // MENU DIRECTIONS
     aboutRow.setOnPress([this]()
@@ -223,11 +224,11 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
         numericPad.show(tr(StringId::Settings_ScreenSleepMinutes), appSettings.getScreenSleepMinutes());
     });
 
-    languageRow.setValue(appSettings.getLanguage() == AppLanguage::Spanish ? "Espanol" : "English");
-    languageRow.setOnPress([this]()
-                           {
+    languageRow.setValue(LANGUAGE_OPTIONS[(int)appSettings.getLanguage()]);
+    languageRow.setOnPress([this]() {
         enumPickerTarget = EnumPickerTarget::Language;
-        enumPicker.show(tr(StringId::Settings_Language), LANGUAGE_OPTIONS, 2, (uint8_t)appSettings.getLanguage()); });
+        enumPicker.show(tr(StringId::Settings_Language), LANGUAGE_OPTIONS, LANGUAGE_COUNT, (uint8_t)appSettings.getLanguage()); 
+    });
 
     controlScrollPanel.addChild(&jogFeedRow, 0, 0);
     controlScrollPanel.addChild(&framingFeedRow, 0, 38);
@@ -293,7 +294,7 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
 
             case EnumPickerTarget::Language:
                 appSettings.setLanguage((AppLanguage)index);
-                languageRow.setValue(index == 0 ? "Espanol" : "English");
+                languageRow.setValue(LANGUAGE_OPTIONS[index]); 
                 if (onLanguageChanged) onLanguageChanged();
                 break;
         } });
@@ -454,7 +455,7 @@ void SettingsScreen::onEnter()
     buzzerToggle.setState(appSettings.isBuzzerEnabled());
     screenSleepToggle.setState(appSettings.isScreenSleepEnabled());
     screenSleepMinutesRow.setValue(String(appSettings.getScreenSleepMinutes()) + " min");
-    languageRow.setValue(appSettings.getLanguage() == AppLanguage::Spanish ? "Espanol" : "English");
+    languageRow.setValue(LANGUAGE_OPTIONS[(int)appSettings.getLanguage()]);
 }
 
 void SettingsScreen::setOnLanguageChanged(LanguageChangeCallback callback)

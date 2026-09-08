@@ -5,5 +5,5 @@
 class SplashScreen
 {
 public:
-    static void show(DisplayManager& display, unsigned long durationMs = 5000);
+    static void show(DisplayManager& display, unsigned long durationMs = 3000);
 };

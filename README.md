@@ -36,7 +36,7 @@ This project allows you to load, preview, and execute G-code files without a con
 - **Jog:** Manual axis control with configurable steps, homing, work zero setting per axis, and touch probe (Probe Z).
 - **Tools:** Spindle/Laser control with mode selector, power adjustment, and rotation direction.
 - **Settings:** Device info, Wi-Fi configuration, native editing of Grbl parameters (`$$`) using specific controls (toggle/enum/numeric), and general app settings (speeds, language, sound, screen sleep, job recovery).
-- **Multilingual:** Native support for English and Spanish.
+- **Multilingual:** Native support for English, Spanish, Italian and German.
 
 ### ⚙️ Machine Control
 - **G-code Streaming:** UART communication with Grbl, featuring a custom parser that tracks the full modal state (position, units, plane, coordinate system, feed, spindle).

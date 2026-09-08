@@ -266,8 +266,15 @@ void App::update()
 
     if (jobRunner.getState() == JobState::Running && appSettings.isJobRecoveryEnabled())
     {
+        const GCodeState& parserState = jobRunner.getParserState();
+
         uint8_t spindleStateValue = 0;
-        jobRecovery.updateProgress(jobRunner.getCurrentLine(), jobRunner.getParserState(), spindleStateValue);
+        if (parserState.spindle == SpindleState::ClockwiseOn)
+            spindleStateValue = 1;
+        else if (parserState.spindle == SpindleState::CounterClockwiseOn)
+            spindleStateValue = 2;
+
+        jobRecovery.updateProgress(jobRunner.getCurrentLine(), parserState, spindleStateValue);
     }
 
     JobState currentJobState = jobRunner.getState();
@@ -285,6 +292,9 @@ void App::update()
         confirmModal.show(display, message);
 
         jobRecovery.clear();
+        int8_t activeTool = toolsScreen.getToolManager().getActiveIndex();
+        if (activeTool >= 0)
+            toolsScreen.getToolManager().addUsageSeconds(activeTool, jobRunner.getElapsedSeconds());
     }
 
     lastJobState = currentJobState;
@@ -297,7 +307,9 @@ void App::update()
         loadingModal.isVisible() ||
         settingsScreen.isKeyboardVisible() ||
         settingsScreen.isNumericPadVisible() ||
-        settingsScreen.isEnumPickerVisible();
+        settingsScreen.isEnumPickerVisible() ||
+        toolsScreen.isKeyboardVisible() ||
+        toolsScreen.isNumericPadVisible();
 
     bool consumed = false;
 
@@ -323,6 +335,16 @@ void App::update()
         if (!settingsScreen.isEnumPickerVisible())
             screenManager.redrawAll();
     }
+    else if (toolsScreen.isKeyboardVisible())
+    {
+        consumed = toolsScreen.handleKeyboardTouch(event);
+        if (!toolsScreen.isKeyboardVisible()) screenManager.redrawAll();
+    }
+    else if (toolsScreen.isNumericPadVisible())
+    {
+        consumed = toolsScreen.handleNumericPadTouch(event);
+        if (!toolsScreen.isNumericPadVisible()) screenManager.redrawAll();
+    }
     else
     {
         consumed = screenManager.handleTouch(event);
@@ -344,4 +366,8 @@ void App::update()
         settingsScreen.drawNumericPad(display);
     if (settingsScreen.isEnumPickerVisible())
         settingsScreen.drawEnumPicker(display);
+    if (toolsScreen.isKeyboardVisible()) 
+        toolsScreen.drawKeyboard(display);
+    if (toolsScreen.isNumericPadVisible()) 
+        toolsScreen.drawNumericPad(display);
 }

@@ -3,7 +3,7 @@
 #include <Preferences.h>
 #include "../../include/config.h"
 
-enum class AppLanguage { Spanish, English };
+enum class AppLanguage { Spanish, English, Italian, German};
 
 class AppSettingsManager
 {
@@ -49,7 +49,7 @@ private:
     float safeZHeight = SAFE_Z_HEIGHT;
     bool framingEnabled = FRAMING_ENABLED_DEFAULT;
     bool buzzerEnabled = BUZZER_ENABLED_DEFAULT;
-    AppLanguage language = AppLanguage::Spanish;
+    AppLanguage language = AppLanguage::English;
 };
 
 extern AppSettingsManager* g_appSettings;
