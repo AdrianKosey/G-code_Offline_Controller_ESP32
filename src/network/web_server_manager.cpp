@@ -1,5 +1,8 @@
 #include "web_server_manager.h"
 #include "web_page.h"
+#include "task_manager_page.h"
+#include <SPIFFS.h>
+#include <WiFi.h>
 
 WebServerManager::WebServerManager(
     GrblController& grblController,
@@ -20,6 +23,8 @@ void WebServerManager::setOnFileSelected(FileSelectCallback callback)
 void WebServerManager::begin()
 {
     server.on("/", HTTP_GET, [this]() { handleRoot(); });
+    server.on("/system", HTTP_GET, [this]() { handleSystemPage(); });
+    server.on("/api/stats", HTTP_GET, [this]() { handleStats(); });
     server.on("/api/status", HTTP_GET, [this]() { handleStatus(); });
     server.on("/api/files", HTTP_GET, [this]() { handleFiles(); });
     server.on("/api/control", HTTP_POST, [this]() { handleControl(); });
@@ -33,6 +38,7 @@ void WebServerManager::begin()
     server.on("/api/probez", HTTP_POST, [this]() { handleProbeZ(); });
     server.on("/api/console", HTTP_GET, [this]() { handleConsoleGet(); });
     server.on("/api/console/send", HTTP_POST, [this]() { handleConsoleSend(); });
+    server.on("/api/preview", HTTP_GET, [this]() { handlePreview(); });
 
     server.on("/api/upload", HTTP_POST,
         [this]() { handleUpload(); },      // is called when the upload is complete
@@ -51,6 +57,84 @@ void WebServerManager::update()
 void WebServerManager::handleRoot()
 {
     server.send_P(200, "text/html", WEB_PAGE_HTML);
+}
+
+void WebServerManager::handleSystemPage()
+{
+    server.send_P(200, "text/html", TASK_MANAGER_PAGE);
+}
+
+void WebServerManager::handleStats()
+{
+    uint32_t ramTotal = ESP.getHeapSize();
+    uint32_t ramFree = ESP.getFreeHeap();
+    uint32_t ramMinFree = ESP.getMinFreeHeap();
+    uint32_t psramTotal = ESP.getPsramSize();
+    uint32_t psramFree = ESP.getFreePsram();
+
+    uint32_t cpuFreq = ESP.getCpuFreqMHz();
+    uint32_t uptimeSecs = millis() / 1000;
+
+    float temp = 0.0f;
+#if defined(CONFIG_IDF_TARGET_ESP32)
+    temp = temperatureRead();
+#endif
+
+    size_t spiffsTotal = SPIFFS.totalBytes();
+    size_t spiffsUsed = SPIFFS.usedBytes();
+
+    String mac = WiFi.macAddress();
+    String ip = WiFi.localIP().toString();
+    int32_t rssi = WiFi.RSSI();
+    String modeStr = (WiFi.getMode() == WIFI_AP) ? "AP Mode" : "WiFi STA";
+
+    // Recolección de tareas FreeRTOS
+    UBaseType_t taskCount = uxTaskGetNumberOfTasks();
+    TaskStatus_t* taskStatusArray = (TaskStatus_t*)pvPortMalloc(taskCount * sizeof(TaskStatus_t));
+
+    String tasksJson = "[";
+    if (taskStatusArray != NULL)
+    {
+        taskCount = uxTaskGetSystemState(taskStatusArray, taskCount, NULL);
+        for (UBaseType_t i = 0; i < taskCount; i++)
+        {
+            tasksJson += "{";
+            tasksJson += "\"name\":\"" + String(taskStatusArray[i].pcTaskName) + "\",";
+            String stateStr;
+            switch (taskStatusArray[i].eCurrentState)
+            {
+                case eRunning:   stateStr = "Running";   break;
+                case eReady:     stateStr = "Ready";     break;
+                case eBlocked:   stateStr = "Blocked";   break;
+                case eSuspended: stateStr = "Suspended"; break;
+                default:         stateStr = "Deleted";   break;
+            }
+            tasksJson += "\"state\":\"" + stateStr + "\",";
+            tasksJson += "\"priority\":" + String(taskStatusArray[i].uxCurrentPriority) + ",";
+            tasksJson += "\"stack_high_watermark\":" + String(taskStatusArray[i].usStackHighWaterMark) + ",";
+            tasksJson += "\"core\":" + String(taskStatusArray[i].xCoreID);
+            tasksJson += "}";
+            if (i < taskCount - 1) tasksJson += ",";
+        }
+        vPortFree(taskStatusArray);
+    }
+    tasksJson += "]";
+
+    String json = "{";
+    json += "\"ram\":{\"total\":" + String(ramTotal) + ",\"free\":" + String(ramFree) + ",\"min_free\":" + String(ramMinFree) + "},";
+    json += "\"psram\":{\"total\":" + String(psramTotal) + ",\"free\":" + String(psramFree) + "},";
+    json += "\"spiffs\":{\"total\":" + String(spiffsTotal) + ",\"used\":" + String(spiffsUsed) + "},";
+    json += "\"hardware\":{\"cpu_freq\":" + String(cpuFreq) + ",\"uptime\":" + String(uptimeSecs) + ",\"temp\":" + String(temp) + "},";
+    json += "\"network\":{";
+    json += "\"mode\":\"" + modeStr + "\",";
+    json += "\"ip\":\"" + ip + "\",";
+    json += "\"mac\":\"" + mac + "\",";
+    json += "\"rssi\":" + String(rssi);
+    json += "},";
+    json += "\"tasks\":" + tasksJson;
+    json += "}";
+
+    server.send(200, "application/json", json);
 }
 
 void WebServerManager::handleStatus()
@@ -323,8 +407,6 @@ void WebServerManager::handleHome()
     server.send(200, "text/plain", "ok");
 }
 
-
-
 void WebServerManager::handleSetZero()
 {
     String axisStr = server.arg("axis");
@@ -394,4 +476,26 @@ StorageSource WebServerManager::parseSource()
 {
     String s = server.hasArg("source") ? server.arg("source") : "sd";
     return (s == "usb") ? StorageSource::USB : StorageSource::SD;
+}
+
+void WebServerManager::handlePreview()
+{
+    const GCodePoint* points = homeScreen.getPreviewPoints();
+    uint16_t count = homeScreen.getPreviewPointCount();
+
+    String json = "{";
+    json += "\"minX\":" + String(homeScreen.getProjectMinX(), 3) + ",";
+    json += "\"minY\":" + String(homeScreen.getProjectMinY(), 3) + ",";
+    json += "\"maxX\":" + String(homeScreen.getProjectMaxX(), 3) + ",";
+    json += "\"maxY\":" + String(homeScreen.getProjectMaxY(), 3) + ",";
+    json += "\"points\":[";
+
+    for (uint16_t i = 0; i < count; i++)
+    {
+        if (i > 0) json += ",";
+        json += "[" + String(points[i].x, 3) + "," + String(points[i].y, 3) + "]";
+    }
+
+    json += "]}";
+    server.send(200, "application/json", json);
 }

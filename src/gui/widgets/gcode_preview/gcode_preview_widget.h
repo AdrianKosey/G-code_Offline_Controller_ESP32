@@ -32,6 +32,9 @@ public:
     void setProgress(float percent); 
     void setDisabledMessage(bool show);
 
+    const GCodePoint* getPoints() const { return points; }
+    uint16_t getPointCount() const { return pointCount; }
+
 private:
     uint16_t backgroundColor;
     uint16_t pathColor;

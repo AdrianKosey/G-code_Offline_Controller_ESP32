@@ -40,6 +40,9 @@ public:
     bool hasValidProjectBounds() const;
 
     void updateMachineState(JobState jobState, const GrblStatus& status, uint32_t currentLine, uint32_t totalLines, unsigned long elapsedSeconds);
+
+    const GCodePoint* getPreviewPoints() const { return gcodePreview.getPoints(); }
+    uint16_t getPreviewPointCount() const { return gcodePreview.getPointCount(); }
 private:
     GrblController& grbl;
     // Header

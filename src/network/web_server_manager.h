@@ -44,6 +44,8 @@ private:
     IStorageFile* uploadStorageFile = nullptr;
 
     void handleRoot();
+    void handleSystemPage();
+    void handleStats();
     void handleStatus();
     void handleFiles();
     void handleControl();
@@ -60,6 +62,8 @@ private:
     void handleProbeZ();
     void handleConsoleGet();
     void handleConsoleSend();
+    void handlePreview();
+    
 
     String buildFilesJson(const String& path);
 

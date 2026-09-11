@@ -231,6 +231,16 @@ void App::begin()
     buzzer.setEnabled(appSettings.isBuzzerEnabled());
 
     screenManager.draw(display);
+
+    xTaskCreatePinnedToCore(
+        App::gcodeTaskWrapper,
+        "GCodeEngine",
+        8192,               // Memory allocated to the task stack
+        this,               // Pass the current App instance
+        10,                 // HIGH priority
+        &gcodeTaskHandle,
+        0                   // Explicitly assigned to CORE 0
+    );
 }
 
 void App::update()
@@ -248,8 +258,8 @@ void App::update()
         return;
     }
 
-    jobRunner.update();
-    framingRunner.update();
+    //jobRunner.update();
+    //framingRunner.update();
     wifiManager.update();
 
     screenManager.setWifiStatus(wifiManager.getMode() == WifiMode::Connected);
@@ -370,4 +380,22 @@ void App::update()
         toolsScreen.drawKeyboard(display);
     if (toolsScreen.isNumericPadVisible()) 
         toolsScreen.drawNumericPad(display);
+}
+
+void App::gcodeTaskWrapper(void *pvParameters)
+{
+    App *app = static_cast<App *>(pvParameters);
+    for (;;)
+    {
+        app->updateGCodeEngine();
+        // Mandatory minimum delay to avoid blocking the Core 0 Watchdog
+        vTaskDelay(pdMS_TO_TICKS(1)); 
+    }
+}
+
+void App::updateGCodeEngine()
+{
+    // CNC priority process (Core 0)
+    jobRunner.update();
+    framingRunner.update();
 }

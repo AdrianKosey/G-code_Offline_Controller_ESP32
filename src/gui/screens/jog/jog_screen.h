@@ -28,6 +28,7 @@ private:
     ButtonWidget homeButton;
     ButtonWidget setXZeroButton, setYZeroButton, setZZeroButton;
     ButtonWidget probeZButton;
+    ButtonWidget unlockMachineButton;
 
     float jogStep = 1.0f;
     bool waitingForProbeZero = false;

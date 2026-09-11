@@ -25,7 +25,8 @@ JogScreen::JogScreen(GrblController& grblController, AppSettingsManager& appSett
       setYZeroButton(Rect{CONTENT_X + 128, 200, 56, 28}, tr(StringId::Jog_SetY0)),
       setZZeroButton(Rect{CONTENT_X + 188, 200, 56, 28}, tr(StringId::Jog_SetZ0)),
 
-      probeZButton(Rect{CONTENT_X + 170, 52, 74, 26}, tr(StringId::Jog_ProbeZ))
+      probeZButton(Rect{CONTENT_X + 170, 52, 74, 26}, tr(StringId::Jog_ProbeZ)),
+      unlockMachineButton(Rect{CONTENT_X + 88, 124, 40, 32}, tr(StringId::Jog_Unlock))
 {
     step1Button.setSelected(true);
 
@@ -51,12 +52,14 @@ JogScreen::JogScreen(GrblController& grblController, AppSettingsManager& appSett
         waitingForProbeZero = true;
     });
 
+    unlockMachineButton.setOnPress([this]() { grbl.sendLine("$X"); });
+
     widgets = {
         &stepLabel, &step01Button, &step1Button, &step10Button,
         &yPlusButton, &xMinusButton, &xPlusButton, &yMinusButton,
         &zPlusButton, &zMinusButton,
         &homeButton, &setXZeroButton, &setYZeroButton, &setZZeroButton,
-        &probeZButton
+        &probeZButton, &unlockMachineButton
     };
 }
 

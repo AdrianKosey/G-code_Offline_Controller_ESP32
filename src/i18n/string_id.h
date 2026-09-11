@@ -11,7 +11,7 @@ enum class StringId
 
     // Jog
     Jog_XUp, Jog_XDown, Jog_YUp, Jog_YDown, Jog_ZUp, Jog_ZDown,
-    Jog_StepLabel, Jog_Home, Jog_SetX0, Jog_SetY0, Jog_SetZ0, Jog_ProbeZ,
+    Jog_StepLabel, Jog_Home, Jog_SetX0, Jog_SetY0, Jog_SetZ0, Jog_ProbeZ, Jog_Unlock,
 
     // Home
     Home_Title, Home_InProgress, Home_NoFile, Home_Running, Home_Paused, Home_Completed, Home_Error, Home_Ready,

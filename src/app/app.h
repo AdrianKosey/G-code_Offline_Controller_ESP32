@@ -35,6 +35,10 @@ public:
     void update();
 
 private:
+    TaskHandle_t gcodeTaskHandle = nullptr;
+    void updateGCodeEngine();
+    static void gcodeTaskWrapper(void *pvParameters);
+
     JobState lastJobState = JobState::Idle;
     AppSettingsManager appSettings;
     ConfirmModalTarget confirmTarget = ConfirmModalTarget::LoadFile;

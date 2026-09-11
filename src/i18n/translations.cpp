@@ -9,7 +9,7 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
     "Inicio", "Archivos", "Manual", "Utilidad", "Ajustes", // Max 8 for sidebar
 
     "X+", "X-", "Y+", "Y-", "Z+", "Z-",
-    "Paso (mm)", "HOME", "SET X0", "SET Y0", "SET Z0", "PROBAR Z",
+    "Paso (mm)", "HOME", "SET X0", "SET Y0", "SET Z0", "PROBAR Z", "$X",
 
     "CONTROLADORA CNC", "En Curso:", "Sin Archivo", "CORRIENDO", "PAUSADO", "TERMINADO", "ERROR", "LISTO",
     "Velocidad", "Potencia",
@@ -60,7 +60,7 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
     "Home", "Files", "Jog", "Tools", "Settings",
 
     "X+", "X-", "Y+", "Y-", "Z+", "Z-",
-    "Step (mm)", "HOME", "SET X0", "SET Y0", "SET Z0", "PROBE Z",
+    "Step (mm)", "HOME", "SET X0", "SET Y0", "SET Z0", "PROBE Z", "$X",
 
     "CNC CONTROLLER", "In Progress:", "No File.", "RUNNING", "PAUSED", "COMPLETED", "ERROR", "READY",
     "Feed", "Power",
@@ -111,7 +111,7 @@ static const char* ITALIAN[(int)StringId::StringId_Count] = {
     "Home", "File", "Move", "Strumenti", "Impostazioni",
 
     "X+", "X-", "Y+", "Y-", "Z+", "Z-",
-    "Passo (mm)", "HOME", "AZZERA X", "AZZERA Y", "AZZERA Z", "SONDA Z",
+    "Passo (mm)", "HOME", "AZZERA X", "AZZERA Y", "AZZERA Z", "SONDA Z", "$X",
 
     "CONTROLLER CNC", "In corso:", "Nessun File.", "IN ESECUZIONE", "IN PAUSA", "COMPLETATO", "ERRORE", "PRONTO",
     "Avanzamento", "Potenza",
@@ -161,7 +161,7 @@ static const char* GERMAN[(int)StringId::StringId_Count] = {
     "Home", "Dateien", "Manuell", "Werkzeuge", "Einstellu",
 
     "X+", "X-", "Y+", "Y-", "Z+", "Z-",
-    "Schritt (mm)", "HOME", "SET X0", "SET Y0", "SET Z0", "MESSEN Z",
+    "Schritt (mm)", "HOME", "SET X0", "SET Y0", "SET Z0", "MESSEN Z", "$X",
 
     "CNC STEUERUNG", "In Bearbeitung:", "Keine Datei.", "LAEUFT", "PAUSIERT", "ABGESCHLOSSEN", "FEHLER", "BEREIT", "Vorschub", "Leistung",
     "X", "Y", "Z",
