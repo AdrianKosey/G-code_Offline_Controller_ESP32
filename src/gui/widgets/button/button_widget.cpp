@@ -71,10 +71,6 @@ bool ButtonWidget::handleTouch(const TouchEvent& event)
         pressed = true;
         trackingPress = true;
         invalidate();
-
-        if (onPress)
-            onPress();
-
         return true;
     }
 
@@ -83,6 +79,12 @@ bool ButtonWidget::handleTouch(const TouchEvent& event)
         pressed = false;
         trackingPress = false;
         invalidate();
+
+        if (contains(event.point.x, event.point.y))
+        {
+            if (onPress)
+                onPress();
+        }
 
         return true;
     }

@@ -25,7 +25,7 @@ public:
 
     KeyboardModalWidget(const Rect& screenBounds);
 
-    void show(const String& title);
+    void show(const String& title, const String& initialText = "");
     void hide();
     bool isVisible() const;
 

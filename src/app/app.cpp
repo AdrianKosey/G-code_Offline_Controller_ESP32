@@ -204,13 +204,28 @@ void App::begin()
             loadingModal.hide();
             screenManager.switchToScreen(0);
             screenManager.redrawAll();
-        } });
+        } else if (confirmTarget == ConfirmModalTarget::DeleteToolConfirm){
+            if (pendingDeleteAction)
+            {
+                pendingDeleteAction();
+                pendingDeleteAction = nullptr;
+            }
+
+            screenManager.redrawAll();
+        }
+    });
 
     confirmModal.setOnCancel([this]()
                              { 
         if (confirmTarget == ConfirmModalTarget::JobRecovery)
             jobRecovery.clear();
         screenManager.redrawAll(); });
+    
+    toolsScreen.setOnRequestDeleteConfirm([this](std::function<void()> confirmAction) {
+        pendingDeleteAction = confirmAction;
+        confirmTarget = ConfirmModalTarget::DeleteToolConfirm;
+        confirmModal.show(display, tr(StringId::Tool_Delete_Confirm));
+    });
 
     webServer.setOnFileSelected([this](StorageSource source, const String &path)
                                 {

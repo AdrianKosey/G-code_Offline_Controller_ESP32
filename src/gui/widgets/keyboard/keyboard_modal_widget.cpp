@@ -161,11 +161,11 @@ void KeyboardModalWidget::refreshKeyLabels()
     }
 }
 
-void KeyboardModalWidget::show(const String& title)
+void KeyboardModalWidget::show(const String& title, const String& initialText)
 {
     titleLabel.setText(title);
-    inputText = "";
-    inputLabel.setText("");
+    inputText = initialText;
+    inputLabel.setText(inputText);
 
     mode = KeyboardMode::Letters;
     buildLayout();

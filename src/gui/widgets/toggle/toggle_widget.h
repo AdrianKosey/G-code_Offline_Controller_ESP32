@@ -11,7 +11,7 @@ class ToggleWidget : public Widget
 {
 public:
     using ChangeCallback = std::function<void(bool)>;
-
+    ToggleWidget() = default; 
     ToggleWidget(const Rect& bounds, bool initialState = false);
 
     void draw(DisplayManager& display) override;

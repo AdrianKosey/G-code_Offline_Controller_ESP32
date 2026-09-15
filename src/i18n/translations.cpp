@@ -25,7 +25,7 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
     "Reanudando trabajo...",
 
     "Tipo de herramienta","Husillo", "Laser", "Potencia Referencia", "ON", "OFF", "CW", "CCW",
-    "+ Nueva herramienta", "Eliminar herramienta", "Usar herramienta", "Diametro", "Uso", "Uso (Horas)", "On/Off", "Herramienta ",
+    "+ Nueva herramienta", "Eliminar herramienta", "Usar herramienta", "Diametro", "Uso", "Uso (Horas)", "On/Off", "Herramienta ", "¿Desea eliminar esta herramienta?",
 
     "Acerca del dispositivo", "Wi-Fi", "Maquina", "Ajustes del Controlador",
     "Firmware", "Proyecto", "G-code Offline Controller",
@@ -76,7 +76,7 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
     "Resuming work...",
 
     "Tool type","Spindle", "Laser", "Power Reference", "ON", "OFF", "CW", "CCW",
-    "+ New Tool", "Delete Tool", "Use Tool", "Diameter", "Usage", "Usage (Hours)", "On/Off", "Tool ",
+    "+ New Tool", "Delete Tool", "Use Tool", "Diameter", "Usage", "Usage (Hours)", "On/Off", "Tool ", "Do you want to delete this tool?",
     
     "About device", "Wi-Fi", "Machine", "Controller Settings",
     "Firmware", "Project", "G-code Offline Controller",
@@ -127,7 +127,7 @@ static const char* ITALIAN[(int)StringId::StringId_Count] = {
     "Ripresa del lavoro...",
 
     "Tipo utensile", "Mandrino", "Laser", "Riferimento Potenza", "ON", "OFF", "CW", "CCW",
-    "+ Nuovo Utensile", "Elimina Utensile", "Usa Utensile", "Diametro", "Uso", "Uso (Ore)", "On/Off", "Utensile ",
+    "+ Nuovo Utensile", "Elimina Utensile", "Usa Utensile", "Diametro", "Uso", "Uso (Ore)", "On/Off", "Utensile ", "Vuoi eliminare questo utensile?",
     
     "Info dispositivo", "Wi-Fi", "Macchina", "Impostazioni Controller",
     "Firmware", "Progetto", "Controller Offline G-code", "Scansione reti", "Dimentica rete", "Non connesso", " (Protetta)",
@@ -176,7 +176,7 @@ static const char* GERMAN[(int)StringId::StringId_Count] = {
     "Arbeit wird fortgesetzt...",
 
     "Werkzeugtyp", "Spindel", "Laser", "Leistungsreferenz", "EIN", "AUS", "CW", "CCW",
-    "+ Neues Werkzeug", "Werkzeug loeschen", "Werkzeug nutzen", "Durchmesser", "Nutzung", "Nutzung (Std)", "Ein/Aus", "Werkzeug ",
+    "+ Neues Werkzeug", "Werkzeug loeschen", "Werkzeug nutzen", "Durchmesser", "Nutzung", "Nutzung (Std)", "Ein/Aus", "Werkzeug ", "Moechten Sie dieses Werkzeug loeschen?",
     
     "Ueber das Geraet", "WLAN", "Maschine", "Steuerung-Einstellungen",
     "Firmware", "Projekt", "G-Code Offline Controller",

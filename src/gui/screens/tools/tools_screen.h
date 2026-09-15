@@ -1,5 +1,5 @@
 #pragma once
-
+#include <functional>
 #include "../../core/screen.h"
 #include "../../core/scroll_panel_widget.h"
 #include "../../theme.h"
@@ -31,6 +31,9 @@ public:
     void drawNumericPad(DisplayManager& display) { numericPad.draw(display); }
     bool handleNumericPadTouch(const TouchEvent& event) { return numericPad.handleTouch(event); }
     ToolProfileManager& getToolManager() { return toolManager; }
+
+    using DeleteConfirmCallback = std::function<void(std::function<void()>)>;
+    void setOnRequestDeleteConfirm(DeleteConfirmCallback callback);
     void onExit() override;
 
 private:
@@ -47,13 +50,13 @@ private:
     MenuRowWidget profileRows[MAX_ROWS];
     uint8_t rowCount = 0;
     ButtonWidget addButton;
-    ButtonWidget useButton;
     //detail scroll
     ScrollPanelWidget detailScrollPanel;
     IconButtonWidget backButton;
     LabelWidget nameLabel;
     MenuRowWidget diameterRow;
     MenuRowWidget powerRow;
+    MenuRowWidget nameRow;
     LabelWidget usageLabel;
     LabelWidget usageValueLabel;
 
@@ -62,7 +65,9 @@ private:
 
     ButtonWidget directionButton;
     ToggleWidget testToggle;
+    ToggleWidget activeToggles[MAX_ROWS];
     LabelWidget testLabelToggle;
+    DeleteConfirmCallback onRequestDeleteConfirm;
     ButtonWidget deleteButton;
 
     KeyboardModalWidget nameKeyboard;

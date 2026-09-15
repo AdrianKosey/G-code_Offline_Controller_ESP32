@@ -11,7 +11,6 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
 
       listScrollPanel(Rect{CONTENT_X + 8, CONTENT_Y + 8, 244, 198}),
       addButton(Rect{0, 0, 244, 32}, tr(StringId::Tool_New)),
-      useButton(Rect{0, 0, 244, 32}, tr(StringId::Tool_Use)),
       detailScrollPanel(Rect{CONTENT_X + 8, CONTENT_Y + 36, 244, 170}),
       backButton(
           Rect{CONTENT_X + 8, CONTENT_Y + 4, 28, 24},
@@ -20,6 +19,7 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
       nameLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 180, 20}, "", Theme::Text, 2, Theme::Background, true),
 
       diameterRow(Rect{0, 0, 244, 36}, tr(StringId::Tool_Diameter)),
+      nameRow(Rect{0, 0, 244, 36}, "Name"),
       powerRow(Rect{0, 0, 244, 36}, tr(StringId::Tools_Power)),
 
       usageLabel(Rect{0, 0, 140, 14}, tr(StringId::Tool_Usage), Theme::TextSecondary, 1, Theme::Background, false),
@@ -42,9 +42,6 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
         toolManager.addProfile(editingProfile);
         openDetail((int8_t)(toolManager.getProfiles().size() - 1));
     });
-    useButton.setOnPress([this]() {
-        toolManager.setActiveIndex(selectedIndex);
-    });
     backButton.setOnPress([this]() {
         stopTestIfRunning();
         rebuildList();
@@ -52,12 +49,25 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
 
     diameterRow.setOnPress([this]() {
         numericTarget = ToolsNumericTarget::Diameter;
-        numericPad.show("Diametro (mm)", editingProfile.diameterMm);
+        numericPad.show(tr(StringId::Tool_Diameter), editingProfile.diameterMm);
     });
+
+    nameRow.setOnPress([this]() {
+        nameKeyboard.show("Tool Name", editingProfile.name);
+    });
+    nameKeyboard.setOnSubmit([this](const String& newName) {
+        if (newName.length() == 0)
+            return;
+
+        editingProfile.name = newName;
+        toolManager.updateProfile(selectedIndex, editingProfile);
+        refreshDetailLabels();
+    });
+    nameKeyboard.setOnCancel([this]() {});
 
     powerRow.setOnPress([this]() {
         numericTarget = ToolsNumericTarget::Power;
-        numericPad.show("Potencia de referencia (%)", editingProfile.defaultPower);
+        numericPad.show(tr(StringId::Tools_Power), editingProfile.defaultPower);
     });
 
     numericPad.setOnSubmit([this](float value) {
@@ -78,6 +88,7 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
         toolManager.updateProfile(selectedIndex, editingProfile);
         spindleTypeButton.setSelected(true);
         laserTypeButton.setSelected(false);
+        detailScrollPanel.invalidate();
         refreshDetailLabels();
     });
 
@@ -87,6 +98,7 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
         toolManager.updateProfile(selectedIndex, editingProfile);
         spindleTypeButton.setSelected(false);
         laserTypeButton.setSelected(true);
+        detailScrollPanel.invalidate();
         refreshDetailLabels();
     });
 
@@ -108,22 +120,28 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
     });
 
     deleteButton.setOnPress([this]() {
-        stopTestIfRunning();
-        toolManager.deleteProfile(selectedIndex);
-        rebuildList();
+        if (onRequestDeleteConfirm)
+        {
+            onRequestDeleteConfirm([this]() {
+                stopTestIfRunning();
+                toolManager.deleteProfile(selectedIndex);
+                rebuildList();
+            });
+        }
+        else{}
     });
     
-    detailScrollPanel.addChild(&diameterRow, 0, 0);
-    detailScrollPanel.addChild(&powerRow, 0, 38);
-    detailScrollPanel.addChild(&usageLabel, 8, 84);
-    detailScrollPanel.addChild(&usageValueLabel, 8, 98);
-    detailScrollPanel.addChild(&spindleTypeButton, 0, 130);
-    detailScrollPanel.addChild(&laserTypeButton, 126, 130);
-    detailScrollPanel.addChild(&directionButton, 0, 164);
-    detailScrollPanel.addChild(&testToggle, 126, 164);
-    detailScrollPanel.addChild(&testLabelToggle, 180, 164);
-    detailScrollPanel.addChild(&deleteButton, 0, 206);
-    detailScrollPanel.addChild(&useButton, 0, 240);
+    detailScrollPanel.addChild(&nameRow, 0, 0);
+    detailScrollPanel.addChild(&diameterRow, 0, 38);
+    detailScrollPanel.addChild(&powerRow, 0, 76);
+    detailScrollPanel.addChild(&usageLabel, 8, 122);
+    detailScrollPanel.addChild(&usageValueLabel, 8, 136);
+    detailScrollPanel.addChild(&spindleTypeButton, 0, 168);
+    detailScrollPanel.addChild(&laserTypeButton, 126, 168);
+    detailScrollPanel.addChild(&directionButton, 0, 202);
+    detailScrollPanel.addChild(&testToggle, 126, 202);
+    detailScrollPanel.addChild(&testLabelToggle, 180, 202);
+    detailScrollPanel.addChild(&deleteButton, 0, 244);
 
     rebuildList();
 }
@@ -135,18 +153,40 @@ void ToolsScreen::rebuildList()
 
     listScrollPanel = ScrollPanelWidget(Rect{CONTENT_X + 8, CONTENT_Y + 8, 244, 198});
 
+    int8_t activeIndex = toolManager.getActiveIndex();
+
     for (uint8_t i = 0; i < rowCount; i++)
     {
         char buf[16];
         snprintf(buf, sizeof(buf), "%.1fmm", profiles[i].diameterMm);
 
-        profileRows[i] = MenuRowWidget(Rect{0, 0, 244, 36}, profiles[i].name);
+        profileRows[i] = MenuRowWidget(Rect{0, 0, 190, 36}, profiles[i].name);
         profileRows[i].setValue(String(buf));
 
         uint8_t idx = i;
         profileRows[i].setOnPress([this, idx]() { openDetail(idx); });
 
+        activeToggles[i] = ToggleWidget(Rect{0, 0, 44, 22}, i == activeIndex);
+
+        activeToggles[i].setOnChange([this, idx](bool state) {
+            if (state)
+            {
+                toolManager.setActiveIndex(idx);
+
+                for (uint8_t j = 0; j < rowCount; j++)
+                {
+                    if (j != idx)
+                        activeToggles[j].setState(false);
+                }
+            }
+            else if (toolManager.getActiveIndex() == idx)
+            {
+                toolManager.setActiveIndex(-1);
+            }
+        });
+
         listScrollPanel.addChild(&profileRows[i], 0, i * 40);
+        listScrollPanel.addChild(&activeToggles[i], 200, i * 40 + 7);
     }
 
     listScrollPanel.addChild(&addButton, 0, rowCount * 40 + 6);
@@ -185,6 +225,7 @@ void ToolsScreen::openDetail(int8_t index)
 void ToolsScreen::refreshDetailLabels()
 {
     nameLabel.setText(editingProfile.name);
+    nameRow.setValue(editingProfile.name);
     diameterRow.setValue(String(editingProfile.diameterMm, 1) + " mm");
     powerRow.setValue(String((int)editingProfile.defaultPower) + "%");
 
@@ -200,6 +241,15 @@ void ToolsScreen::applyTestOutput()
 {
     float outputPower = testOn ? editingProfile.defaultPower : 0.0f;
     grbl.setSpindlePower(outputPower, editingProfile.type == ToolType::Spindle ? testClockwise : true);
+
+    if (testOn && editingProfile.type == ToolType::Laser && grbl.isLaserMode())
+    {
+        // Grbl in laser mode does not apply PWM until the planner processes
+        // an actual movement—we force a zero-distance move to
+        // "release" the queued M3 command without actually moving the machine.
+        grbl.sendLine("G91 G1 X0 Y0 F1");
+        grbl.sendLine("G90");
+    }
 }
 
 void ToolsScreen::stopTestIfRunning()
@@ -252,4 +302,9 @@ void ToolsScreen::draw(DisplayManager& display)
     }
 
     IScreen::draw(display);
+}
+
+void ToolsScreen::setOnRequestDeleteConfirm(DeleteConfirmCallback callback)
+{
+    onRequestDeleteConfirm = callback;
 }

@@ -27,7 +27,7 @@ enum class StringId
 
     // Tools
     Tool_Type, Tools_Spindle, Tools_Laser, Tools_Power, Tools_On, Tools_Off, Tools_CW, Tools_CCW,
-    Tool_New, Tool_Delete, Tool_Use, Tool_Diameter, Tool_Usage, Tool_Usage_Hours, Tools_OnOff, Tool_Count,
+    Tool_New, Tool_Delete, Tool_Use, Tool_Diameter, Tool_Usage, Tool_Usage_Hours, Tools_OnOff, Tool_Count, Tool_Delete_Confirm,
 
     // Settings - menu
     Settings_About, Settings_Wifi, Settings_Machine, Settings_Control,

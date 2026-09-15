@@ -26,7 +26,7 @@
 #include "../storage/storage_manager.h"
 #include "splash_screen.h"
 #include "time_format.h"
-enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery, JobCompleted };
+enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery, JobCompleted, DeleteToolConfirm };
 class App
 {
 public:
@@ -38,7 +38,7 @@ private:
     TaskHandle_t gcodeTaskHandle = nullptr;
     void updateGCodeEngine();
     static void gcodeTaskWrapper(void *pvParameters);
-
+    std::function<void()> pendingDeleteAction;
     JobState lastJobState = JobState::Idle;
     AppSettingsManager appSettings;
     ConfirmModalTarget confirmTarget = ConfirmModalTarget::LoadFile;
