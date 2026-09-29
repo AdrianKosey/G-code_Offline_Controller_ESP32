@@ -2,7 +2,7 @@
 
 FramingRunner::FramingRunner(GrblController& grbl) : grbl(grbl) {}
 
-void FramingRunner::start(float minX, float minY, float maxX, float maxY, float newFeedRate)
+void FramingRunner::start(float minX, float minY, float maxX, float maxY, float newFeedRate, float power)
 {
     feedRate = newFeedRate;
 
@@ -18,8 +18,8 @@ void FramingRunner::start(float minX, float minY, float maxX, float maxY, float 
     waitingForOk = false;
     running = true;
 
-    // The tool is turned off for safety before traversing the perimeter
-    grbl.setSpindlePower(0.0f);
+    // The tool is powered on for the framing operation, if a power value is provided
+    grbl.setSpindlePower(power);
 }
 
 bool FramingRunner::isRunning() const { return running; }
@@ -29,6 +29,7 @@ void FramingRunner::sendNextStep()
     if (currentStep >= stepCount)
     {
         running = false;
+        grbl.setSpindlePower(0.0f);
         return;
     }
 

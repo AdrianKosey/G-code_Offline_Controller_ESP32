@@ -31,6 +31,8 @@ public:
 
     void invalidateAll();
     void redrawAll();
+
+    void setOnConsolePress(std::function<void()> callback) { header.setOnConsolePress(callback); }
 private:
     struct ScreenEntry
     {

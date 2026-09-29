@@ -30,6 +30,7 @@ public:
 
     float getSafeZHeight() const;
     void setSafeZHeight(float value);
+    
     bool isScreenSleepEnabled() const;
     void setScreenSleepEnabled(bool enabled);
 

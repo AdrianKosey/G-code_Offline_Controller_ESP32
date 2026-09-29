@@ -35,7 +35,8 @@ App::App()
       framingRunner(grblController),
       settingsScreen(wifiManager, grblController, appSettings),
       screenSleep(display, appSettings),
-      webServer(grblController, jobRunner, framingRunner, appSettings, storageManager, homeScreen)
+      webServer(grblController, jobRunner, framingRunner, appSettings, storageManager, homeScreen),
+      gcodeConsole(Rect{0, 0, 320, 240}, grblController)
 {
     g_appSettings = &appSettings;
 }
@@ -104,18 +105,23 @@ void App::begin()
         jobRunner.stop();
         jobRecovery.clear(); });
 
-    homeScreen.setOnFraming([this]()
-                            {
+    homeScreen.setOnFraming([this](){
         if (!homeScreen.hasValidProjectBounds())
         {
             confirmModal.show(display, tr(StringId::Modal_Framing_Error));
             return;
         }
-
+        float powerTool = 0.0f;
+        if (toolsScreen.getToolManager().getActiveIndex() >= 0)
+        {
+            ToolProfile tool = toolsScreen.getToolManager().getActiveTool();
+            powerTool = tool.defaultPower;
+        }
         framingRunner.start(
             homeScreen.getProjectMinX(), homeScreen.getProjectMinY(),
             homeScreen.getProjectMaxX(), homeScreen.getProjectMaxY(),
-            appSettings.getFramingFeedRate()); });
+            appSettings.getFramingFeedRate(), powerTool);
+    });
 
     filesScreen.setOnFileSelected([this](const String &path)
                                   {
@@ -127,6 +133,10 @@ void App::begin()
         String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
 
         confirmModal.show(display, tr(StringId::App_Open_File) + filename + "?"); });
+    
+    screenManager.setOnConsolePress([this]() {
+        gcodeConsole.show(display);
+    });
 
     settingsScreen.setOnBuzzerChanged([this](bool enabled)
                                       { buzzer.setEnabled(enabled); });
@@ -334,11 +344,24 @@ void App::update()
         settingsScreen.isNumericPadVisible() ||
         settingsScreen.isEnumPickerVisible() ||
         toolsScreen.isKeyboardVisible() ||
-        toolsScreen.isNumericPadVisible();
+        toolsScreen.isNumericPadVisible() ||
+        gcodeConsole.isVisible();
+    
+    bool wasConsoleVisible = gcodeConsole.isVisible();
+    
+    gcodeConsole.update();
 
     bool consumed = false;
 
-    if (confirmModal.isVisible())
+    if (gcodeConsole.isVisible())
+    {
+        consumed = gcodeConsole.handleTouch(event);
+
+        if (wasConsoleVisible && !gcodeConsole.isVisible())
+            screenManager.redrawAll();
+        
+    }
+    else if (confirmModal.isVisible())
         consumed = confirmModal.handleTouch(event);
     else if (loadingModal.isVisible())
         consumed = loadingModal.handleTouch(event);
@@ -376,14 +399,15 @@ void App::update()
         screenManager.update();
     }
 
-    if (event.type == TouchType::Pressed && consumed)
-        buzzer.beep();
-
     if (!anyModalVisible)
         screenManager.draw(display);
 
+    if (event.type == TouchType::Pressed && consumed)
+        buzzer.beep();
+
     confirmModal.draw(display);
     loadingModal.draw(display);
+    gcodeConsole.draw(display);
 
     if (settingsScreen.isKeyboardVisible())
         settingsScreen.drawKeyboard(display);

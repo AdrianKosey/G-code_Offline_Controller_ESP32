@@ -7,7 +7,7 @@
 class ToolProfileManager
 {
 public:
-    static constexpr uint8_t MAX_PROFILES = 8;
+    static constexpr uint8_t MAX_PROFILES = 10;
 
     ToolProfileManager();
 
@@ -21,6 +21,8 @@ public:
 
     int8_t getActiveIndex() const;
     void setActiveIndex(int8_t index);
+
+    ToolProfile getActiveTool() const;
 
 private:
     Preferences prefs;

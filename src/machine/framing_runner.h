@@ -8,7 +8,7 @@ class FramingRunner
 public:
     FramingRunner(GrblController& grbl);
 
-    void start(float minX, float minY, float maxX, float maxY, float feedRate);
+    void start(float minX, float minY, float maxX, float maxY, float feedRate, float power = 0.0f);
     void update();
 
     bool isRunning() const;

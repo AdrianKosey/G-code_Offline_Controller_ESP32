@@ -13,6 +13,7 @@
 #include "../gui/screens/tools/tools_screen.h"
 #include "../gui/widgets/modal/confirm_modal_widget.h"
 #include "../gui/widgets/modal/loading_modal_widget.h"
+#include "../gui/widgets/gcode_console/gcode_console_modal_widget.h"
 #include "../network/wifi_manager.h"
 #include "../machine/grbl_controller.h"
 #include "../gcode/gcode_job_runner.h"
@@ -71,4 +72,5 @@ private:
     ConfirmModalWidget confirmModal;
     LoadingModalWidget loadingModal;
     String pendingFilePath;
+    GcodeConsoleModalWidget gcodeConsole;
 };

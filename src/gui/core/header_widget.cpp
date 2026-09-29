@@ -1,11 +1,12 @@
 #include "header_widget.h"
 
 HeaderWidget::HeaderWidget(const Rect& bounds)
-    : titleLabel(Rect{static_cast<short>(bounds.x + 10), static_cast<short>(bounds.y + 4), static_cast<short>(150), static_cast<short>(20)}, "", Theme::Text, static_cast<short>(2), Theme::Background),
+    : titleLabel(Rect{static_cast<short>(bounds.x + 34), static_cast<short>(bounds.y + 4), static_cast<short>(126), static_cast<short>(20)}, "", Theme::Text, static_cast<short>(2), Theme::Background),
       sdIcon(Rect{static_cast<short>(bounds.x + bounds.width - 70), static_cast<short>(bounds.y + 6), Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT}, Icons::MicroSd, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::TextSecondary, Theme::Background),
       wifiIcon(Rect{static_cast<short>(bounds.x + bounds.width - 22), static_cast<short>(bounds.y + 6), Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT}, Icons::Wifi, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::TextSecondary, Theme::Background),
       machineIcon(Rect{static_cast<short>(bounds.x + bounds.width - 94), static_cast<short>(bounds.y + 6), Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT}, Icons::MachineDisconnected, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::TextSecondary),
-      usbIcon(Rect{static_cast<short>(bounds.x + bounds.width - 46), static_cast<short>(bounds.y + 6), Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT}, Icons::UsbDisconnected, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::TextSecondary)
+      usbIcon(Rect{static_cast<short>(bounds.x + bounds.width - 46), static_cast<short>(bounds.y + 6), Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT}, Icons::UsbDisconnected, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::TextSecondary),
+      consoleButton(Rect{static_cast<short>(bounds.x + 10), static_cast<short>(bounds.y + 4), 22, 22}, Icons::Console, Icons::HEADER_WIDTH, Icons::HEADER_HEIGHT, Theme::Background, Theme::TextSecondary, false)
 {}
 
 void HeaderWidget::setTitle(const String& title)
@@ -44,4 +45,15 @@ void HeaderWidget::draw(DisplayManager& display)
     usbIcon.draw(display);
     wifiIcon.draw(display);
     machineIcon.draw(display);
+    consoleButton.draw(display);
+}
+
+void HeaderWidget::setOnConsolePress(std::function<void()> callback)
+{
+    consoleButton.setOnPress(callback);
+}
+
+bool HeaderWidget::handleTouch(const TouchEvent& event)
+{
+    return consoleButton.handleTouch(event);
 }

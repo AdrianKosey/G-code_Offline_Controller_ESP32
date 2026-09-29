@@ -66,6 +66,9 @@ void ScreenManager::update()
 
 bool ScreenManager::handleTouch(const TouchEvent &event)
 {
+    if (header.handleTouch(event))
+        return true;
+        
     if (sidebar.handleTouch(event))
         return true;
 

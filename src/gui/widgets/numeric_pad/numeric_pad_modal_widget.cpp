@@ -1,5 +1,5 @@
 #include "numeric_pad_modal_widget.h"
-
+#include "../../../i18n/translations.h"
 NumericPadModalWidget::NumericPadModalWidget(const Rect& screenBounds)
     : screenBounds(screenBounds),
       panel(Rect{screenBounds.x, screenBounds.y, screenBounds.width, screenBounds.height}, Theme::Panel, 0),
@@ -12,8 +12,8 @@ NumericPadModalWidget::NumericPadModalWidget(const Rect& screenBounds)
       dotButton(Rect{0, 0, 0, 0}, "."),
       signButton(Rect{0, 0, 0, 0}, "+/-"),
       backspaceButton(Rect{0, 0, 0, 0}, "<-"),
-      cancelButton(Rect{0, 0, 0, 0}, "Cancelar"),
-      submitButton(Rect{0, 0, 0, 0}, "OK")
+      cancelButton(Rect{0, 0, 0, 0}, tr(StringId::Modal_Cancel)),
+      submitButton(Rect{0, 0, 0, 0}, tr(StringId::Modal_Ok))
 {
     // ---- BUTTON GRID CONFIGURATION ----
     int16_t paddingX = 8;
@@ -53,9 +53,9 @@ NumericPadModalWidget::NumericPadModalWidget(const Rect& screenBounds)
     // ---- ROW 4: [ Cancel ] [ <- ] [ OK ] ----
     int16_t row4_Y = startY + 4 * (keyH + gap);
 
-    cancelButton    = ButtonWidget(Rect{col0_X, row4_Y, keyW, keyH}, "Cancelar");
+    cancelButton    = ButtonWidget(Rect{col0_X, row4_Y, keyW, keyH}, tr(StringId::Modal_Cancel));
     backspaceButton = ButtonWidget(Rect{col1_X, row4_Y, keyW, keyH}, "<-");
-    submitButton    = ButtonWidget(Rect{col2_X, row4_Y, keyW, keyH}, "OK");
+    submitButton    = ButtonWidget(Rect{col2_X, row4_Y, keyW, keyH}, tr(StringId::Modal_Ok));
 
     // ---- ACTION CONFIGURATION (Logic intact) ----
     digitButtons[9].setOnPress([this]() { appendChar('0'); });

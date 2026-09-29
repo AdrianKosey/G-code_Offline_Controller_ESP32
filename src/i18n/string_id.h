@@ -4,7 +4,7 @@ enum class StringId
 {
     // App
     App_Open_File, App_Modal_Language, App_Loading_File, App_Reset, 
-    App_Yes, App_No,
+    App_Yes, App_No, Console_Title, Console_Command,
 
     // Sidebar
     Sidebar_Home, Sidebar_Files, Sidebar_Jog, Sidebar_Tools, Sidebar_Settings,

@@ -4,7 +4,7 @@
 
 static const char* SPANISH[(int)StringId::StringId_Count] = {
     "Abrir: ", "Esto reinicia el controlador.", "Cargando archivo...", "Reiniciando Dispositivo...", 
-    "Si", "No",
+    "Si", "No", "Consola G-code", "Escribir Comando",
 
     "Inicio", "Archivos", "Manual", "Utilidad", "Ajustes", // Max 8 for sidebar
 
@@ -50,12 +50,12 @@ static const char* SPANISH[(int)StringId::StringId_Count] = {
     "Recorrido max Y", "Recorrido max Z", 
     "us", "ms", "mascara", "mm", "mm/min", "RPM", "pasos/mm", "mm/s2",
 
-    "Cancelar", "OK", "Cargar archivo?", "Cargando...", "Framing no Disponible."
+    "Cancelar", "Confirmar", "Cargar archivo?", "Cargando...", "Framing no Disponible."
 };
 
 static const char* ENGLISH[(int)StringId::StringId_Count] = {
     "Open: ", "This resets the controller.", "Loading file...", "Restarting Device...",
-    "Yes", "No",
+    "Yes", "No", "G-code Console", "Write Command",
 
     "Home", "Files", "Jog", "Tools", "Settings",
 
@@ -101,12 +101,12 @@ static const char* ENGLISH[(int)StringId::StringId_Count] = {
     "Y-axis max travel", "Z-axis max travel", 
     "us", "ms", "mask", "mm", "mm/min", "RPM", "steps/mm", "mm/s2",
 
-    "Cancel", "OK", "Load file?", "Loading...", "Framing Not Available"
+    "Cancel", "Confirm", "Load file?", "Loading...", "Framing Not Available"
 };
 
 static const char* ITALIAN[(int)StringId::StringId_Count] = {
     "Apri: ", "Questo ripristina il controller.", "Caricamento file...", "Riavvio dispositivo...",
-    "Si", "No",
+    "Si", "No", "Console G-code", "Scrivi Comando",
 
     "Home", "File", "Move", "Strumenti", "Impostazioni",
 
@@ -151,12 +151,12 @@ static const char* ITALIAN[(int)StringId::StringId_Count] = {
     "Corsa max asse Y", "Corsa max asse Z", 
     "us", "ms", "maschera", "mm", "mm/min", "RPM", "step/mm", "mm/s2",
 
-    "Annulla", "OK", "Caricare file?", "Caricamento...", "Framing non disponibile"
+    "Annulla", "Conferma", "Caricare file?", "Caricamento...", "Framing non disponibile"
 };
 
 static const char* GERMAN[(int)StringId::StringId_Count] = {
     "Oeffnen: ", "Dies setzt die Steuerung zurueck.", "Datei laden...", "Geraet neustarten...",
-    "Ja", "Nein",
+    "Ja", "Nein", "G-code Konsole", "Befehl schreiben",
 
     "Home", "Dateien", "Manuell", "Werkzeuge", "Einstellu",
 
@@ -201,7 +201,7 @@ static const char* GERMAN[(int)StringId::StringId_Count] = {
     "Y-Achse max. Weg", "Z-Achse max. Weg", 
     "us", "ms", "Maske", "mm", "mm/min", "RPM", "Schritte/mm", "mm/s2",
 
-    "Abbrechen", "OK", "Datei laden?", "Laden...", "Framing nicht verfuegbar"
+    "Abbrechen", "Bestaetigen", "Datei laden?", "Laden...", "Framing nicht verfuegbar"
 };
 
 

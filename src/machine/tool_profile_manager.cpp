@@ -87,6 +87,14 @@ void ToolProfileManager::addUsageSeconds(uint8_t index, uint32_t seconds)
 
 int8_t ToolProfileManager::getActiveIndex() const { return activeIndex; }
 
+ToolProfile ToolProfileManager::getActiveTool() const
+{
+    if (activeIndex < 0 || activeIndex >= profiles.size())
+        return ToolProfile();
+
+    return profiles[activeIndex];
+}
+
 void ToolProfileManager::setActiveIndex(int8_t index)
 {
     activeIndex = index;

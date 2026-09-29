@@ -1,6 +1,6 @@
 #include "keyboard_modal_widget.h"
 #include <cstring>
-
+#include "../../../i18n/translations.h"
 namespace
 {
     const char* LETTER_ROWS[3] = { "qwertyuiop", "asdfghjkl", "zxcvbnm" };
@@ -92,8 +92,8 @@ void KeyboardModalWidget::buildLayout()
     int16_t row4_Y = startY + 4 * (keyH + gap);
     int16_t bottomBtnW = (totalActionRowW - gap) / 2; 
 
-    cancelButton = ButtonWidget(Rect{(int16_t)(screenBounds.x + paddingX), row4_Y, bottomBtnW, keyH}, "Cancelar");
-    submitButton = ButtonWidget(Rect{(int16_t)(screenBounds.x + paddingX + bottomBtnW + gap), row4_Y, bottomBtnW, keyH}, "OK");
+    cancelButton = ButtonWidget(Rect{(int16_t)(screenBounds.x + paddingX), row4_Y, bottomBtnW, keyH}, tr(StringId::Modal_Cancel));
+    submitButton = ButtonWidget(Rect{(int16_t)(screenBounds.x + paddingX + bottomBtnW + gap), row4_Y, bottomBtnW, keyH}, tr(StringId::Modal_Ok));
 
 
     shiftButton.setOnPress([this]() {
