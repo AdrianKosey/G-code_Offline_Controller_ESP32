@@ -35,6 +35,8 @@ public:
     void setOnSubmit(SubmitCallback callback);
     void setOnCancel(CancelCallback callback);
 
+    void requestRedraw() { if (visible) dirty = true; }
+
 private:
     Rect screenBounds;
     bool visible = false;

@@ -86,6 +86,8 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
         stopTestIfRunning();
         editingProfile.type = ToolType::Spindle;
         toolManager.updateProfile(selectedIndex, editingProfile);
+        if (selectedIndex == toolManager.getActiveIndex())
+            applyLaserModeForTool(editingProfile);
         spindleTypeButton.setSelected(true);
         laserTypeButton.setSelected(false);
         detailScrollPanel.invalidate();
@@ -96,6 +98,8 @@ ToolsScreen::ToolsScreen(GrblController& grblController)
         stopTestIfRunning();
         editingProfile.type = ToolType::Laser;
         toolManager.updateProfile(selectedIndex, editingProfile);
+        if (selectedIndex == toolManager.getActiveIndex())
+            applyLaserModeForTool(editingProfile);
         spindleTypeButton.setSelected(false);
         laserTypeButton.setSelected(true);
         detailScrollPanel.invalidate();
@@ -172,6 +176,7 @@ void ToolsScreen::rebuildList()
             if (state)
             {
                 toolManager.setActiveIndex(idx);
+                applyLaserModeForTool(toolManager.getProfiles()[idx]);
 
                 for (uint8_t j = 0; j < rowCount; j++)
                 {
@@ -307,4 +312,29 @@ void ToolsScreen::draw(DisplayManager& display)
 void ToolsScreen::setOnRequestDeleteConfirm(DeleteConfirmCallback callback)
 {
     onRequestDeleteConfirm = callback;
+}
+
+void ToolsScreen::applyLaserModeForTool(const ToolProfile& tool)
+{
+    // Grbl rejects $ changes while the machine is not in Idle (error:8),
+    // and changing the mode mid-operation would be dangerous anyway.
+    GrblState state = grbl.getStatus().state;
+    if (state != GrblState::Idle && state != GrblState::Unknown)
+        return;
+
+    bool wantLaser = (tool.type == ToolType::Laser);
+
+    // Only write if it actually changes - every write of $ goes to Grbl's EEPROM
+    if (grbl.isLaserMode() == wantLaser)
+        return;
+
+    grbl.setSetting(32, wantLaser ? 1.0f : 0.0f);
+}
+
+void ToolsScreen::syncLaserModeWithActiveTool()
+{
+    if (toolManager.getActiveIndex() < 0)
+        return;
+
+    applyLaserModeForTool(toolManager.getActiveTool());
 }

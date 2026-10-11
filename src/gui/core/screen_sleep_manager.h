@@ -15,6 +15,7 @@ public:
     void update();
 
     bool isSleeping() const;
+    bool consumeRedrawRequest();
 
 private:
     enum class State { Awake, Dimmed, Sleeping };
@@ -26,6 +27,8 @@ private:
     static constexpr uint8_t DIM_BRIGHTNESS_PERCENT = 10;
     bool sleeping = false;
     unsigned long lastActivityAt = 0;
+    bool screenWasBlanked = false;
+    bool needsRedrawAfterWake = false;
 
     void sleep();
     void wake();

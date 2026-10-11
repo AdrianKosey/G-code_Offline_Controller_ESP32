@@ -26,6 +26,8 @@ public:
     void setOnConfirm(ConfirmCallback callback);
     void setOnCancel(ConfirmCallback callback);
 
+    void requestRedraw() { if (visible) dirty = true; }
+
 private:
     Rect screenBounds;
     bool visible = false;

@@ -26,6 +26,7 @@ App::App()
           Rect{SIDEBAR_WIDTH, 0, 320 - SIDEBAR_WIDTH, HEADER_HEIGHT}),
       confirmModal(Rect{0, 0, 320, 240}),
       loadingModal(Rect{0, 0, 320, 240}),
+      infoModal(Rect{0, 0, 320, 240}),
       jobRunner(grblController),
       storageManager(SD_CS_PIN, CH376_CS_PIN, CH376_INT_PIN),
       homeScreen(grblController),
@@ -44,7 +45,7 @@ App::App()
 void App::begin()
 {
     grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
-    // grblController.beginSimulated();
+    //grblController.beginSimulated();
     SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
     sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
     if (!sdReady)
@@ -98,8 +99,7 @@ void App::begin()
                                       jobRunner.start();
                                       if (appSettings.isJobRecoveryEnabled())
                                           jobRecovery.startJob(pendingFilePath, homeScreen.getTotalLines());
-                                  }
-                              });
+                                  } });
     homeScreen.setOnStop([this]()
                          {
         jobRunner.stop();
@@ -108,7 +108,7 @@ void App::begin()
     homeScreen.setOnFraming([this](){
         if (!homeScreen.hasValidProjectBounds())
         {
-            confirmModal.show(display, tr(StringId::Modal_Framing_Error));
+            infoModal.show(display, tr(StringId::Modal_Framing_Error));
             return;
         }
         float powerTool = 0.0f;
@@ -120,8 +120,7 @@ void App::begin()
         framingRunner.start(
             homeScreen.getProjectMinX(), homeScreen.getProjectMinY(),
             homeScreen.getProjectMaxX(), homeScreen.getProjectMaxY(),
-            appSettings.getFramingFeedRate(), powerTool);
-    });
+            appSettings.getFramingFeedRate(), powerTool); });
 
     filesScreen.setOnFileSelected([this](const String &path)
                                   {
@@ -133,10 +132,9 @@ void App::begin()
         String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
 
         confirmModal.show(display, tr(StringId::App_Open_File) + filename + "?"); });
-    
-    screenManager.setOnConsolePress([this]() {
-        gcodeConsole.show(display);
-    });
+
+    screenManager.setOnConsolePress([this]()
+                                    { gcodeConsole.show(display); });
 
     settingsScreen.setOnBuzzerChanged([this](bool enabled)
                                       { buzzer.setEnabled(enabled); });
@@ -146,14 +144,13 @@ void App::begin()
         confirmTarget = ConfirmModalTarget::LanguageRestart;
         confirmModal.show(display, tr(StringId::App_Modal_Language)); });
 
-    confirmModal.setOnConfirm([this]()
-                              {
+    confirmModal.setOnConfirm([this](){
         if (confirmTarget == ConfirmModalTarget::LoadFile)
         {
             loadingModal.show(tr(StringId::App_Loading_File));
             loadingModal.draw(display);
 
-            IStorageDriver& driver = storageManager.getDriver(pendingSource);
+            IStorageDriver &driver = storageManager.getDriver(pendingSource);
 
             homeScreen.loadJob(driver, pendingFilePath, appSettings.isGcodePreviewEnabled(), appSettings.isFramingEnabled());
             jobRunner.load(driver, pendingFilePath, homeScreen.getTotalLines());
@@ -168,36 +165,28 @@ void App::begin()
             loadingModal.draw(display);
             delay(1500);
             ESP.restart();
-        }else if (confirmTarget == ConfirmModalTarget::JobCompleted)
-        {
-            screenManager.redrawAll();
         }
         else if (confirmTarget == ConfirmModalTarget::JobRecovery)
         {
-            const RecoverySnapshot& snap = jobRecovery.getSnapshot();
+            const RecoverySnapshot &snap = jobRecovery.getSnapshot();
 
             loadingModal.show(tr(StringId::Work_Resuming));
             loadingModal.draw(display);
 
-            //Mandatory Homing - I NEVER trust the saved position without actual physical reference
+            // Mandatory Homing - I NEVER trust the saved position without actual physical reference
             grblController.home();
 
             // Explicitly reapply all modal state where commands like F/G90 are only sent once in the original file
             String setup = String("G") + (snap.metric ? "21" : "20") +
-                            " G" + (snap.absoluteMode ? "90" : "91") +
-                            " G" + String(snap.plane) +
-                            " G" + String(snap.coordSystem);
+                        " G" + (snap.absoluteMode ? "90" : "91") +
+                        " G" + String(snap.plane) +
+                        " G" + String(snap.coordSystem);
             grblController.sendLine(setup);
 
             if (snap.feedRate > 0)
                 grblController.sendLine("F" + String(snap.feedRate, 0));
 
-            if (snap.spindleState == 1)
-                grblController.sendLine("M3 S" + String(snap.spindleSpeed, 0));
-            else if (snap.spindleState == 2)
-                grblController.sendLine("M4 S" + String(snap.spindleSpeed, 0));
-
-            // Reposition: First raise to a safe height, then XY, then lower to the actual Z position.
+            // Reposition FIRST, with the tool still OFF - rise to safe height, move XY, then lower to real Z.
             // WARNING: This assumes the part/material is still in the same physical position
             // as before the power outage - visually verify before confirming this step.
             float safeZ = appSettings.getSafeZHeight();
@@ -205,6 +194,26 @@ void App::begin()
             grblController.sendLine("G90 G0 Z" + String(safeZ, 3));
             grblController.sendLine("G0 X" + String(snap.x, 3) + " Y" + String(snap.y, 3));
             grblController.sendLine("G1 Z" + String(snap.z, 3) + " F" + String(min(snap.feedRate, 300.0f), 0));
+
+            
+            bool isLaser = false;
+
+            if (toolsScreen.getToolManager().getActiveIndex() >= 0)
+            {
+                ToolProfile tool = toolsScreen.getToolManager().getActiveTool();
+                isLaser = (tool.type == ToolType::Laser);
+            }
+
+            if (snap.spindleState == 1)
+                grblController.sendLine("M3 S" + String(snap.spindleSpeed, 0));
+            else if (snap.spindleState == 2)
+                grblController.sendLine("M4 S" + String(snap.spindleSpeed, 0));
+
+            if ((snap.spindleState == 1 || snap.spindleState == 2) && isLaser && grblController.isLaserMode())
+            {
+                grblController.sendLine("G91 G1 X0 Y0 F1");
+                grblController.sendLine("G90");
+            }
 
             // and continue streaming the file from the saved line
             jobRunner.resumeFrom(storageManager.getDriver(StorageSource::SD), snap.path, snap.line, snap.totalLines);
@@ -214,28 +223,30 @@ void App::begin()
             loadingModal.hide();
             screenManager.switchToScreen(0);
             screenManager.redrawAll();
-        } else if (confirmTarget == ConfirmModalTarget::DeleteToolConfirm){
-            if (pendingDeleteAction)
-            {
-                pendingDeleteAction();
-                pendingDeleteAction = nullptr;
-            }
-
-            screenManager.redrawAll();
         }
-    });
+            else if (confirmTarget == ConfirmModalTarget::DeleteToolConfirm){
+                if (pendingDeleteAction){
+                    pendingDeleteAction();
+                    pendingDeleteAction = nullptr;
+                }
 
-    confirmModal.setOnCancel([this]()
-                             { 
+                screenManager.redrawAll();
+            } 
+        });
+
+    confirmModal.setOnCancel([this](){ 
         if (confirmTarget == ConfirmModalTarget::JobRecovery)
             jobRecovery.clear();
-        screenManager.redrawAll(); });
-    
-    toolsScreen.setOnRequestDeleteConfirm([this](std::function<void()> confirmAction) {
+        screenManager.redrawAll(); 
+    });
+
+    infoModal.setOnClose([this]() { redrawAllIncludingModals(); });
+
+    toolsScreen.setOnRequestDeleteConfirm([this](std::function<void()> confirmAction)
+                                          {
         pendingDeleteAction = confirmAction;
         confirmTarget = ConfirmModalTarget::DeleteToolConfirm;
-        confirmModal.show(display, tr(StringId::Tool_Delete_Confirm));
-    });
+        confirmModal.show(display, tr(StringId::Tool_Delete_Confirm)); });
 
     webServer.setOnFileSelected([this](StorageSource source, const String &path)
                                 {
@@ -260,11 +271,11 @@ void App::begin()
     xTaskCreatePinnedToCore(
         App::gcodeTaskWrapper,
         "GCodeEngine",
-        8192,               // Memory allocated to the task stack
-        this,               // Pass the current App instance
-        10,                 // HIGH priority
+        8192, // Memory allocated to the task stack
+        this, // Pass the current App instance
+        10,   // HIGH priority
         &gcodeTaskHandle,
-        0                   // Explicitly assigned to CORE 0
+        0 // Explicitly assigned to CORE 0
     );
 }
 
@@ -278,17 +289,25 @@ void App::update()
     storageManager.update();
     if (screenSleep.handleTouch(event))
     {
-        if (!screenSleep.isSleeping())
-            screenManager.redrawAll();
+        if (screenSleep.consumeRedrawRequest())
+            redrawAllIncludingModals();
         return;
     }
 
-    //jobRunner.update();
-    //framingRunner.update();
     wifiManager.update();
 
     screenManager.setWifiStatus(wifiManager.getMode() == WifiMode::Connected);
     screenManager.setMachineStatus(grblController.getConnectionState() == GrblConnectionState::Connected);
+    if (grblController.getConnectionState() != GrblConnectionState::Connected)
+    {
+        laserModeSynced = false; // If disconnected, we re-synchronize upon reconnection.
+    }
+    else if (!laserModeSynced && grblController.isSettingsLoaded())
+    {
+        // The machine's actual $$ settings are now in place: adjust $32 according to the active tool type.
+        toolsScreen.syncLaserModeWithActiveTool();
+        laserModeSynced = true;
+    }
     screenManager.setUsbStatus(storageManager.isUsbAvailable());
     screenManager.setSdStatus(storageManager.isSdAvailable());
 
@@ -301,7 +320,7 @@ void App::update()
 
     if (jobRunner.getState() == JobState::Running && appSettings.isJobRecoveryEnabled())
     {
-        const GCodeState& parserState = jobRunner.getParserState();
+        const GCodeState &parserState = jobRunner.getParserState();
 
         uint8_t spindleStateValue = 0;
         if (parserState.spindle == SpindleState::ClockwiseOn)
@@ -323,8 +342,7 @@ void App::update()
                          tr(StringId::Job_Completed_Time) + formatElapsed(jobRunner.getElapsedSeconds()) + "\n" +
                          tr(StringId::Job_Completed_Lines) + String(jobRunner.getTotalLines());
 
-        confirmTarget = ConfirmModalTarget::JobCompleted;
-        confirmModal.show(display, message);
+        infoModal.show(display, message);
 
         jobRecovery.clear();
         int8_t activeTool = toolsScreen.getToolManager().getActiveIndex();
@@ -338,28 +356,30 @@ void App::update()
         jobRecovery.clear();
 
     bool anyModalVisible =
+        infoModal.isVisible() ||
         confirmModal.isVisible() ||
         loadingModal.isVisible() ||
+        gcodeConsole.isVisible() ||
         settingsScreen.isKeyboardVisible() ||
         settingsScreen.isNumericPadVisible() ||
         settingsScreen.isEnumPickerVisible() ||
         toolsScreen.isKeyboardVisible() ||
-        toolsScreen.isNumericPadVisible() ||
-        gcodeConsole.isVisible();
-    
+        toolsScreen.isNumericPadVisible();
+
     bool wasConsoleVisible = gcodeConsole.isVisible();
-    
+
     gcodeConsole.update();
 
     bool consumed = false;
-
-    if (gcodeConsole.isVisible())
+    if(infoModal.isVisible()){
+        consumed = infoModal.handleTouch(event);
+    }
+    else if (gcodeConsole.isVisible())
     {
         consumed = gcodeConsole.handleTouch(event);
 
         if (wasConsoleVisible && !gcodeConsole.isVisible())
             screenManager.redrawAll();
-        
     }
     else if (confirmModal.isVisible())
         consumed = confirmModal.handleTouch(event);
@@ -386,12 +406,14 @@ void App::update()
     else if (toolsScreen.isKeyboardVisible())
     {
         consumed = toolsScreen.handleKeyboardTouch(event);
-        if (!toolsScreen.isKeyboardVisible()) screenManager.redrawAll();
+        if (!toolsScreen.isKeyboardVisible())
+            screenManager.redrawAll();
     }
     else if (toolsScreen.isNumericPadVisible())
     {
         consumed = toolsScreen.handleNumericPadTouch(event);
-        if (!toolsScreen.isNumericPadVisible()) screenManager.redrawAll();
+        if (!toolsScreen.isNumericPadVisible())
+            screenManager.redrawAll();
     }
     else
     {
@@ -399,26 +421,29 @@ void App::update()
         screenManager.update();
     }
 
-    if (!anyModalVisible)
-        screenManager.draw(display);
-
     if (event.type == TouchType::Pressed && consumed)
         buzzer.beep();
+        
+    if(!screenSleep.isSleeping()){
+        if (!anyModalVisible)
+            screenManager.draw(display);
 
-    confirmModal.draw(display);
-    loadingModal.draw(display);
-    gcodeConsole.draw(display);
+        confirmModal.draw(display);
+        loadingModal.draw(display);
+        gcodeConsole.draw(display);
+        infoModal.draw(display);
 
-    if (settingsScreen.isKeyboardVisible())
-        settingsScreen.drawKeyboard(display);
-    if (settingsScreen.isNumericPadVisible())
-        settingsScreen.drawNumericPad(display);
-    if (settingsScreen.isEnumPickerVisible())
-        settingsScreen.drawEnumPicker(display);
-    if (toolsScreen.isKeyboardVisible()) 
-        toolsScreen.drawKeyboard(display);
-    if (toolsScreen.isNumericPadVisible()) 
-        toolsScreen.drawNumericPad(display);
+        if (settingsScreen.isKeyboardVisible())
+            settingsScreen.drawKeyboard(display);
+        if (settingsScreen.isNumericPadVisible())
+            settingsScreen.drawNumericPad(display);
+        if (settingsScreen.isEnumPickerVisible())
+            settingsScreen.drawEnumPicker(display);
+        if (toolsScreen.isKeyboardVisible())
+            toolsScreen.drawKeyboard(display);
+        if (toolsScreen.isNumericPadVisible())
+            toolsScreen.drawNumericPad(display);
+    }
 }
 
 void App::gcodeTaskWrapper(void *pvParameters)
@@ -428,7 +453,7 @@ void App::gcodeTaskWrapper(void *pvParameters)
     {
         app->updateGCodeEngine();
         // Mandatory minimum delay to avoid blocking the Core 0 Watchdog
-        vTaskDelay(pdMS_TO_TICKS(1)); 
+        vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
 
@@ -437,4 +462,16 @@ void App::updateGCodeEngine()
     // CNC priority process (Core 0)
     jobRunner.update();
     framingRunner.update();
+}
+
+void App::redrawAllIncludingModals()
+{
+    screenManager.redrawAll();
+
+    confirmModal.requestRedraw();
+    loadingModal.requestRedraw();
+    infoModal.requestRedraw();
+    gcodeConsole.requestRedraw();
+    settingsScreen.requestModalsRedraw();
+    toolsScreen.requestModalsRedraw();
 }

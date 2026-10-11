@@ -13,6 +13,7 @@
 #include "../gui/screens/tools/tools_screen.h"
 #include "../gui/widgets/modal/confirm_modal_widget.h"
 #include "../gui/widgets/modal/loading_modal_widget.h"
+#include "../gui/widgets/modal/info_modal_widget.h"
 #include "../gui/widgets/gcode_console/gcode_console_modal_widget.h"
 #include "../network/wifi_manager.h"
 #include "../machine/grbl_controller.h"
@@ -27,7 +28,8 @@
 #include "../storage/storage_manager.h"
 #include "splash_screen.h"
 #include "time_format.h"
-enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery, JobCompleted, DeleteToolConfirm };
+
+enum class ConfirmModalTarget { LoadFile, LanguageRestart, JobRecovery, DeleteToolConfirm };
 class App
 {
 public:
@@ -71,6 +73,10 @@ private:
 
     ConfirmModalWidget confirmModal;
     LoadingModalWidget loadingModal;
+    InfoModalWidget infoModal;
     String pendingFilePath;
     GcodeConsoleModalWidget gcodeConsole;
+
+    bool laserModeSynced = false;
+    void redrawAllIncludingModals();
 };

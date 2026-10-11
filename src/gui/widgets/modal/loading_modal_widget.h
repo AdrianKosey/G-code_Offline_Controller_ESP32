@@ -17,6 +17,8 @@ public:
     void draw(DisplayManager& display);
     bool handleTouch(const TouchEvent& event);
 
+    void requestRedraw() { if (visible) dirty = true; }
+
 private:
     Rect screenBounds;
     bool visible = false;

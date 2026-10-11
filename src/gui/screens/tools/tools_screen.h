@@ -12,32 +12,47 @@
 #include "../../../machine/grbl_controller.h"
 #include "../../../machine/tool_profile_manager.h"
 #include "../../widgets/toggle/toggle_widget.h"
-enum class ToolsPage { List, Detail };
-enum class ToolsNumericTarget { Diameter, Power };
+enum class ToolsPage
+{
+    List,
+    Detail
+};
+enum class ToolsNumericTarget
+{
+    Diameter,
+    Power
+};
 
 class ToolsScreen : public IScreen
 {
 public:
-    ToolsScreen(GrblController& grblController);
+    ToolsScreen(GrblController &grblController);
 
     void update() override;
-    void draw(DisplayManager& display) override;
+    void draw(DisplayManager &display) override;
 
     bool isKeyboardVisible() const { return nameKeyboard.isVisible(); }
-    void drawKeyboard(DisplayManager& display) { nameKeyboard.draw(display); }
-    bool handleKeyboardTouch(const TouchEvent& event) { return nameKeyboard.handleTouch(event); }
+    void drawKeyboard(DisplayManager &display) { nameKeyboard.draw(display); }
+    bool handleKeyboardTouch(const TouchEvent &event) { return nameKeyboard.handleTouch(event); }
 
     bool isNumericPadVisible() const { return numericPad.isVisible(); }
-    void drawNumericPad(DisplayManager& display) { numericPad.draw(display); }
-    bool handleNumericPadTouch(const TouchEvent& event) { return numericPad.handleTouch(event); }
-    ToolProfileManager& getToolManager() { return toolManager; }
+    void drawNumericPad(DisplayManager &display) { numericPad.draw(display); }
+    bool handleNumericPadTouch(const TouchEvent &event) { return numericPad.handleTouch(event); }
+    ToolProfileManager &getToolManager() { return toolManager; }
 
     using DeleteConfirmCallback = std::function<void(std::function<void()>)>;
     void setOnRequestDeleteConfirm(DeleteConfirmCallback callback);
+
+    void syncLaserModeWithActiveTool();
+    void requestModalsRedraw()
+    {
+        nameKeyboard.requestRedraw();
+        numericPad.requestRedraw();
+    }
     void onExit() override;
 
 private:
-    GrblController& grbl;
+    GrblController &grbl;
     ToolProfileManager toolManager;
 
     ToolsPage currentPage = ToolsPage::List;
@@ -50,7 +65,7 @@ private:
     MenuRowWidget profileRows[MAX_ROWS];
     uint8_t rowCount = 0;
     ButtonWidget addButton;
-    //detail scroll
+    // detail scroll
     ScrollPanelWidget detailScrollPanel;
     IconButtonWidget backButton;
     LabelWidget nameLabel;
@@ -84,4 +99,5 @@ private:
     void refreshDetailLabels();
     void applyTestOutput();
     void stopTestIfRunning();
+    void applyLaserModeForTool(const ToolProfile &tool);
 };

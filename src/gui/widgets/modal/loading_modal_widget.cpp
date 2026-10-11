@@ -47,6 +47,9 @@ void LoadingModalWidget::draw(DisplayManager& display)
 
     display.fillRect(screenBounds.x, screenBounds.y, screenBounds.width, screenBounds.height, Theme::Border);
 
+    panel.invalidate();
+    messageLabel.invalidate();
+
     panel.draw(display);
     messageLabel.draw(display);
 

@@ -47,26 +47,25 @@ enum class EnumPickerTarget
 class SettingsScreen : public IScreen
 {
 public:
-
-    SettingsScreen(WifiManager& wifiManager, GrblController& grblController, AppSettingsManager& appSettingsManager);
+    SettingsScreen(WifiManager &wifiManager, GrblController &grblController, AppSettingsManager &appSettingsManager);
     void onEnter() override;
 
-    void draw(DisplayManager& display) override;
+    void draw(DisplayManager &display) override;
     void update() override;
 
     // WIFI
     bool isKeyboardVisible() const { return passwordKeyboard.isVisible(); }
-    void drawKeyboard(DisplayManager& display) { passwordKeyboard.draw(display); }
-    bool handleKeyboardTouch(const TouchEvent& event) { return passwordKeyboard.handleTouch(event); }
+    void drawKeyboard(DisplayManager &display) { passwordKeyboard.draw(display); }
+    bool handleKeyboardTouch(const TouchEvent &event) { return passwordKeyboard.handleTouch(event); }
 
     // MACHINE
     bool isNumericPadVisible() const { return numericPad.isVisible(); }
-    void drawNumericPad(DisplayManager& display) { numericPad.draw(display); }
-    bool handleNumericPadTouch(const TouchEvent& event) { return numericPad.handleTouch(event); }
+    void drawNumericPad(DisplayManager &display) { numericPad.draw(display); }
+    bool handleNumericPadTouch(const TouchEvent &event) { return numericPad.handleTouch(event); }
 
     bool isEnumPickerVisible() const { return enumPicker.isVisible(); }
-    void drawEnumPicker(DisplayManager& display) { enumPicker.draw(display); }
-    bool handleEnumPickerTouch(const TouchEvent& event) { return enumPicker.handleTouch(event); }
+    void drawEnumPicker(DisplayManager &display) { enumPicker.draw(display); }
+    bool handleEnumPickerTouch(const TouchEvent &event) { return enumPicker.handleTouch(event); }
 
     // Config
     using BoolChangeCallback = std::function<void(bool)>;
@@ -74,6 +73,13 @@ public:
 
     using LanguageChangeCallback = std::function<void()>;
     void setOnLanguageChanged(LanguageChangeCallback callback);
+
+    void requestModalsRedraw()
+    {
+        passwordKeyboard.requestRedraw();
+        numericPad.requestRedraw();
+        enumPicker.requestRedraw();
+    }
 
 private:
     LanguageChangeCallback onLanguageChanged;
@@ -124,27 +130,27 @@ private:
     LabelWidget buzzerLabel;
     ToggleWidget buzzerToggle;
 
-    std::vector<Widget*> menuWidgets;
-    std::vector<Widget*> aboutWidgets;
-    std::vector<Widget*> wifiWidgets;
-    std::vector<Widget*> machineWidgets;
-    std::vector<Widget*> controlWidgets;
+    std::vector<Widget *> menuWidgets;
+    std::vector<Widget *> aboutWidgets;
+    std::vector<Widget *> wifiWidgets;
+    std::vector<Widget *> machineWidgets;
+    std::vector<Widget *> controlWidgets;
 
     void switchToPage(SettingsPage page);
     void refreshNetworkList();
 
-    WifiManager& wifi;
+    WifiManager &wifi;
 
     WifiNetworkListWidget networkList;
     LabelWidget wifiDetailLabel;
     KeyboardModalWidget passwordKeyboard;
     String pendingSsid;
 
-    GrblController& grbl;
+    GrblController &grbl;
     GrblSettingsListWidget grblSettingsList;
     uint8_t editingSettingIndex = 0;
 
-    AppSettingsManager& appSettings;
+    AppSettingsManager &appSettings;
 
     NumericPadModalWidget numericPad;
     NumericPadTarget numericPadTarget = NumericPadTarget::GrblSetting;

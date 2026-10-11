@@ -26,6 +26,12 @@ public:
     void draw(DisplayManager& display);
     bool handleTouch(const TouchEvent& event);
 
+    void requestRedraw()
+    {
+        if (visible) dirty = true;
+        commandKeyboard.requestRedraw();
+    }
+
 private:
     Rect screenBounds;
     GrblController& grbl;

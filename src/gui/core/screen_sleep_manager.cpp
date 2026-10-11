@@ -10,7 +10,11 @@ bool ScreenSleepManager::isSleeping() const { return state == State::Sleeping; }
 
 void ScreenSleepManager::wake()
 {
+    if (state == State::Sleeping && screenWasBlanked)
+        needsRedrawAfterWake = true;
+
     state = State::Awake;
+    screenWasBlanked = false;
     lastActivityAt = millis();
 
     if (display.hasBacklightControl())
@@ -61,9 +65,18 @@ void ScreenSleepManager::update()
     {
         state = State::Sleeping;
 
-        if (display.hasBacklightControl())
+        if (display.hasBacklightControl()){
             display.setBacklightLevel(0);
-        else
+            screenWasBlanked = false;
+        } else{
             display.fillRect(0, 0, display.width(), display.height(), 0x0000);
+            screenWasBlanked = true;
+        }
     }
+}
+bool ScreenSleepManager::consumeRedrawRequest()
+{
+    bool request = needsRedrawAfterWake;
+    needsRedrawAfterWake = false;
+    return request;
 }
