@@ -20,8 +20,20 @@ void WebServerManager::setOnFileSelected(FileSelectCallback callback)
     onFileSelected = callback;
 }
 
+void WebServerManager::setActiveFile(StorageSource source, const String& path)
+{
+    activeFileSource = source;
+    activeFilePath = path;
+}
+
 void WebServerManager::begin()
 {
+    if (!SPIFFS.begin(false))
+        Serial.println("SPIFFS: mount failed (upload the filesystem image)");
+
+    server.serveStatic("/viewer.html", SPIFFS, "/viewer.html", "max-age=86400");
+    server.serveStatic("/three-lite.js", SPIFFS, "/three-lite.js", "max-age=86400");
+
     server.on("/", HTTP_GET, [this]() { handleRoot(); });
     server.on("/system", HTTP_GET, [this]() { handleSystemPage(); });
     server.on("/api/stats", HTTP_GET, [this]() { handleStats(); });
@@ -39,6 +51,8 @@ void WebServerManager::begin()
     server.on("/api/console", HTTP_GET, [this]() { handleConsoleGet(); });
     server.on("/api/console/send", HTTP_POST, [this]() { handleConsoleSend(); });
     server.on("/api/preview", HTTP_GET, [this]() { handlePreview(); });
+    server.on("/api/file", HTTP_GET, [this]() { handleFileDownload(); });
+    server.on("/api/active-file", HTTP_GET, [this]() { handleActiveFile(); });
 
     server.on("/api/upload", HTTP_POST,
         [this]() { handleUpload(); },      // is called when the upload is complete
@@ -498,4 +512,81 @@ void WebServerManager::handlePreview()
 
     json += "]}";
     server.send(200, "application/json", json);
+}
+
+void WebServerManager::handleFileDownload()
+{
+    String name = server.arg("name");
+    StorageSource source = parseSource();
+
+    // The viewer accepts a self-describing path such as /sd/job.nc or
+    // /usb/job.nc, while retaining source=sd|usb for callers that use the
+    // regular storage paths.
+    if (name.startsWith("/sd/"))
+    {
+        source = StorageSource::SD;
+        name = name.substring(3);
+    }
+    else if (name.startsWith("/usb/"))
+    {
+        source = StorageSource::USB;
+        name = name.substring(4);
+    }
+
+    if (name.length() == 0 || !name.startsWith("/") || name.indexOf("..") >= 0)
+    {
+        server.send(400, "text/plain", "ruta invalida");
+        return;
+    }
+
+    IStorageDriver& driver = storage.getDriver(source);
+    if (!driver.isAvailable())
+    {
+        server.send(503, "text/plain", "medio no disponible");
+        return;
+    }
+
+    IStorageFile* file = driver.openRead(name);
+    if (!file || !file->isValid())
+    {
+        if (file) delete file;
+        server.send(404, "text/plain", "archivo no encontrado");
+        return;
+    }
+
+    // Chunked transfer keeps the ESP32 memory usage bounded. The extra header
+    // lets the browser calculate percentage progress even without a HTTP
+    // Content-Length header.
+    server.sendHeader("X-File-Size", String(file->size()));
+    server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+    server.send(200, "text/plain; charset=utf-8", "");
+
+    uint8_t buffer[512];
+    while (file->available())
+    {
+        size_t count = file->read(buffer, sizeof(buffer));
+        if (count == 0)
+            break;
+        server.sendContent((const char*)buffer, count);
+        yield();
+    }
+
+    file->close();
+    delete file;
+}
+
+void WebServerManager::handleActiveFile()
+{
+    if (activeFilePath.length() == 0)
+    {
+        server.send(404, "application/json", "{\"error\":\"no hay trabajo cargado\"}");
+        return;
+    }
+
+    String path = activeFilePath;
+    path.replace("\\", "\\\\");
+    path.replace("\"", "\\\"");
+    const char* source = activeFileSource == StorageSource::USB ? "usb" : "sd";
+    server.send(200, "application/json", String("{\"source\":\"") + source +
+        "\",\"path\":\"" + path + "\"}");
 }

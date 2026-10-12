@@ -29,6 +29,10 @@ public:
     using FileSelectCallback = std::function<void(StorageSource, const String&)>;
     void setOnFileSelected(FileSelectCallback callback);
 
+    // Kept by the application whenever a job is opened, including from the
+    // physical display.  The browser uses it to open its 3D preview directly.
+    void setActiveFile(StorageSource source, const String& path);
+
 private:
     WebServer server;
 
@@ -40,6 +44,8 @@ private:
     HomeScreen& homeScreen;
 
     FileSelectCallback onFileSelected;
+    StorageSource activeFileSource = StorageSource::SD;
+    String activeFilePath;
 
     IStorageFile* uploadStorageFile = nullptr;
 
@@ -63,6 +69,8 @@ private:
     void handleConsoleGet();
     void handleConsoleSend();
     void handlePreview();
+    void handleFileDownload();
+    void handleActiveFile();
     
 
     String buildFilesJson(const String& path);

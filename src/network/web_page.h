@@ -234,7 +234,8 @@ const char WEB_PAGE_HTML[] PROGMEM = R"rawliteral(
     cursor: grab;
   }
   .canvas-container:active { cursor: grabbing; }
-  #pathCanvas { width: 100%; height: 100%; display: block; }
+  #pathCanvas, #pathCanvas3d { width: 100%; height: 100%; display: block; border: 0; }
+  #pathCanvas3d { display: none; background: #060911; }
 
   .canvas-legend {
     position: absolute;
@@ -510,8 +511,11 @@ const char WEB_PAGE_HTML[] PROGMEM = R"rawliteral(
       <div style="display:flex; flex-direction:column; gap:16px;">
         <div class="card" style="display:flex; flex-direction:column; gap:12px;">
           <div class="card-header">
-            <span>2D Preview</span>
-            <span style="font-size:10px; color:var(--text-muted);">Drag: Move | Wheel: Zoom</span>
+            <span id="previewTitle">2D View · ESP32</span>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button id="previewModeButton" onclick="togglePreviewMode()">Use 3D browser</button>
+              <span id="previewHint" style="font-size:10px; color:var(--text-muted);">Drag: Move | Wheel: Zoom</span>
+            </div>
           </div>
 
           <div class="canvas-container" id="canvasContainer">
@@ -519,6 +523,7 @@ const char WEB_PAGE_HTML[] PROGMEM = R"rawliteral(
               <div class="legend-item"><div class="legend-line" style="background:#ff9100;"></div><span style="color:#ff9100;">G-Code Path</span></div>
             </div>
             <canvas id="pathCanvas"></canvas>
+            <iframe id="pathCanvas3d" title="3D view of G-code"></iframe>
             <div class="canvas-tools">
               <button onclick="resetCanvasView()">Center</button>
               <button onclick="clearCanvasPath()">Clear Path</button>
@@ -530,7 +535,7 @@ const char WEB_PAGE_HTML[] PROGMEM = R"rawliteral(
         <div class="card">
           <div class="card-header">Job Execution Control</div>
           
-          <div class="job-filename" id="filename">Sin archivo cargado</div>
+          <div class="job-filename" id="filename">No file uploaded</div>
           <div class="job-feed">Feedrate: <b id="feed" style="color:#fff;">0</b> mm/min</div>
 
           <div class="progress-track"><div id="progressBar" class="progress-fill"></div></div>
@@ -725,6 +730,9 @@ let jogStep = 0.1;
 const canvasContainer = document.getElementById('canvasContainer');
 const canvas = document.getElementById('pathCanvas');
 const ctx = canvas.getContext('2d');
+const canvas3d = document.getElementById('pathCanvas3d');
+let previewMode = 'esp32';
+let browserViewerLoaded = false;
 
 let staticPath = null; // {minX, minY, maxX, maxY, points: [[x,y], ...]}
 let currentPos = { x: 0, y: 0 };
@@ -752,6 +760,7 @@ function resizeCanvas() {
 }
 
 function resetCanvasView() {
+  if (previewMode === 'browser') return;
   zoomLevel = 1.0;
   panX = 0;
   panY = 0;
@@ -759,8 +768,44 @@ function resetCanvasView() {
 }
 
 function clearCanvasPath() {
+  if (previewMode === 'browser') return;
   staticPath = null;
   drawToolpath();
+}
+
+function setPreviewMode(mode) {
+  previewMode = mode;
+  const browserMode = mode === 'browser';
+  canvas.style.display = browserMode ? 'none' : 'block';
+  canvas3d.style.display = browserMode ? 'block' : 'none';
+  document.querySelector('.canvas-legend').style.display = browserMode ? 'none' : 'flex';
+  document.querySelector('.canvas-tools').style.display = browserMode ? 'none' : 'flex';
+  document.getElementById('previewTitle').textContent = browserMode ? '3D view · browser' : '2D View · ESP32';
+  document.getElementById('previewModeButton').textContent = browserMode ? 'Use 2D ESP32' : 'Use 3D browser';
+  document.getElementById('previewHint').textContent = browserMode ? 'Drag: orbit · Wheel: zoom' : 'Drag: Move | Wheel: Zoom';
+  if (browserMode && !browserViewerLoaded) loadActiveBrowser3DFile();
+  if (!browserMode) resizeCanvas();
+}
+
+function togglePreviewMode() {
+  setPreviewMode(previewMode === 'esp32' ? 'browser' : 'esp32');
+}
+
+function setBrowser3DFile(path, source = currentSource) {
+  canvas3d.src = '/viewer.html?embed=1&name=' + encodeURIComponent(path) + '&source=' + encodeURIComponent(source);
+  browserViewerLoaded = true;
+}
+
+async function loadActiveBrowser3DFile() {
+  try {
+    const response = await fetch('/api/active-file');
+    if (!response.ok) throw new Error('No job loaded');
+    const job = await response.json();
+    setBrowser3DFile(job.path, job.source);
+  } catch (error) {
+    canvas3d.removeAttribute('src');
+    alert('No job loaded for 3D preview.');
+  }
 }
 
 // Mouse Pan and Zoom
@@ -873,7 +918,7 @@ async function refreshStatus() {
     document.getElementById('stateBadge').innerText = state;
     document.getElementById('filename').innerText = data.filename || 'No file loaded';
     document.getElementById('progressBar').style.width = data.percent + '%';
-    document.getElementById('progressText').innerText = data.line + ' / ' + data.totalLines + ' líneas';
+    document.getElementById('progressText').innerText = data.line + ' / ' + data.totalLines + ' lines';
     document.getElementById('progressPercent').innerText = data.percent + '%';
     
     const x = Number(data.x);
@@ -988,6 +1033,7 @@ async function refreshFiles() {
         infoDiv.innerHTML = `${iconFile} ${shortName}`;
         infoDiv.onclick = () => selectFile(fullPath);
         actionsDiv.innerHTML =
+          `<button title="Cargar vista 3D en Dashboard" onclick="open3DViewer('${fullPath}')">◈</button>` +
           `<button onclick="selectFile('${fullPath}')">${iconLoad}</button>` +
           `<button onclick="renamePrompt('${fullPath}')">${iconEdit}</button>` +
           `<button onclick="deleteEntry('${fullPath}')">${iconTrash}</button>`;
@@ -1024,7 +1070,14 @@ async function selectFile(path) {
   if (!confirm(`¿Cargar ${path} para ejecución?`)) return;
   await fetch('/api/select', { method: 'POST', headers: {'Content-Type':'application/x-www-form-urlencoded'}, body: 'path=' + encodeURIComponent(path) + '&source=' + currentSource });
 
+  setBrowser3DFile(path);
   setTimeout(loadPreview, 1500);
+}
+
+function open3DViewer(path) {
+  setBrowser3DFile(path);
+  setPreviewMode('browser');
+  showPage('dashboard', document.querySelector('.nav-item[data-page="dashboard"]'));
 }
 
 document.getElementById('uploadForm').addEventListener('submit', async (e) => {
