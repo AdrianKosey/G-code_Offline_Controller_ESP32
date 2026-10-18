@@ -36,6 +36,7 @@ App::App()
       framingRunner(grblController),
       settingsScreen(wifiManager, grblController, appSettings),
       screenSleep(display, appSettings),
+      backlight(display),
       webServer(grblController, jobRunner, framingRunner, appSettings, storageManager, homeScreen),
       gcodeConsole(Rect{0, 0, 320, 240}, grblController)
 {
@@ -44,21 +45,14 @@ App::App()
 
 void App::begin()
 {
-    //grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
-    grblController.beginSimulated();
-    SPI.begin(SCK, MISO, MOSI, SD_CS_PIN);
-    sdReady = SD.begin(SD_CS_PIN, SPI, 4000000);
-    if (!sdReady)
-    {
-        Serial.println("SD: card not detected or initialization failed");
-    }
-
+    grblController.begin(Serial2, 115200, GRBL_RX_PIN, GRBL_TX_PIN);
+    storageManager.begin();
+    //grblController.beginSimulated();
     display.begin();
-    SplashScreen::show(display);
-    constexpr bool FORCE_TOUCH_CALIBRATION = false;
-    touch.begin(FORCE_TOUCH_CALIBRATION);
 
-    // display.clear(Theme::Background);
+    constexpr bool FORCE_TOUCH_CALIBRATION = false;
+    bool touchOk = touch.begin(FORCE_TOUCH_CALIBRATION);
+
 
     screenManager.registerScreen(0, &homeScreen, tr(StringId::Sidebar_Home));
     screenManager.registerScreen(1, &filesScreen, tr(StringId::Sidebar_Files));
@@ -69,7 +63,7 @@ void App::begin()
     wifiManager.begin();
     jobRecovery.begin();
     webServer.begin();
-    storageManager.begin();
+    
     if (appSettings.isJobRecoveryEnabled() && jobRecovery.hasPendingRecovery())
     {
         const RecoverySnapshot &snap = jobRecovery.getSnapshot();
@@ -259,16 +253,39 @@ void App::begin()
         String filename = (lastSlash >= 0) ? path.substring(lastSlash + 1) : path;
 
         confirmModal.show(display, tr(StringId::App_Open_File) + filename + "?"); });
-
+    
     screenManager.showInitialScreen(0);
-    screenManager.setSdStatus(sdReady);
-    screenManager.setWifiStatus(false);
-    screenManager.setUsbStatus(false);
+    screenManager.setSdStatus(storageManager.isSdAvailable());
+    screenManager.setWifiStatus(wifiManager.getMode() == WifiMode::Connected);
+    screenManager.setUsbStatus(storageManager.isUsbAvailable());
     buzzer.begin();
     buzzer.setEnabled(appSettings.isBuzzerEnabled());
+    backlight.fadeTo(100, 2000);
+
+    String designedByBootItem = String("Designed By Kosey ") + CONTROL_VERSION;
+    String usbStorageBootItem = String("Mounting USB Storage version 0x") + String(toupper(storageManager.getUsbChipVersion()), HEX) + "...";
+    std::vector<BootItem> bootSequence = {
+        {"Starting Kernel & GPIO Setup...", true},
+        {usbStorageBootItem.c_str(), storageManager.Ch376Available()},
+        {"Mounting SD Card Storage...", storageManager.isSdAvailable()},
+        {"Connecting to GRBL Controller...", grblController.getConnectionState() == GrblConnectionState::Connected},
+        {"Touch Status...", touchOk},
+        {"Force Calibration of Touch Controller...", FORCE_TOUCH_CALIBRATION},
+        {"Starting WiFi Manager...", wifiManager.getMode() == WifiMode::Connected || wifiManager.getMode() == WifiMode::AccessPoint || wifiManager.getMode() == WifiMode::Connecting},
+        {"Starting Web Server...", true},
+        {"Loading Settings...", true},
+        {"Loading Tool Profiles...", true},
+        {"Loading Job Recovery...", true},
+        {"Loading GCode Engine...", true},
+        {"Loading GUI...", true},
+        {"Starting Main Loop...", true},
+        {designedByBootItem.c_str(), true}
+    };
+
+    SplashScreen::show(display, buzzer, bootSequence, 5000, [this]() { backlight.update(); });
+    display.clear(Theme::Background);
 
     screenManager.draw(display);
-
     xTaskCreatePinnedToCore(
         App::gcodeTaskWrapper,
         "GCodeEngine",
@@ -283,7 +300,7 @@ void App::begin()
 void App::update()
 {
     TouchEvent event = touch.poll();
-
+    backlight.update();
     screenSleep.update();
     buzzer.update();
     webServer.update();
@@ -309,9 +326,19 @@ void App::update()
         toolsScreen.syncLaserModeWithActiveTool();
         laserModeSynced = true;
     }
-    screenManager.setUsbStatus(storageManager.isUsbAvailable());
-    screenManager.setSdStatus(storageManager.isSdAvailable());
+    static bool lastUsbState = storageManager.isUsbAvailable();
+    static bool lastSdState = storageManager.isSdAvailable();
+    bool currentUsbState = storageManager.isUsbAvailable();
+    bool currentSdState = storageManager.isSdAvailable();
+    if (currentUsbState != lastUsbState || currentSdState != lastSdState) {
+        buzzer.beep();
+        lastUsbState = currentUsbState;
+        lastSdState = currentSdState;
+    }
 
+    screenManager.setUsbStatus(currentUsbState);
+    screenManager.setSdStatus(currentSdState);
+    
     homeScreen.updateMachineState(
         jobRunner.getState(),
         grblController.getStatus(),

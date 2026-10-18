@@ -16,7 +16,8 @@ public:
 
     bool isSdAvailable() const;
     bool isUsbAvailable() const;
-
+    bool Ch376Available() const;
+    byte getUsbChipVersion() const { return usbDriver.getChipVersion(); }
     IStorageDriver& getDriver(StorageSource source);
 
 private:
@@ -25,7 +26,7 @@ private:
 
     bool sdAvailable = false;
     bool usbAvailable = false;
-
+    bool ch376Available = false;
     unsigned long lastCheckAt = 0;
     static constexpr unsigned long CHECK_INTERVAL_MS = 1000;
 };

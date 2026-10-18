@@ -105,30 +105,76 @@ class UsbStorageDriver : public IStorageDriver
 {
 public:
     UsbStorageDriver(uint8_t csPin, uint8_t intPin)
-        : chip(csPin, intPin)
+        : chip(csPin, intPin, SPI_SCK_MHZ(4))
     {
     }
 
     bool begin() override
     {
-        chip.init();
-        delay(500);
-        chip.setSource(0); // 0 = USB (the "1" in this library is an SD slot specific to the CH376 module; it is not used from this chip, it is used from the screen)
-        available = chip.driveReady();
-        if (available)
-            Serial.println("USB: memoria detectada y lista.");
-        else
-            Serial.println("USB: CH376S inicializado, sin memoria insertada (o no responde).");
-        return available;
+        delay(10000);
+        SPI.begin(); 
+        chipVersion = 0;
+        int attempts = 0;
+
+        // 5 try attempts to initialize the CH376S chip, with a 500ms delay between each attempt 
+        // [I hate very much this fucking chip, It's a joke of a chip :)]
+        while ((chipVersion == 0 || chipVersion == 0xFF) && attempts < 5) {
+            attempts++;
+            Serial.print("Attempting to initialize CH376S (Attempt ");
+            Serial.print(attempts);
+            Serial.println(")...");
+            
+            chip.init(); 
+            delay(100);
+            
+            chipVersion = chip.getChipVer();
+            
+            if (chipVersion == 0 || chipVersion == 0xFF) {
+                delay(500);
+            }
+        }
+
+        if (chipVersion != 0 && chipVersion != 0xFF) {
+            Serial.print("CH376 successfully initialized! Version: 0x"); // 0x44 is the CH376S version 17/10/2026 test
+            Serial.println(chipVersion, HEX);
+            
+            // USB Host (0)
+            chip.setSource(0); 
+            delay(100);
+
+            available = chip.driveReady();
+            
+            if (available) {
+                Serial.println("SPI: USB Memory mounted and ready to use.");
+            } else {
+                Serial.println("SPI: CH376S ready, but no USB flash drive detected yet.");
+            }
+            return true;
+        } else {
+            Serial.println("Critical error in CH376S. Requires electrical reset.");
+            available = false;
+            return false;
+        }
+
     }
 
     bool isAvailable() override
     {
-        if (chip.checkIntMessage())
-            available = chip.getDeviceStatus();
+        if (chip.checkIntMessage()) {
+            if (chip.getDeviceStatus()) {
+                Serial.println("USB Connected!");
+                available = true;
+                chip.driveReady();
+            } else {
+                available = false;
+                Serial.println("USB Disconnected.");
+            }
+    }
 
         return available;
     }
+    
+    byte getChipVersion() const { return chipVersion; }
 
     std::vector<StorageEntry> listDir(const String &path) override
     {
@@ -239,7 +285,7 @@ public:
 private:
     Ch376msc chip;
     bool available = false;
-
+    byte chipVersion = 0;
     static String formatFatName(const char *rawName)
     {
         String base;

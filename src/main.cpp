@@ -7,18 +7,14 @@ App* app = nullptr;
 void setup()
 {
   Serial.begin(115200);
-
-  esp_err_t err = nvs_flash_init();
-
-  if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
-  {
-    Serial.println("Corrupted NVS, erasing and restarting...");
-    nvs_flash_erase();
-    err = nvs_flash_init();
-  }
-
-  Serial.printf("nvs_flash_init() = %s\n", err == ESP_OK ? "OK" : "FAIL");
-
+  pinMode(TFT_CS, OUTPUT);
+  pinMode(SD_CS_PIN, OUTPUT);
+  pinMode(CH376_CS_PIN, OUTPUT);
+  pinMode(TOUCH_CS, OUTPUT);
+  digitalWrite(TFT_CS, HIGH);
+  digitalWrite(SD_CS_PIN, HIGH);
+  digitalWrite(CH376_CS_PIN, HIGH);
+  digitalWrite(TOUCH_CS, HIGH);
   app = new App();
 
   app->begin();

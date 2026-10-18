@@ -16,7 +16,7 @@ bool ILI9341Driver::begin()
     if (TFT_BACKLIGHT_PIN >= 0)
     {
         ledcAttach(TFT_BACKLIGHT_PIN, BACKLIGHT_LEDC_FREQ, BACKLIGHT_LEDC_RESOLUTION);
-        ledcWrite(TFT_BACKLIGHT_PIN, 255);
+        ledcWrite(TFT_BACKLIGHT_PIN, 0);
     }
     return true;
 }

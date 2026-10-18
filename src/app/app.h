@@ -23,6 +23,7 @@
 #include "../i18n/translations.h"
 #include "../machine/job_recovery_manager.h"
 #include "../gui/core/screen_sleep_manager.h"
+#include "../gui/core/backlight_fader.h"
 #include "../app/buzzer_manager.h"
 #include "../network/web_server_manager.h"
 #include "../storage/storage_manager.h"
@@ -60,6 +61,7 @@ private:
     TouchManager touch;
     ScreenManager screenManager;
     ScreenSleepManager screenSleep;
+    BacklightFader backlight;
 
     HomeScreen homeScreen;
     FilesScreen filesScreen;
