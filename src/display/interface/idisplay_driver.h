@@ -85,4 +85,6 @@ public:
     virtual int16_t getTextWidth(const String& text, uint8_t font) = 0;
     virtual void setBacklightLevel(uint8_t percent) = 0;
     virtual bool hasBacklightControl() const = 0;
+    virtual void sleepPanel() {}
+    virtual void wakePanel() {}
 };

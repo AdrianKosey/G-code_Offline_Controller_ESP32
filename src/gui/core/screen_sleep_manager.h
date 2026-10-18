@@ -29,6 +29,7 @@ private:
     unsigned long lastActivityAt = 0;
     bool screenWasBlanked = false;
     bool needsRedrawAfterWake = false;
+    bool panelSlept = false;
 
     void sleep();
     void wake();

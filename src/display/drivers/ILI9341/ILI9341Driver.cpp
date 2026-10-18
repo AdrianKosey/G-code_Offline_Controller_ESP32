@@ -3,9 +3,8 @@
 #include <driver/ledc.h>
 static constexpr uint32_t BACKLIGHT_LEDC_FREQ = 5000;
 static constexpr uint8_t BACKLIGHT_LEDC_RESOLUTION = 8; // 0-255
-ILI9341Driver::ILI9341Driver()
-{
-}
+
+ILI9341Driver::ILI9341Driver(){}
 
 bool ILI9341Driver::begin()
 {
@@ -186,4 +185,32 @@ void ILI9341Driver::setBacklightLevel(uint8_t percent)
 bool ILI9341Driver::hasBacklightControl() const
 {
     return TFT_BACKLIGHT_PIN >= 0;
+}
+
+void ILI9341Driver::sleepPanel()
+{
+    if (panelAsleep) return;
+
+    tft.writecommand(0x28);   // Display OFF
+    delay(10);
+    tft.writecommand(0x10);   // Sleep IN
+    delay(5);                
+
+    panelSleptAt = millis();
+    panelAsleep = true;
+}
+
+void ILI9341Driver::wakePanel()
+{
+    if (!panelAsleep) return;
+
+    // There must be an interval of >= 120 ms between Sleep IN and Sleep OUT.
+    unsigned long since = millis() - panelSleptAt;
+    if (since < 120) delay(120 - since);
+
+    tft.writecommand(0x11);   // Sleep OUT
+    delay(120);
+    tft.writecommand(0x29);   // Display ON
+
+    panelAsleep = false;
 }

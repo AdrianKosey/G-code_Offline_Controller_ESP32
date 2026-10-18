@@ -96,7 +96,11 @@ public:
 
     void setBacklightLevel(uint8_t percent) override;
     bool hasBacklightControl() const override;
+    void sleepPanel() override;
+    void wakePanel() override;
 
 private:
     TFT_eSPI tft;
+    bool panelAsleep = false;
+    unsigned long panelSleptAt = 0;
 };

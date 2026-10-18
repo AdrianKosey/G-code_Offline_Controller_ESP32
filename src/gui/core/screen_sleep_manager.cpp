@@ -13,6 +13,11 @@ void ScreenSleepManager::wake()
     if (state == State::Sleeping && screenWasBlanked)
         needsRedrawAfterWake = true;
 
+    if (panelSlept){
+        display.wakePanel();
+        panelSlept = false;
+    }
+
     state = State::Awake;
     screenWasBlanked = false;
     lastActivityAt = millis();
@@ -67,6 +72,8 @@ void ScreenSleepManager::update()
 
         if (display.hasBacklightControl()){
             display.setBacklightLevel(0);
+            display.sleepPanel();
+            panelSlept = true;
             screenWasBlanked = false;
         } else{
             display.fillRect(0, 0, display.width(), display.height(), 0x0000);

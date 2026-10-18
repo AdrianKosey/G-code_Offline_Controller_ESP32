@@ -133,7 +133,8 @@ This project is built with [PlatformIO](https://platformio.org/) on top of the A
 9. Run the build/upload command:
 
 ```bash
-pio run --target upload
+pio run -t upload
+pio run -t uploadfs
 ```
 
 ## 🏗️ Architecture

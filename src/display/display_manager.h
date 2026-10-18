@@ -85,6 +85,8 @@ public:
     int16_t getTextWidth(const String& text, uint8_t font);
     void setBacklightLevel(uint8_t percent) { driver.setBacklightLevel(percent); }
     bool hasBacklightControl() const { return driver.hasBacklightControl(); }
+    void sleepPanel() { driver.sleepPanel(); }
+    void wakePanel() { driver.wakePanel(); }
 
 private:
     IDisplayDriver &driver;
