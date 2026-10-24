@@ -11,8 +11,14 @@ namespace
 
         return lower.endsWith(".nc") ||
                lower.endsWith(".gcode") ||
+               // CH376S enumerates FAT long names through their 8.3 alias.
+               // A .gcode file therefore arrives as e.g. PART.GCO.
+               lower.endsWith(".gco") ||
                lower.endsWith(".ngc") ||
-               lower.endsWith(".tap");
+               lower.endsWith(".tap") ||
+               lower.endsWith(".cnc") ||
+               lower.endsWith(".gc") ||
+               lower.endsWith(".g");
     }
 }
 

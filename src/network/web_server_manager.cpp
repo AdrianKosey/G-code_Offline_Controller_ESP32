@@ -214,7 +214,9 @@ String WebServerManager::buildFilesJson(const String& path)
         {
             String lower = name;
             lower.toLowerCase();
-            include = lower.endsWith(".nc") || lower.endsWith(".gcode") || lower.endsWith(".ngc") || lower.endsWith(".tap");
+            include = lower.endsWith(".nc") || lower.endsWith(".gcode") || lower.endsWith(".gco") ||
+                      lower.endsWith(".ngc") || lower.endsWith(".tap") || lower.endsWith(".cnc") ||
+                      lower.endsWith(".gc") || lower.endsWith(".g");
         }
 
         if (include)
@@ -252,7 +254,9 @@ void WebServerManager::handleFiles()
             {
                 String lower = e.name;
                 lower.toLowerCase();
-                include = lower.endsWith(".nc") || lower.endsWith(".gcode") || lower.endsWith(".ngc") || lower.endsWith(".tap");
+                include = lower.endsWith(".nc") || lower.endsWith(".gcode") || lower.endsWith(".gco") ||
+                          lower.endsWith(".ngc") || lower.endsWith(".tap") || lower.endsWith(".cnc") ||
+                          lower.endsWith(".gc") || lower.endsWith(".g");
             }
 
             if (include)

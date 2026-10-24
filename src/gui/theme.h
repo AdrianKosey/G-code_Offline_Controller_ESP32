@@ -47,4 +47,5 @@ namespace Theme
     constexpr uint16_t Progress = RGB565(0xecb86f); // #ECB86F
     constexpr uint16_t Progress2 = RGB565(0x7f00e7); // #7f00e7
     constexpr uint16_t Progress3 = RGB565(0x6fc4ec); // #6fc4ec
+    constexpr uint16_t Progress4 = RGB565(0xff7b00); // #ff7b00
 }

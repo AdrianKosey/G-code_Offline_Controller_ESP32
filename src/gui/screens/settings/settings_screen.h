@@ -18,6 +18,7 @@
 #include "../../widgets/enum_picker/enum_picker_modal_widget.h"
 #include "../../../machine/grbl_controller.h"
 #include "../../../app/app_settings_manager.h"
+#include "../../../storage/storage_manager.h"
 #include "../../core/scroll_panel_widget.h"
 #include "about_content_builder.h"
 enum class SettingsPage
@@ -47,7 +48,7 @@ enum class EnumPickerTarget
 class SettingsScreen : public IScreen
 {
 public:
-    SettingsScreen(WifiManager &wifiManager, GrblController &grblController, AppSettingsManager &appSettingsManager);
+    SettingsScreen(WifiManager &wifiManager, GrblController &grblController, AppSettingsManager &appSettingsManager, StorageManager &storageManager);
     void onEnter() override;
 
     void draw(DisplayManager &display) override;

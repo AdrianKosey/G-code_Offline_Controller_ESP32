@@ -9,7 +9,7 @@ static constexpr int16_t CONTENT_HEIGHT = 206;
 static const char *LANGUAGE_OPTIONS[] = {"Espanol", "English", "Italiano", "Deutsch"};
 static constexpr uint8_t LANGUAGE_COUNT = sizeof(LANGUAGE_OPTIONS) / sizeof(LANGUAGE_OPTIONS[0]);
 
-SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblController, AppSettingsManager &appSettingsManager)
+SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblController, AppSettingsManager &appSettingsManager, StorageManager &storageManager)
     : // Menu principal
       aboutRow(Rect{CONTENT_X + 8, CONTENT_Y + 8, 244, 40}, tr(StringId::Settings_About)),
       wifiRow(Rect{CONTENT_X + 8, CONTENT_Y + 52, 244, 40}, tr(StringId::Settings_Wifi)),
@@ -23,7 +23,7 @@ SettingsScreen::SettingsScreen(WifiManager &wifiManager, GrblController &grblCon
           Theme::Background, Theme::Text, false),
       aboutTitleLabel(Rect{CONTENT_X + 44, CONTENT_Y + 4, 150, 20}, tr(StringId::Settings_About), Theme::Text, 2, Theme::Background, false),
       aboutScrollPanel(Rect{CONTENT_X + 8, CONTENT_Y + 40, 244, 160}),
-      aboutContent(grblController, wifiManager),
+      aboutContent(grblController, wifiManager, storageManager),
 
       // Wi-Fi
       wifiBackButton(

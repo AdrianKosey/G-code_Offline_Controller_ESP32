@@ -6,11 +6,12 @@
 #include "../../../machine/grbl_controller.h"
 #include "../../../app/device_info_provider.h"
 #include "../../../network/wifi_manager.h"
+#include "../../../storage/storage_manager.h"
 
 class AboutContentBuilder
 {
 public:
-    AboutContentBuilder(GrblController& grbl, WifiManager& wifi);
+    AboutContentBuilder(GrblController& grbl, WifiManager& wifi, StorageManager& storage);
 
     void attachTo(ScrollPanelWidget& panel); 
     void refresh(); 
@@ -18,7 +19,10 @@ public:
 private:
     GrblController& grbl;
     WifiManager& wifi;
+    StorageManager& storage;
 
+    LabelWidget designedByCaption;
+    LabelWidget designedByValue;
     LabelWidget controlNameValue;
     LabelWidget controlVersionValue;
     LabelWidget cncVersionValue;
@@ -27,6 +31,9 @@ private:
     LabelWidget sdLabel;
     ProgressBarWidget sdBar;
     LabelWidget sdValue;
+    LabelWidget usbLabel;
+    ProgressBarWidget usbBar;
+    LabelWidget usbValue;
 
     LabelWidget tempValue;
     LabelWidget uptimeValue;

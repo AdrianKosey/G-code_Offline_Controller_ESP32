@@ -34,7 +34,7 @@ App::App()
       jogScreen(grblController, appSettings),
       toolsScreen(grblController),
       framingRunner(grblController),
-      settingsScreen(wifiManager, grblController, appSettings),
+      settingsScreen(wifiManager, grblController, appSettings, storageManager),
       screenSleep(display, appSettings),
       backlight(display),
       webServer(grblController, jobRunner, framingRunner, appSettings, storageManager, homeScreen),

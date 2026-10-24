@@ -13,9 +13,11 @@ namespace
     }
 }
 
-AboutContentBuilder::AboutContentBuilder(GrblController& grblController, WifiManager& wifiManager)
-    : grbl(grblController), wifi(wifiManager),
+AboutContentBuilder::AboutContentBuilder(GrblController& grblController, WifiManager& wifiManager, StorageManager& storageManager)
+    : grbl(grblController), wifi(wifiManager), storage(storageManager),
 
+      designedByCaption(Rect{0, 0, 150, 14}, "Designed by", Theme::TextSecondary, 1, Theme::Background, false),
+      designedByValue(Rect{0, 0, 220, 18}, "Kosey Electronics", Theme::Text, 2, Theme::Background, true),
       controlNameValue(Rect{0, 0, 220, 18}, "", Theme::Text, 2, Theme::Background, true),
       controlVersionValue(Rect{0, 0, 220, 18}, "", Theme::Text, 2, Theme::Background, true),
       cncVersionValue(Rect{0, 0, 220, 18}, "", Theme::Text, 2, Theme::Background, true),
@@ -23,6 +25,9 @@ AboutContentBuilder::AboutContentBuilder(GrblController& grblController, WifiMan
       sdLabel(Rect{0, 0, 150, 16}, tr(StringId::Settings_SD), Theme::TextSecondary, 1, Theme::Background, false),
       sdBar(Rect{0, 0, 220, 10}, Theme::SidebarBackground, Theme::Progress),
       sdValue(Rect{0, 0, 220, 16}, "", Theme::TextSecondary, 1, Theme::Background, false),
+      usbLabel(Rect{0, 0, 150, 16}, tr(StringId::Settings_USB), Theme::TextSecondary, 1, Theme::Background, false),
+      usbBar(Rect{0, 0, 220, 10}, Theme::SidebarBackground, Theme::Progress4),
+      usbValue(Rect{0, 0, 220, 16}, "", Theme::TextSecondary, 1, Theme::Background, false),
       controlNameCaption(Rect{0,0,150,14}, tr(StringId::Settings_NameDevice), Theme::TextSecondary, 1, Theme::Background, false),
       controlVersionCaption(Rect{0,0,150,14}, tr(StringId::Settings_VersionDevice), Theme::TextSecondary, 1, Theme::Background, false),
       cncVersionCaption(Rect{0,0,150,14}, tr(StringId::Settings_VersionCNC), Theme::TextSecondary, 1, Theme::Background, false),
@@ -86,6 +91,21 @@ void AboutContentBuilder::refresh()
         sdValue.setText(tr(StringId::Files_NoSdCard));
     }
 
+    IStorageDriver& usb = storage.getDriver(StorageSource::USB);
+    if (usb.isAvailable() && usb.totalBytes() > 0)
+    {
+        uint64_t total = usb.totalBytes();
+        uint64_t free = usb.freeBytes();
+        uint64_t used = total > free ? total - free : 0;
+        usbBar.setValue((float)used / (float)total * 100.0f);
+        usbValue.setText(formatBytes(used) + " / " + formatBytes(total));
+    }
+    else
+    {
+        usbBar.setValue(0);
+        usbValue.setText("USB not detected");
+    }
+
     tempValue.setText(String(info.temperatureC, 1) + " C");
     uptimeValue.setText(formatUptime(info.uptimeSeconds));
 
@@ -124,6 +144,7 @@ void AboutContentBuilder::attachTo(ScrollPanelWidget& panel)
         y += rowH;
     };
 
+    addRow(designedByCaption, designedByValue);
     addRow(controlNameCaption, controlNameValue);
     addRow(controlVersionCaption, controlVersionValue);
     addRow(cncVersionCaption, cncVersionValue);
@@ -131,6 +152,11 @@ void AboutContentBuilder::attachTo(ScrollPanelWidget& panel)
     panel.addChild(&sdLabel, 8, y);
     panel.addChild(&sdBar, 8, y + 16);
     panel.addChild(&sdValue, 8, y + 28);
+    y += rowH + 10;
+
+    panel.addChild(&usbLabel, 8, y);
+    panel.addChild(&usbBar, 8, y + 16);
+    panel.addChild(&usbValue, 8, y + 28);
     y += rowH + 10;
 
     addRow(tempCaption, tempValue);

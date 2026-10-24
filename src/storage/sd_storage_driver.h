@@ -105,6 +105,12 @@ public:
     bool rmdir(const String &path) override { return SD.rmdir(path); }
 
     uint64_t totalBytes() override { return SD.cardSize(); }
+    uint64_t freeBytes() override
+    {
+        uint64_t total = SD.cardSize();
+        uint64_t used = SD.usedBytes();
+        return total > used ? total - used : 0;
+    }
     const char *driverName() const override { return "SD"; }
 
 private:

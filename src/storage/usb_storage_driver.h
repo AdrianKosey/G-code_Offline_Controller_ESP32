@@ -280,6 +280,11 @@ public:
         return (uint64_t)chip.getTotalSectors() * 512ULL; // SECTORSIZE of the library = 512
     }
 
+    uint64_t freeBytes() override
+    {
+        return (uint64_t)chip.getFreeSectors() * 512ULL;
+    }
+
     const char *driverName() const override { return "USB"; }
 
 private:

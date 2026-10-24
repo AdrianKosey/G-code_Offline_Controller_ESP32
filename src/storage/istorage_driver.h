@@ -24,5 +24,6 @@ public:
     virtual bool rmdir(const String& path) = 0;
 
     virtual uint64_t totalBytes() = 0;
+    virtual uint64_t freeBytes() = 0;
     virtual const char* driverName() const = 0; // "SD" or "USB"
 };
