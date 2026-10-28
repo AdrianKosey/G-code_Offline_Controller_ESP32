@@ -8,7 +8,8 @@
   ![Arduino](https://img.shields.io/badge/Arduino-00979D?style=for-the-badge&logo=arduino&logoColor=white)
   ![Grbl](https://img.shields.io/badge/Grbl-Ready-success?style=for-the-badge)
   [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](LICENSE)
-
+  [![PCBWay Sponsored](https://img.shields.io/badge/PCBWay-Sponsored-active?style=for-the-badge&color=4CB60F)](https://www.pcbway.com/)
+  <br>
   *Standalone touch controller for Grbl-controlled CNC machines, based on ESP32 + ILI9341 display.*
 </div>
 
@@ -19,6 +20,7 @@ This project allows you to load, preview, and execute G-code files without a con
 ## 📑 Table of Contents
 - [Key Features](#-key-features)
 - [Interfaces](#-interfaces)
+- [Hardware Sponsorship](#-hardware-sponsorship)
 - [Hardware Requirements](#-hardware)
 - [Firmware & Build](#-firmware)
 - [Software Architecture](#%EF%B8%8F-architecture)
@@ -63,6 +65,25 @@ This project allows you to load, preview, and execute G-code files without a con
 | 🛠️ Tools (Spindle/Laser) | ⚙️ Settings (Configuration) | 🌐 Web Monitor |
 | :---: | :---: | :---: |
 | <img src="docs/img/tools.png" width="250" alt="Tools Control"> | <img src="docs/img/settings.png" width="250" alt="Settings"> | <img src="docs/img/web_monitor.png" width="250" alt="Web Interface"> |
+
+---
+
+## 🤝🏼 Hardware Sponsorship
+
+<div align="center">
+  <a href="https://www.pcbway.com/" target="_blank">
+    <img src="docs/img/pcbway.png" alt="PCBWay Logo" width="300">
+  </a>
+</div>
+
+The dedicated PCB for this project was designed from scratch to ensure high reliability, optimal signal integrity for the ESP32, and an easy manual assembly process. 
+
+We are proud to announce that the professional prototyping of these boards has been fully sponsored by **[PCBWay](https://pcbway.com)**. Thanks to their high-precision manufacturing services, we achieved:
+- **Flawless Trace Definition:** Perfect routing compliance for the SMD components and level shifters.
+- **Superior Silkscreen Quality:** Clean, highly readable text labels and diagrams across both sides of the board.
+- **Industrial Finish:** Robust solder mask application that facilitates clean hand-soldering for makers.
+
+Whether you are looking to build this G-code controller or need rapid, professional manufacturing for your own custom electronics, we highly recommend checking out **[PCBWay's PCB Prototype and Assembly Services](https://pcbway.com)**. Their technical review and manufacturing speed have been instrumental in moving this open-source project forward.
 
 ---
 
